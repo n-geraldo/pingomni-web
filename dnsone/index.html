@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>DNSOne by PingOmni: coming soon</title>
+        <meta name="description" content="DNSOne, DNS for ISPs and network operators, is coming to the PingOmni family." />
+        <meta name="theme-color" content="#151b24" />
+        <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+        <script>
+            // Apply the saved theme before first paint, so the page never flashes the wrong one.
+            try {
+                var t = localStorage.getItem('pingomni-theme');
+                if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+            } catch (e) {}
+        </script>
+    </head>
+    <body>
+        <div id="root" data-page="dnsone"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
+</html>

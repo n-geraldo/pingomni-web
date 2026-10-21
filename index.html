@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>PingOmni: software that ISPs run on</title>
+        <meta name="description" content="PingOmni makes self-hosted tools for internet service providers and network operators. RadiusOne is the ISP back office on FreeRADIUS." />
+        <meta name="theme-color" content="#151b24" />
+        <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+        <script>
+            // Apply the saved theme before first paint, so the page never flashes the wrong one.
+            try {
+                var t = localStorage.getItem('pingomni-theme');
+                if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+            } catch (e) {}
+        </script>
+    </head>
+    <body>
+        <div id="root" data-page="home"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
+</html>
