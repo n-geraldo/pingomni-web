@@ -1,6 +1,6 @@
 // Header, footer and contact band shared by every page, plus the theme switch.
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Mark, Wordmark } from '../brand';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Mark, Wordmark, type Brand } from '../brand';
 import { CONTACT_EMAIL, DEMO_URL, mailto } from '../config';
 import Icon from '../Icon';
 
@@ -18,16 +18,78 @@ function currentTheme(): Theme {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-const NAV: { page: PageId | 'use-cases' | 'about'; href: string; label: string }[] = [
-    { page: 'radiusone', href: 'radiusone/', label: 'RadiusOne' },
-    { page: 'ticketone', href: 'ticketone/', label: 'TicketOne' },
-    { page: 'dnsone', href: 'dnsone/', label: 'DNSOne' },
-    { page: 'use-cases', href: '#use-cases', label: 'Use cases' },
-    { page: 'about', href: '#about', label: 'About' },
+// The Products menu: what is available first, then what is coming.
+const PRODUCTS: { page: Brand & PageId; href: string; job: string; soon?: boolean }[] = [
+    { page: 'radiusone', href: 'radiusone/', job: 'ISP back office on FreeRADIUS' },
+    { page: 'ticketone', href: 'ticketone/', job: 'Support tickets for ISP help desks', soon: true },
+    { page: 'dnsone', href: 'dnsone/', job: 'DNS for ISPs and network operators', soon: true },
 ];
 
+const NAV: { href: string; label: string }[] = [
+    { href: '#use-cases', label: 'Use cases' },
+    { href: '#about', label: 'About' },
+];
+
+function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
+    const { page, root } = useSite();
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    const current = PRODUCTS.some((p) => p.page === page);
+
+    useEffect(() => {
+        if (!open) return;
+        const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+        const onClick = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && setOpen(false);
+        window.addEventListener('keydown', onKey);
+        document.addEventListener('mousedown', onClick);
+        return () => {
+            window.removeEventListener('keydown', onKey);
+            document.removeEventListener('mousedown', onClick);
+        };
+    }, [open]);
+
+    return (
+        <div className={open ? 'nav-menu open' : 'nav-menu'} ref={ref}>
+            <button
+                type="button"
+                className="nav-menu-btn"
+                aria-expanded={open}
+                aria-controls="products-menu"
+                data-current={current || undefined}
+                onClick={() => setOpen(!open)}
+            >
+                Products
+                <Icon name="chevron" />
+            </button>
+            <ul className="nav-menu-list" id="products-menu">
+                {PRODUCTS.map((p) => (
+                    <li key={p.page}>
+                        <a
+                            href={`${root}${p.href}`}
+                            aria-current={p.page === page ? 'page' : undefined}
+                            onClick={() => {
+                                setOpen(false);
+                                onNavigate();
+                            }}
+                        >
+                            <Mark brand={p.page} size={32} />
+                            <span className="nav-menu-text">
+                                <span className="nav-menu-name">
+                                    <Wordmark brand={p.page} />
+                                    {p.soon && <span className="nav-menu-soon">Coming soon</span>}
+                                </span>
+                                <span className="nav-menu-job">{p.job}</span>
+                            </span>
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
 function Header({ onTheme }: { onTheme: () => void }) {
-    const { page, root, theme } = useSite();
+    const { root, theme } = useSite();
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
@@ -45,13 +107,9 @@ function Header({ onTheme }: { onTheme: () => void }) {
                     <Wordmark brand="pingomni" />
                 </a>
                 <nav className={open ? 'site-nav open' : 'site-nav'} aria-label="Main">
+                    <ProductsMenu onNavigate={() => setOpen(false)} />
                     {NAV.map((item) => (
-                        <a
-                            key={item.href}
-                            href={`${root}${item.href}`}
-                            aria-current={item.page === page ? 'page' : undefined}
-                            onClick={() => setOpen(false)}
-                        >
+                        <a key={item.href} href={`${root}${item.href}`} onClick={() => setOpen(false)}>
                             {item.label}
                         </a>
                     ))}

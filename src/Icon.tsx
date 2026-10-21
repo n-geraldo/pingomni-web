@@ -13,6 +13,7 @@ const ICONS: Record<string, string> = {
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     menu: '<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>',
     close: '<path d="M6 6l12 12M18 6 6 18"/>',
+    chevron: '<path d="m6 9 6 6 6-6"/>',
     arrow: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
     external: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M19 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4"/>',
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',

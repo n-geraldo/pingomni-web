@@ -501,6 +501,113 @@ a:hover {
   text-decoration: none;
 }
 
+/* Products menu: a list under the nav, available product first, the coming ones marked */
+.nav-menu {
+  position: relative;
+}
+
+.nav-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px 8px 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--on-stage-muted);
+  font: 500 15px/1.6 var(--font);
+  cursor: pointer;
+  transition: color 120ms, background-color 120ms;
+}
+
+.nav-menu-btn:hover,
+.nav-menu-btn[data-current],
+.nav-menu.open .nav-menu-btn {
+  color: var(--on-stage);
+  background: rgba(255, 255, 255, .06);
+}
+
+.nav-menu-btn .icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 160ms var(--ease-out);
+}
+
+.nav-menu.open .nav-menu-btn .icon {
+  transform: rotate(180deg);
+}
+
+.nav-menu-list {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  display: none;
+  width: 340px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+}
+
+.nav-menu.open .nav-menu-list {
+  display: grid;
+  gap: 2px;
+}
+
+.site-nav .nav-menu-list a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: var(--radius);
+  color: var(--text);
+  font-weight: 400;
+}
+
+.site-nav .nav-menu-list a:hover,
+.site-nav .nav-menu-list a[aria-current="page"] {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.nav-menu-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nav-menu-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.site-header .nav-menu-list .wordmark {
+  font-size: 16px;
+  color: var(--wordmark);
+}
+
+.site-header .nav-menu-list .wordmark-accent {
+  color: var(--accent);
+}
+
+.nav-menu-soon {
+  padding: 1px 7px;
+  border: 1px solid var(--warning-line);
+  border-radius: var(--radius-sm);
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.nav-menu-job {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -1403,6 +1510,19 @@ a:hover {
   .site-nav a {
     padding: 12px 8px;
     font-size: 16px;
+  }
+
+  .nav-menu-btn {
+    width: 100%;
+    justify-content: space-between;
+    padding: 12px 8px;
+    font-size: 16px;
+  }
+
+  .nav-menu-list {
+    position: static;
+    width: auto;
+    margin: 4px 0 8px;
   }
 
   .header-row {
