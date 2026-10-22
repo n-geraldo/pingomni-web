@@ -3,10 +3,53 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>PingOmni: software that ISPs run on</title>
-        <meta name="description" content="PingOmni makes self-hosted tools for internet service providers and network operators. RadiusOne is the ISP back office on FreeRADIUS." />
+        <title>PingOmni: self-hosted software for ISPs and network operators</title>
+        <meta name="description" content="PingOmni makes self-hosted tools for ISPs and network operators. RadiusOne is the ISP back office on FreeRADIUS: subscribers, billing and NAS monitoring." />
+        <link rel="canonical" href="%VITE_SITE_URL%/" />
         <meta name="theme-color" content="#151b24" />
         <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="PingOmni" />
+        <meta property="og:title" content="PingOmni: self-hosted software for ISPs and network operators" />
+        <meta property="og:description" content="PingOmni makes self-hosted tools for ISPs and network operators. RadiusOne is the ISP back office on FreeRADIUS: subscribers, billing and NAS monitoring." />
+        <meta property="og:url" content="%VITE_SITE_URL%/" />
+        <meta property="og:image" content="%VITE_SITE_URL%/og/default.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="PingOmni: self-hosted software for ISPs and network operators" />
+        <meta name="twitter:description" content="PingOmni makes self-hosted tools for ISPs and network operators. RadiusOne is the ISP back office on FreeRADIUS: subscribers, billing and NAS monitoring." />
+        <meta name="twitter:image" content="%VITE_SITE_URL%/og/default.png" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "Organization",
+                        "@id": "%VITE_SITE_URL%/#organization",
+                        "name": "PingOmni",
+                        "url": "%VITE_SITE_URL%/",
+                        "logo": "%VITE_SITE_URL%/brand/pingomni-logo.png",
+                        "description": "Self-hosted software for internet service providers and network operators.",
+                        "contactPoint": {
+                            "@type": "ContactPoint",
+                            "contactType": "sales",
+                            "email": "%VITE_CONTACT_EMAIL%"
+                        }
+                    },
+                    {
+                        "@type": "WebSite",
+                        "@id": "%VITE_SITE_URL%/#website",
+                        "url": "%VITE_SITE_URL%/",
+                        "name": "PingOmni",
+                        "publisher": {
+                            "@id": "%VITE_SITE_URL%/#organization"
+                        }
+                    }
+                ]
+            }
+        </script>
         <script>
             // Apply the saved theme before first paint, so the page never flashes the wrong one.
             try {
@@ -16,7 +59,7 @@
         </script>
     </head>
     <body>
-        <div id="root" data-page="home"></div>
+        <div id="root" data-page="home" data-root="./"></div>
         <script type="module" src="/src/main.tsx"></script>
     </body>
 </html>

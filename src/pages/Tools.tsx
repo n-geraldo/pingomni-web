@@ -1183,10 +1183,12 @@ export default function Tools({ group }: { group: ToolGroup }) {
     const { root } = useSite();
     const tools = TOOLS.filter((t) => t.group === group);
     const fromHash = () => tools.find((t) => `#${t.id}` === window.location.hash) ?? tools[0];
-    const [tool, setTool] = useState<Tool>(fromHash);
+    // The pre-rendered page shows the first tool; the one in the address (#mx) is picked once the page runs.
+    const [tool, setTool] = useState<Tool>(tools[0]);
 
     useEffect(() => {
         const onHash = () => setTool(fromHash());
+        onHash();
         window.addEventListener('hashchange', onHash);
         return () => window.removeEventListener('hashchange', onHash);
     }, []);

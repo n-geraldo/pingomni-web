@@ -7,17 +7,18 @@ The company site for PingOmni, the home of RadiusOne and the "One" product famil
 ```bash
 npm ci
 npm run dev          # http://localhost:5173
-npm run build        # type-check, then build into dist/
+npm run build        # type-check, build, pre-render every page, write sitemap.xml and robots.txt into dist/
 ```
 
-Upload `dist/` to any web server. Asset paths are relative, so it works from a domain root or a sub-folder.
+Upload `dist/` to the root of a domain (asset paths are absolute). Serve missing addresses with `404.html` and a 404 status, as `deploy/nginx.conf` does.
 
 ## Settings
 
-Set these at build time (for example in `.env.production`):
+Set these at build time in `.env` (or `.env.production`):
 
 | Variable | Default | Used for |
 |---|---|---|
+| `VITE_SITE_URL` | `https://pingomni.com` | Canonical links, Open Graph tags, structured data, sitemap.xml and robots.txt |
 | `VITE_DEMO_URL` | `http://10.4.100.101:8090/` | "Try the demo" buttons (the static RadiusOne demo) |
 | `VITE_CONTACT_EMAIL` | `hello@pingomni.com` | Contact and "Tell me when it's ready" links |
 
@@ -42,6 +43,13 @@ sudo cp deploy/nginx.conf /etc/nginx/sites-available/pingomni-web && sudo nginx 
 ```
 
 `npm run dev` sends `/api/` to the server build (`API_ORIGIN`, default `http://10.4.100.101:8091`).
+
+## Search engines
+
+- Every page is pre-rendered at build time (`src/entry-server.tsx`, `scripts/prerender.mjs`), so its text and links are in the HTML before any script runs; the browser then hydrates it.
+- Each page's `<head>` has its own title, description, canonical link, Open Graph and Twitter tags (images in `public/og/`) and JSON-LD structured data: Organization and WebSite on the home page, SoftwareApplication for RadiusOne, WebApplication for the tools pages, and breadcrumbs.
+- The build writes `sitemap.xml` and `robots.txt` from the pages' canonical links. `/api/` is disallowed.
+- Lighthouse (2026-10-22, on the test server): SEO 100 and accessibility 100 on every page, performance 94–99. Best practices is 79 only because the test server is plain HTTP; serve the site over HTTPS (and redirect HTTP to it) for 100.
 
 ## Screenshots
 

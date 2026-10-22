@@ -5,8 +5,8 @@ import { defineConfig } from 'vite';
 const page = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
-    // Relative asset paths: the built site works from a domain root or a sub-folder.
-    base: './',
+    // Absolute asset paths: the site lives at a domain root, and the 404 page is served at any depth.
+    base: '/',
     plugins: [react()],
     // In development, the tools API comes from the server build.
     server: { proxy: { '/api/': process.env.API_ORIGIN ?? 'http://10.4.100.101:8091' } },
@@ -21,6 +21,7 @@ export default defineConfig({
                 ticketone: page('ticketone/index.html'),
                 dnsone: page('dnsone/index.html'),
                 tools: page('tools/index.html'),
+                notFound: page('404.html'),
                 toolsNetwork: page('tools/network/index.html'),
                 toolsEmail: page('tools/email/index.html'),
             },

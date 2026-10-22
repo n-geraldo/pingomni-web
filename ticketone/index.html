@@ -3,10 +3,48 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>TicketOne by PingOmni: coming soon</title>
-        <meta name="description" content="TicketOne, support tickets for ISP help desks, is the next product in the PingOmni family." />
+        <title>TicketOne by PingOmni: support tickets for ISP help desks</title>
+        <meta name="description" content="TicketOne, support tickets for ISP help desks, is the next product in the PingOmni family. Get an email when it is ready." />
+        <link rel="canonical" href="%VITE_SITE_URL%/ticketone/" />
         <meta name="theme-color" content="#151b24" />
         <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="PingOmni" />
+        <meta property="og:title" content="TicketOne by PingOmni: support tickets for ISP help desks" />
+        <meta property="og:description" content="TicketOne, support tickets for ISP help desks, is the next product in the PingOmni family. Get an email when it is ready." />
+        <meta property="og:url" content="%VITE_SITE_URL%/ticketone/" />
+        <meta property="og:image" content="%VITE_SITE_URL%/og/default.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="TicketOne by PingOmni: support tickets for ISP help desks" />
+        <meta name="twitter:description" content="TicketOne, support tickets for ISP help desks, is the next product in the PingOmni family. Get an email when it is ready." />
+        <meta name="twitter:image" content="%VITE_SITE_URL%/og/default.png" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "PingOmni",
+                                "item": "%VITE_SITE_URL%/"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 2,
+                                "name": "TicketOne",
+                                "item": "%VITE_SITE_URL%/ticketone/"
+                            }
+                        ]
+                    }
+                ]
+            }
+        </script>
         <script>
             // Apply the saved theme before first paint, so the page never flashes the wrong one.
             try {
@@ -16,7 +54,7 @@
         </script>
     </head>
     <body>
-        <div id="root" data-page="ticketone"></div>
+        <div id="root" data-page="ticketone" data-root="../"></div>
         <script type="module" src="/src/main.tsx"></script>
     </body>
 </html>

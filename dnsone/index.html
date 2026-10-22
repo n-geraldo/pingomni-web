@@ -3,10 +3,48 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>DNSOne by PingOmni: coming soon</title>
-        <meta name="description" content="DNSOne, DNS for ISPs and network operators, is coming to the PingOmni family." />
+        <title>DNSOne by PingOmni: DNS for ISPs and network operators</title>
+        <meta name="description" content="DNSOne, DNS for ISPs and network operators, is coming to the PingOmni family. Get an email when it is ready." />
+        <link rel="canonical" href="%VITE_SITE_URL%/dnsone/" />
         <meta name="theme-color" content="#151b24" />
         <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="PingOmni" />
+        <meta property="og:title" content="DNSOne by PingOmni: DNS for ISPs and network operators" />
+        <meta property="og:description" content="DNSOne, DNS for ISPs and network operators, is coming to the PingOmni family. Get an email when it is ready." />
+        <meta property="og:url" content="%VITE_SITE_URL%/dnsone/" />
+        <meta property="og:image" content="%VITE_SITE_URL%/og/default.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="DNSOne by PingOmni: DNS for ISPs and network operators" />
+        <meta name="twitter:description" content="DNSOne, DNS for ISPs and network operators, is coming to the PingOmni family. Get an email when it is ready." />
+        <meta name="twitter:image" content="%VITE_SITE_URL%/og/default.png" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "PingOmni",
+                                "item": "%VITE_SITE_URL%/"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 2,
+                                "name": "DNSOne",
+                                "item": "%VITE_SITE_URL%/dnsone/"
+                            }
+                        ]
+                    }
+                ]
+            }
+        </script>
         <script>
             // Apply the saved theme before first paint, so the page never flashes the wrong one.
             try {
@@ -16,7 +54,7 @@
         </script>
     </head>
     <body>
-        <div id="root" data-page="dnsone"></div>
+        <div id="root" data-page="dnsone" data-root="../"></div>
         <script type="module" src="/src/main.tsx"></script>
     </body>
 </html>

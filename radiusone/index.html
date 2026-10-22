@@ -3,10 +3,61 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>RadiusOne by PingOmni: the ISP back office on FreeRADIUS</title>
-        <meta name="description" content="Subscribers, service plans, billing and NAS monitoring in one self-hosted portal on FreeRADIUS. One command installs it on Ubuntu 24.04." />
+        <title>RadiusOne: ISP billing and RADIUS management on FreeRADIUS</title>
+        <meta name="description" content="RadiusOne is a self-hosted ISP back office on FreeRADIUS: PPPoE subscribers, service plans, invoices, NAS monitoring over SNMP and CoA disconnects. One-command install." />
+        <link rel="canonical" href="%VITE_SITE_URL%/radiusone/" />
         <meta name="theme-color" content="#151b24" />
         <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="PingOmni" />
+        <meta property="og:title" content="RadiusOne: ISP billing and RADIUS management on FreeRADIUS" />
+        <meta property="og:description" content="RadiusOne is a self-hosted ISP back office on FreeRADIUS: PPPoE subscribers, service plans, invoices, NAS monitoring over SNMP and CoA disconnects. One-command install." />
+        <meta property="og:url" content="%VITE_SITE_URL%/radiusone/" />
+        <meta property="og:image" content="%VITE_SITE_URL%/og/radiusone.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="RadiusOne: ISP billing and RADIUS management on FreeRADIUS" />
+        <meta name="twitter:description" content="RadiusOne is a self-hosted ISP back office on FreeRADIUS: PPPoE subscribers, service plans, invoices, NAS monitoring over SNMP and CoA disconnects. One-command install." />
+        <meta name="twitter:image" content="%VITE_SITE_URL%/og/radiusone.png" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "SoftwareApplication",
+                        "name": "RadiusOne",
+                        "url": "%VITE_SITE_URL%/radiusone/",
+                        "applicationCategory": "BusinessApplication",
+                        "operatingSystem": "Ubuntu 24.04 LTS",
+                        "softwareRequirements": "FreeRADIUS, MariaDB",
+                        "description": "Self-hosted ISP back office on FreeRADIUS: PPPoE subscribers and service plans, invoices and payments, NAS monitoring, notifications and encrypted backups.",
+                        "screenshot": "%VITE_SITE_URL%/shots/dashboard-light.jpg",
+                        "publisher": {
+                            "@id": "%VITE_SITE_URL%/#organization"
+                        }
+                    },
+                    {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "PingOmni",
+                                "item": "%VITE_SITE_URL%/"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 2,
+                                "name": "RadiusOne",
+                                "item": "%VITE_SITE_URL%/radiusone/"
+                            }
+                        ]
+                    }
+                ]
+            }
+        </script>
         <script>
             // Apply the saved theme before first paint, so the page never flashes the wrong one.
             try {
@@ -16,7 +67,7 @@
         </script>
     </head>
     <body>
-        <div id="root" data-page="radiusone"></div>
+        <div id="root" data-page="radiusone" data-root="../"></div>
         <script type="module" src="/src/main.tsx"></script>
     </body>
 </html>

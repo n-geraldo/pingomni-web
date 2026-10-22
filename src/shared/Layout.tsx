@@ -6,7 +6,7 @@ import Icon from '../Icon';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 
 export type Theme = 'light' | 'dark';
-export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone' | 'tools-network' | 'tools-email';
+export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone' | 'tools-network' | 'tools-email' | 'notfound';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
 type Site = { page: PageId; root: string; theme: Theme };
@@ -346,7 +346,9 @@ function useReveal() {
 }
 
 export function Layout({ page, root, children }: { page: PageId; root: string; children: ReactNode }) {
-    const [theme, setTheme] = useState<Theme>(currentTheme);
+    // Pages are pre-rendered in light; the visitor's theme is applied once the page is running.
+    const [theme, setTheme] = useState<Theme>('light');
+    useEffect(() => setTheme(currentTheme()), []);
     useReveal();
     const toggle = () => {
         const next: Theme = theme === 'dark' ? 'light' : 'dark';
