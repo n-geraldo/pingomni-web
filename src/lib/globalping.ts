@@ -3,24 +3,27 @@
 
 const API = 'https://api.globalping.io/v1/measurements';
 
-export type Probe = {
-    country: string;
-    city: string;
-    network: string;
-    asn: number;
-    status: 'finished' | 'failed' | 'offline' | 'in-progress';
-    resolved: string | null;
-    min: number | null;
-    avg: number | null;
-    max: number | null;
-    loss: number | null;
-};
-
 type Location = { magic: string; limit: number };
 
-// Places to ping from, as Globalping "magic" locations. "Around the world" asks every continent,
+export type ProbeInfo = { country: string; city: string; network: string; asn: number; status: string };
+
+export type PingProbe = ProbeInfo & { resolved: string | null; min: number | null; avg: number | null; max: number | null; loss: number | null };
+
+export type TraceProbe = ProbeInfo & {
+    resolved: string | null;
+    hops: { address: string | null; name: string | null; avg: number | null }[];
+};
+
+export type DnsProbe = ProbeInfo & {
+    resolver: string | null;
+    code: string | null;
+    ms: number | null;
+    answers: { type: string; ttl: number; value: string }[];
+};
+
+// Places to test from, as Globalping "magic" locations. "Around the world" asks every continent,
 // because Globalping's own "world" leans on Europe and North America, where most probes are.
-export const PING_FROM: { label: string; locations?: Location[] }[] = [
+export const TEST_FROM: { label: string; locations?: Location[] }[] = [
     { label: 'Our server' },
     {
         label: 'Around the world',
@@ -42,24 +45,28 @@ export const PING_FROM: { label: string; locations?: Location[] }[] = [
     ].map((country) => ({ label: country, locations: [{ magic: country, limit: 2 }] })),
 ];
 
+export const locationsFor = (label: string) => TEST_FROM.find((f) => f.label === label)?.locations;
+
+// A traceroute is long, so it uses half as many probes per location (one per continent "around the world").
+const halved = (locations: Location[]) => locations.map((l) => ({ ...l, limit: Math.max(1, Math.ceil(l.limit / 2)) }));
+
 export class GlobalpingError extends Error {}
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function pingFrom(target: string, locations: Location[]): Promise<{ target: string; probes: Probe[] }> {
+/** Starts a measurement, waits for every probe to finish, and returns the raw results. */
+async function measure(body: Record<string, unknown>): Promise<any[]> {
     let res: Response;
     try {
-        res = await fetch(API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: 'ping', target, locations, measurementOptions: { packets: 4 } }),
-        });
+        res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     } catch {
         throw new GlobalpingError('Could not reach Globalping. Check your connection and try again.');
     }
     if (res.status === 429) {
         const reset = Number(res.headers.get('X-RateLimit-Reset') ?? 0);
-        throw new GlobalpingError(`You have used this hour’s free Globalping tests. Try again in ${Math.max(1, Math.ceil(reset / 60))} minutes, or ping from our server.`);
+        throw new GlobalpingError(
+            `You have used this hour’s free Globalping tests. Try again in ${Math.max(1, Math.ceil(reset / 60))} minutes, or test from our server.`,
+        );
     }
     const created = await res.json().catch(() => null);
     if (!res.ok || !created?.id) {
@@ -68,29 +75,76 @@ export async function pingFrom(target: string, locations: Location[]): Promise<{
         throw new GlobalpingError(message.replace(/^Parameter validation failed\.?\s*/i, '') || 'Globalping did not accept the test.');
     }
 
-    // Results arrive over a few seconds; poll until every probe is done.
-    const deadline = Date.now() + 30000;
+    const deadline = Date.now() + 45000;
     let data: any;
     do {
-        await sleep(600);
+        await sleep(700);
         const r = await fetch(`${API}/${created.id}`);
         data = await r.json().catch(() => null);
     } while (data?.status === 'in-progress' && Date.now() < deadline);
     if (!data?.results) throw new GlobalpingError('The test did not finish. Try again.');
+    return data.results;
+}
 
+const probeInfo = (x: any): ProbeInfo => ({
+    country: x.probe.country,
+    city: x.probe.city,
+    network: x.probe.network,
+    asn: x.probe.asn,
+    status: x.result.status,
+});
+
+export async function pingFrom(target: string, locations: Location[]) {
+    const results = await measure({ type: 'ping', target, locations, measurementOptions: { packets: 4 } });
     return {
         target,
-        probes: data.results.map((x: any): Probe => ({
-            country: x.probe.country,
-            city: x.probe.city,
-            network: x.probe.network,
-            asn: x.probe.asn,
-            status: x.result.status,
-            resolved: x.result.resolvedAddress ?? null,
-            min: x.result.stats?.min ?? null,
-            avg: x.result.stats?.avg ?? null,
-            max: x.result.stats?.max ?? null,
-            loss: x.result.stats?.loss ?? null,
-        })),
+        probes: results.map(
+            (x): PingProbe => ({
+                ...probeInfo(x),
+                resolved: x.result.resolvedAddress ?? null,
+                min: x.result.stats?.min ?? null,
+                avg: x.result.stats?.avg ?? null,
+                max: x.result.stats?.max ?? null,
+                loss: x.result.stats?.loss ?? null,
+            }),
+        ),
+    };
+}
+
+export async function traceFrom(target: string, locations: Location[]) {
+    const results = await measure({ type: 'traceroute', target, locations: halved(locations), measurementOptions: { protocol: 'ICMP' } });
+    return {
+        target,
+        traces: results.map(
+            (x): TraceProbe => ({
+                ...probeInfo(x),
+                resolved: x.result.resolvedAddress ?? null,
+                hops: (x.result.hops ?? []).map((h: any) => {
+                    const rtts = (h.timings ?? []).map((t: any) => t.rtt).filter((v: any) => typeof v === 'number');
+                    return {
+                        address: h.resolvedAddress ?? null,
+                        name: h.resolvedHostname && h.resolvedHostname !== h.resolvedAddress ? h.resolvedHostname : null,
+                        avg: rtts.length ? rtts.reduce((a: number, b: number) => a + b, 0) / rtts.length : null,
+                    };
+                }),
+            }),
+        ),
+    };
+}
+
+export async function dnsFrom(name: string, type: string, locations: Location[]) {
+    const results = await measure({ type: 'dns', target: name, locations, measurementOptions: { query: { type } } });
+    return {
+        name,
+        type,
+        lookups: results.map(
+            (x): DnsProbe => ({
+                ...probeInfo(x),
+                resolver: x.result.resolver ?? null,
+                code: x.result.statusCodeName ?? null,
+                ms: x.result.timings?.total ?? null,
+                answers: (x.result.answers ?? []).map((a: any) => ({ type: a.type, ttl: a.ttl, value: String(a.value).replace(/\.$/, '') })),
+            }),
+        ),
     };
 }

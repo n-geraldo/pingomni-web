@@ -9,7 +9,7 @@ export const TOOL_PAGES: Record<ToolGroup, { title: string; path: string; blurb:
 
 export const TOOL_LIST: { id: string; group: ToolGroup; name: string; blurb: string; icon: string }[] = [
     { id: 'ping', group: 'network', name: 'Ping', blurb: 'How long packets take to reach a host', icon: 'activity' },
-    { id: 'traceroute', group: 'network', name: 'Traceroute', blurb: 'The route packets take from our server to a host', icon: 'route' },
+    { id: 'traceroute', group: 'network', name: 'Traceroute', blurb: 'The route packets take to a host', icon: 'route' },
     { id: 'port', group: 'network', name: 'Port check', blurb: 'Whether a TCP port is open on a host', icon: 'plug' },
     { id: 'reverse', group: 'network', name: 'Reverse lookup', blurb: 'The hostname behind an IP address', icon: 'swap' },
     { id: 'proxy', group: 'network', name: 'Proxy checker', blurb: 'Whether your connection goes through a proxy', icon: 'shield' },

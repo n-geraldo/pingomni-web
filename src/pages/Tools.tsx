@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Icon from '../Icon';
-import { PING_FROM, pingFrom, type Probe } from '../lib/globalping';
+import { dnsFrom, locationsFor, pingFrom, TEST_FROM, traceFrom, type DnsProbe, type PingProbe, type TraceProbe } from '../lib/globalping';
 import { rangeToMasks, subnet } from '../lib/ipcalc';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { useSite } from '../shared/Layout';
@@ -21,6 +21,17 @@ type ToolSpec = {
 type Tool = ToolSpec & (typeof TOOL_LIST)[number];
 
 class ToolError extends Error {}
+
+// The "from" choice shared by ping, traceroute and DNS: our server, or Globalping probes elsewhere.
+const fromField = (label: string): Field => ({ name: 'from', label, placeholder: '', options: TEST_FROM.map((f) => f.label), width: 'medium' });
+
+async function viaGlobalping<T>(run: () => Promise<T>): Promise<T> {
+    try {
+        return await run();
+    } catch (err) {
+        throw new ToolError(err instanceof Error ? err.message : 'The test failed.');
+    }
+}
 
 async function api(tool: string, params: Record<string, string>): Promise<Result> {
     const query = new URLSearchParams({ tool, ...params });
@@ -163,16 +174,11 @@ const SPECS: ToolSpec[] = [
         id: 'ping',
         fields: [
             { name: 'host', label: 'Host or IP', placeholder: 'example.com' },
-            { name: 'from', label: 'Ping from', placeholder: '', options: PING_FROM.map((f) => f.label), width: 'medium' },
+            fromField('Ping from'),
         ],
         run: async (v) => {
-            const from = PING_FROM.find((f) => f.label === v.from);
-            if (!from?.locations) return api('ping', { host: v.host });
-            try {
-                return await pingFrom(v.host, from.locations);
-            } catch (err) {
-                throw new ToolError(err instanceof Error ? err.message : 'The test failed.');
-            }
+            const locations = locationsFor(v.from);
+            return locations ? viaGlobalping(() => pingFrom(v.host, locations)) : api('ping', { host: v.host });
         },
         note: 'Other locations use Globalping, a free network of probes around the world, run from your browser.',
         render: (r) =>
@@ -199,10 +205,19 @@ const SPECS: ToolSpec[] = [
     },
     {
         id: 'traceroute',
-        fields: [{ name: 'host', label: 'Host or IP', placeholder: 'example.com' }],
-        run: (v) => api('traceroute', v),
-        note: 'A trace can take up to half a minute.',
-        render: (r) => (
+        fields: [
+            { name: 'host', label: 'Host or IP', placeholder: 'example.com' },
+            fromField('Trace from'),
+        ],
+        run: async (v) => {
+            const locations = locationsFor(v.from);
+            return locations ? viaGlobalping(() => traceFrom(v.host, locations)) : api('traceroute', { host: v.host });
+        },
+        note: 'A trace can take up to half a minute. Other locations use Globalping, a free network of probes around the world, run from your browser.',
+        render: (r) =>
+            r.traces ? (
+                <TraceWorld r={r} />
+            ) : (
             <>
                 <div className="out-summary">
                     <span>
@@ -222,7 +237,7 @@ const SPECS: ToolSpec[] = [
                     empty="No hops were recorded."
                 />
             </>
-        ),
+            ),
     },
     {
         id: 'port',
@@ -332,15 +347,25 @@ const SPECS: ToolSpec[] = [
         fields: [
             { name: 'name', label: 'Domain or hostname', placeholder: 'example.com' },
             { name: 'type', label: 'Record', placeholder: '', options: ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'SOA', 'CAA', 'SRV'], width: 'narrow' },
+            fromField('Look up from'),
         ],
-        run: (v) => api('dns', v),
-        render: (r) => (
-            <Table
-                head={['Type', 'TTL', 'Value']}
-                rows={r.records.map((x: Result) => [x.type, x.ttl, <Mono>{x.value}</Mono>])}
-                empty={`No ${r.type === 'ALL' ? '' : `${r.type} `}records for ${r.name}.`}
-            />
-        ),
+        run: async (v) => {
+            const locations = locationsFor(v.from);
+            if (!locations) return api('dns', { name: v.name, type: v.type });
+            if (v.type === 'ALL') throw new ToolError('Pick one record type to look it up from other locations.');
+            return viaGlobalping(() => dnsFrom(v.name, v.type, locations));
+        },
+        note: 'Look up from other locations to see whether a DNS change has reached every country (propagation). Uses Globalping, run from your browser.',
+        render: (r) =>
+            r.lookups ? (
+                <DnsWorld r={r} />
+            ) : (
+                <Table
+                    head={['Type', 'TTL', 'Value']}
+                    rows={r.records.map((x: Result) => [x.type, x.ttl, <Mono>{x.value}</Mono>])}
+                    empty={`No ${r.type === 'ALL' ? '' : `${r.type} `}records for ${r.name}.`}
+                />
+            ),
     },
     {
         id: 'mx',
@@ -564,7 +589,7 @@ function AllPorts({ r }: { r: Result }) {
 
 // Ping results from Globalping probes: one row per location, fastest first.
 function PingWorld({ r }: { r: Result }) {
-    const probes = [...(r.probes as Probe[])].sort((a, b) => (a.avg ?? Infinity) - (b.avg ?? Infinity));
+    const probes = [...(r.probes as PingProbe[])].sort((a, b) => (a.avg ?? Infinity) - (b.avg ?? Infinity));
     const answered = probes.filter((p) => p.avg != null);
     const fastest = answered[0];
     return (
@@ -582,9 +607,7 @@ function PingWorld({ r }: { r: Result }) {
             <Table
                 head={['Location', 'Network', 'Loss', 'Minimum', 'Average', 'Maximum']}
                 rows={probes.map((p) => [
-                    <span className="out-place">
-                        <strong>{p.city}</strong> <span className="faint">{p.country}</span>
-                    </span>,
+                    <Place p={p} />,
                     <span className="faint">{p.network} (AS{p.asn})</span>,
                     p.loss == null ? '—' : <Status level={p.loss === 0 ? 'ok' : p.loss < 100 ? 'warning' : 'error'}>{p.loss}%</Status>,
                     ms(p.min),
@@ -593,6 +616,110 @@ function PingWorld({ r }: { r: Result }) {
                 ])}
                 empty="No probes answered."
             />
+        </>
+    );
+}
+
+const Place = ({ p }: { p: { city: string; country: string } }) => (
+    <span className="out-place">
+        <strong>{p.city}</strong> <span className="faint">{p.country}</span>
+    </span>
+);
+
+// Traceroutes from Globalping probes: one collapsible route per location.
+function TraceWorld({ r }: { r: Result }) {
+    const traces = r.traces as TraceProbe[];
+    return (
+        <>
+            <div className="out-summary">
+                <span>
+                    Routes to {r.target}
+                    {traces[0]?.resolved && traces[0].resolved !== r.target && <> <Mono>{traces[0].resolved}</Mono></>} from {traces.length}{' '}
+                    {traces.length === 1 ? 'location' : 'locations'}
+                </span>
+            </div>
+            <div className="out-routes">
+                {traces.map((t, i) => {
+                    const last = [...t.hops].reverse().find((h) => h.avg != null);
+                    const reached = t.hops.some((h) => h.address && h.address === t.resolved);
+                    return (
+                        <details className="out-route" key={i} open={traces.length === 1}>
+                            <summary>
+                                <Place p={t} />
+                                <span className="faint out-route-net">
+                                    {t.network} (AS{t.asn})
+                                </span>
+                                <span className="out-route-meta">
+                                    {t.hops.length} hops · {ms(last?.avg)}
+                                </span>
+                                <Status level={reached ? 'ok' : 'warning'}>{reached ? 'Reached' : 'Not reached'}</Status>
+                            </summary>
+                            <Table
+                                head={['Hop', 'Address', 'Name', 'Time']}
+                                rows={t.hops.map((h, n) => [
+                                    n + 1,
+                                    h.address ? <Mono>{h.address}</Mono> : <span className="faint">No answer</span>,
+                                    h.name ?? '—',
+                                    ms(h.avg),
+                                ])}
+                                empty="No hops were recorded."
+                                compact
+                            />
+                        </details>
+                    );
+                })}
+            </div>
+        </>
+    );
+}
+
+// DNS answers from resolvers around the world; differing answers usually mean a change is still spreading.
+function DnsWorld({ r }: { r: Result }) {
+    const lookups = r.lookups as DnsProbe[];
+    const key = (l: DnsProbe) => l.answers.map((a) => a.value).sort().join('|');
+    const variants = new Set(lookups.filter((l) => l.answers.length).map(key));
+    const empty = lookups.filter((l) => !l.answers.length).length;
+    return (
+        <>
+            <div className="out-summary">
+                <Status level={variants.size > 1 ? 'warning' : variants.size === 1 && !empty ? 'ok' : empty === lookups.length ? 'error' : 'warning'}>
+                    {variants.size > 1
+                        ? 'Answers differ'
+                        : variants.size === 1 && !empty
+                          ? 'Same answer everywhere'
+                          : empty === lookups.length
+                            ? 'No records'
+                            : 'Some locations have no answer'}
+                </Status>
+                <span>
+                    {r.type} records for {r.name} from {lookups.length} locations
+                </span>
+            </div>
+            <Table
+                head={['Location', 'Resolver', 'Answer', 'TTL', 'Time']}
+                rows={lookups.map((l) => [
+                    <Place p={l} />,
+                    l.resolver === 'private' ? <span className="faint">Local resolver</span> : <Mono>{l.resolver ?? '—'}</Mono>,
+                    l.answers.length ? (
+                        <span className="out-answers">
+                            {[...l.answers].sort((a, b) => a.value.localeCompare(b.value, 'en', { numeric: true })).map((a, i) => (
+                                <Mono key={i}>{a.value}</Mono>
+                            ))}
+                        </span>
+                    ) : (
+                        <span className="faint">{l.code && l.code !== 'NOERROR' ? l.code : 'No records'}</span>
+                    ),
+                    l.answers[0]?.ttl ?? '—',
+                    l.ms == null ? '—' : `${l.ms} ms`,
+                ])}
+                empty="No locations answered."
+            />
+            {variants.size > 1 && (
+                <p className="tool-note">
+                    Different answers can mean a change is still spreading, or that the domain answers by location on purpose (common for
+                    large sites and CDNs). Compare with the TTL: old answers disappear once it runs out.
+                </p>
+            )}
         </>
     );
 }
