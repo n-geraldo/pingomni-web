@@ -5,13 +5,17 @@ const API = 'https://api.globalping.io/v1/measurements';
 
 type Location = { magic: string; limit: number };
 
+/** status: "finished", or "failed" / "offline" / "in-progress" when the probe produced no usable result. */
 export type ProbeInfo = { country: string; city: string; network: string; asn: number; status: string; raw: string };
+
+/** Trace and MTR options: ICMP, or TCP to a port (gets through networks that drop ICMP). */
+export type TraceOptions = { protocol: 'ICMP' | 'TCP'; port?: number };
 
 export type PingProbe = ProbeInfo & { resolved: string | null; min: number | null; avg: number | null; max: number | null; loss: number | null };
 
 export type TraceProbe = ProbeInfo & {
     resolved: string | null;
-    hops: { address: string | null; name: string | null; avg: number | null }[];
+    hops: { address: string | null; name: string | null; avg: number | null; loss: number }[];
 };
 
 export type DnsProbe = ProbeInfo & {
@@ -54,8 +58,8 @@ export class GlobalpingError extends Error {}
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Starts a measurement, waits for every probe to finish, and returns the raw results. */
-async function measure(body: Record<string, unknown>): Promise<any[]> {
+/** Starts a measurement and waits for every probe to finish (45 s at most). partial: some probes had not finished by then. */
+async function measure(body: Record<string, unknown>): Promise<{ results: any[]; partial: boolean }> {
     let res: Response;
     try {
         res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -65,7 +69,7 @@ async function measure(body: Record<string, unknown>): Promise<any[]> {
     if (res.status === 429) {
         const reset = Number(res.headers.get('X-RateLimit-Reset') ?? 0);
         throw new GlobalpingError(
-            `You have used this hour’s free Globalping tests. Try again in ${Math.max(1, Math.ceil(reset / 60))} minutes, or test from our server.`,
+            `You have used this hour’s free Globalping tests from your connection. Try again in ${Math.max(1, Math.ceil(reset / 60))} minutes, or test from our server.`,
         );
     }
     const created = await res.json().catch(() => null);
@@ -79,11 +83,11 @@ async function measure(body: Record<string, unknown>): Promise<any[]> {
     let data: any;
     do {
         await sleep(700);
-        const r = await fetch(`${API}/${created.id}`);
-        data = await r.json().catch(() => null);
-    } while (data?.status === 'in-progress' && Date.now() < deadline);
-    if (!data?.results) throw new GlobalpingError('The test did not finish. Try again.');
-    return data.results;
+        const r = await fetch(`${API}/${created.id}`).catch(() => null);
+        data = (await r?.json().catch(() => null)) ?? data;
+    } while ((!data || data.status === 'in-progress') && Date.now() < deadline);
+    if (!data?.results?.length) throw new GlobalpingError('Globalping did not return results in time. Try again.');
+    return { results: data.results, partial: data.status === 'in-progress' };
 }
 
 const probeInfo = (x: any): ProbeInfo => ({
@@ -95,9 +99,15 @@ const probeInfo = (x: any): ProbeInfo => ({
     raw: String(x.result.rawOutput ?? '').trim(),
 });
 
+const traceOptions = (o: TraceOptions) => (o.protocol === 'TCP' ? { protocol: 'TCP', port: o.port ?? 443 } : { protocol: 'ICMP' });
+const traceSettings = (o: TraceOptions) => (o.protocol === 'TCP' ? `TCP port ${o.port ?? 443}` : 'ICMP');
+
 export async function pingFrom(target: string, locations: Location[]) {
-    const results = await measure({ type: 'ping', target, locations, measurementOptions: { packets: 4 } });
+    const { results, partial } = await measure({ type: 'ping', target, locations, measurementOptions: { packets: 4 } });
     return {
+        via: 'globalping',
+        partial,
+        settings: '4 ICMP echo requests per probe',
         target,
         probes: results.map(
             (x): PingProbe => ({
@@ -112,9 +122,12 @@ export async function pingFrom(target: string, locations: Location[]) {
     };
 }
 
-export async function traceFrom(target: string, locations: Location[]) {
-    const results = await measure({ type: 'traceroute', target, locations: halved(locations), measurementOptions: { protocol: 'ICMP' } });
+export async function traceFrom(target: string, locations: Location[], options: TraceOptions = { protocol: 'ICMP' }) {
+    const { results, partial } = await measure({ type: 'traceroute', target, locations: halved(locations), measurementOptions: traceOptions(options) });
     return {
+        via: 'globalping',
+        partial,
+        settings: `${traceSettings(options)}, 2 probes per hop`,
         target,
         traces: results.map(
             (x): TraceProbe => ({
@@ -122,10 +135,12 @@ export async function traceFrom(target: string, locations: Location[]) {
                 resolved: x.result.resolvedAddress ?? null,
                 hops: (x.result.hops ?? []).map((h: any) => {
                     const rtts = (h.timings ?? []).map((t: any) => t.rtt).filter((v: any) => typeof v === 'number');
+                    const sent = (h.timings ?? []).length;
                     return {
                         address: h.resolvedAddress ?? null,
                         name: h.resolvedHostname && h.resolvedHostname !== h.resolvedAddress ? h.resolvedHostname : null,
                         avg: rtts.length ? rtts.reduce((a: number, b: number) => a + b, 0) / rtts.length : null,
+                        loss: sent ? Math.round(((sent - rtts.length) / sent) * 100) : 100,
                     };
                 }),
             }),
@@ -147,9 +162,12 @@ export type MtrHop = {
 
 export type MtrRun = { place: ProbeInfo | null; hops: MtrHop[] };
 
-export async function mtrFrom(target: string, locations: Location[]) {
-    const results = await measure({ type: 'mtr', target, locations: halved(locations), measurementOptions: { packets: 5, protocol: 'ICMP' } });
+export async function mtrFrom(target: string, locations: Location[], options: TraceOptions = { protocol: 'ICMP' }) {
+    const { results, partial } = await measure({ type: 'mtr', target, locations: halved(locations), measurementOptions: { packets: 5, ...traceOptions(options) } });
     return {
+        via: 'globalping',
+        partial,
+        settings: `${traceSettings(options)}, 5 probes per hop`,
         target,
         resolved: results[0]?.result.resolvedAddress ?? null,
         runs: results.map(
@@ -175,12 +193,16 @@ export async function mtrFrom(target: string, locations: Location[]) {
     };
 }
 
-export async function dnsFrom(name: string, type: string, locations: Location[]) {
-    const results = await measure({ type: 'dns', target: name, locations, measurementOptions: { query: { type } } });
+/** resolver: a public resolver's IP, or undefined for each probe's own (usually its ISP's) resolver. */
+export async function dnsFrom(name: string, type: string, locations: Location[], resolver?: string) {
+    const { results, partial } = await measure({ type: 'dns', target: name, locations, measurementOptions: { query: { type }, ...(resolver ? { resolver } : {}) } });
     return {
+        via: 'globalping',
+        partial,
+        settings: resolver ? `${type} query to ${resolver} from each probe` : `${type} query to each probe’s own resolver`,
         name,
         type,
-        lookups: results.map(
+        probes: results.map(
             (x): DnsProbe => ({
                 ...probeInfo(x),
                 resolver: x.result.resolver ?? null,

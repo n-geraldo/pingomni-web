@@ -550,7 +550,7 @@ a:hover {
 /* Tools menu: the two tools pages side by side, each listing its tools */
 .mega-tools {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px clamp(24px, 4vw, 48px);
 }
 
@@ -1351,7 +1351,7 @@ a:hover {
 }
 
 
-/* Home: use cases as rows, the situation beside what RadiusOne does about it */
+/* RadiusOne: use cases as rows, the situation beside what RadiusOne does about it */
 .cases {
   padding: 0;
   list-style: none;
@@ -1394,6 +1394,144 @@ a:hover {
 
 .section-foot {
   margin-top: 32px;
+}
+
+/* Home: free tools, a quick check that opens a tool with the form filled in, then every tool by group */
+.quick {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label label"
+    "input actions";
+  gap: 8px 12px;
+  align-items: center;
+  padding: clamp(16px, 2.4vw, 24px);
+  margin-bottom: clamp(32px, 4vw, 48px);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.quick-label {
+  grid-area: label;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.quick-input {
+  grid-area: input;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-strong);
+  font: 15px var(--font-mono);
+  transition: border-color 120ms, box-shadow 120ms;
+}
+
+.quick-input::placeholder {
+  color: var(--text-faint);
+  font-family: var(--font);
+}
+
+.quick-input:hover {
+  border-color: var(--text-faint);
+}
+
+.quick-input:focus {
+  outline: none;
+  border-color: var(--accent-solid);
+  box-shadow: var(--focus);
+}
+
+.quick-actions {
+  grid-area: actions;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toolgroups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px clamp(32px, 5vw, 64px);
+}
+
+.toolgroup-head {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.toolgroup-head a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-strong);
+}
+
+.toolgroup-head a:hover {
+  text-decoration: none;
+  color: var(--accent);
+}
+
+.toolgroup-head > a > .icon:last-child {
+  width: 16px;
+  height: 16px;
+  color: var(--text-faint);
+  transition: transform 160ms var(--ease-out);
+}
+
+.toolgroup-head a:hover > .icon:last-child {
+  transform: translateX(3px);
+}
+
+.toolgroup-list {
+  border-top: 1px solid var(--line);
+}
+
+.toolgroup-list a {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  transition: background-color 120ms;
+}
+
+.toolgroup-list a:hover {
+  text-decoration: none;
+  background: var(--surface-hover);
+}
+
+.toolgroup-list .icon {
+  flex: none;
+  margin-top: 3px;
+  color: var(--text-faint);
+}
+
+.toolgroup-list a:hover .icon {
+  color: var(--accent);
+}
+
+.toolgroup-list a > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.toolgroup-list strong {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.toolgroup-list a > span > span {
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
 /* Two-column rows: a term and its line, in the portal's hairline table grammar */
@@ -1946,7 +2084,8 @@ a:hover {
   color: var(--text-strong);
 }
 
-.field span {
+.field > span,
+.field > label {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
@@ -2024,16 +2163,18 @@ a:hover {
 /* Port check: common ports to pick from, grouped by what they are for */
 .common-ports {
   display: grid;
-  gap: 12px;
-  margin-top: 20px;
+  gap: 14px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
 }
 
 .common-ports-head {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px 16px;
+  gap: 10px 16px;
 }
 
 .common-ports-head .btn:disabled {
@@ -2043,57 +2184,135 @@ a:hover {
 
 .common-ports-title {
   margin: 0;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-strong);
 }
 
-.common-ports-groups {
-  display: grid;
-  gap: 10px;
-}
-
-.common-ports-group {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  align-items: start;
-  gap: 6px 12px;
-}
-
-.common-ports-label {
-  padding-top: 6px;
+.common-ports-hint {
+  margin: 2px 0 0;
   font-size: 13px;
   color: var(--text-faint);
 }
 
-.common-ports-list {
+/* Info about the port in focus on the left, the groups on the right. */
+.common-ports-body {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.port-info {
+  position: sticky;
+  top: calc(var(--header-h) + 16px);
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.port-info-group {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.port-info-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.port-info-num {
+  font: 700 32px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+
+.port-info-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.port-info-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
+.port-info-about {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* The groups flow down balanced columns, each group kept whole. */
+.common-ports-groups {
+  columns: 3 170px;
+  column-gap: 20px;
+}
+
+.common-ports-group {
+  break-inside: avoid;
+  margin-bottom: 14px;
+}
+
+.common-ports-label {
+  margin: 0 0 4px;
+  padding: 0 8px 6px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.common-ports-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .port-chip {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
+  gap: 10px;
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
   color: var(--text);
   font: 13px var(--font);
+  text-align: left;
   cursor: pointer;
   transition: border-color 120ms, background-color 120ms, color 120ms;
 }
 
 .port-chip:hover:not(:disabled) {
-  border-color: var(--accent-line);
-  background: var(--accent-bg);
+  background: var(--surface-hover);
+}
+
+.port-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
 }
 
 .port-chip[aria-pressed="true"] {
-  border-color: var(--accent-solid);
+  border-color: var(--accent-line);
+  background: var(--accent-bg);
   color: var(--accent);
 }
 
@@ -2104,11 +2323,177 @@ a:hover {
 
 .port-chip-num {
   font: 600 13px var(--font-mono);
+  font-variant-numeric: tabular-nums;
   color: var(--text-strong);
+}
+
+.port-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .port-chip[aria-pressed="true"] .port-chip-num {
   color: var(--accent);
+}
+
+/* Subnet calculator: examples to try, the split into smaller networks, and the prefix map */
+.subnet-examples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.subnet-examples-label {
+  margin-right: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.example-chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  text-align: left;
+  gap: 8px;
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 120ms, background-color 120ms;
+}
+
+.example-chip:hover:not(:disabled) {
+  border-color: var(--accent-line);
+  background: var(--accent-bg);
+}
+
+.example-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.example-chip:disabled {
+  opacity: .6;
+  cursor: progress;
+}
+
+.example-chip-text {
+  white-space: nowrap;
+  font: 600 13px var(--font-mono);
+  color: var(--text-strong);
+}
+
+.example-chip-about {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.subnet-split {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.subnet-split-head,
+.prefix-map-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.subnet-split-title,
+.prefix-map-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.subnet-split-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.subnet-split-pick select {
+  min-width: 0;
+  height: 36px;
+  max-width: 100%;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-strong);
+  font: 14px var(--font);
+}
+
+.subnet-split-pick select:focus {
+  outline: none;
+  border-color: var(--accent-solid);
+  box-shadow: var(--focus);
+}
+
+.prefix-map {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.prefix-map-hint {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.prefix-table .num {
+  text-align: right;
+}
+
+.prefix-table tbody tr {
+  cursor: pointer;
+}
+
+.prefix-table tbody tr[aria-current="true"] td {
+  background: var(--accent-bg);
+}
+
+.prefix-table tbody tr[aria-current="true"] .prefix-pick {
+  color: var(--accent);
+}
+
+.prefix-pick {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 600 14px var(--font-mono);
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
+.prefix-pick:focus-visible {
+  outline: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--focus);
+}
+
+.prefix-map-more {
+  justify-self: start;
 }
 
 .tool-output {
@@ -2304,6 +2689,63 @@ a:hover {
   gap: 8px;
 }
 
+/* BGP: AS numbers link to the AS lookup, prefixes to the prefix lookup */
+.out-as {
+  font: 0.92em/1.5 var(--font-mono);
+  white-space: nowrap;
+}
+
+.out-aspath {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 0;
+}
+
+.out-aspath-arrow {
+  padding: 0 6px;
+  color: var(--text-faint);
+}
+
+.out-aspath-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: 14px;
+}
+
+.out-aspath-names {
+  flex-basis: 100%;
+  font-size: 13px;
+}
+
+.out-stack {
+  display: grid;
+  gap: 4px;
+}
+
+.out-prefixes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 4px 16px;
+  padding: 12px 0 4px;
+}
+
+.out-prefix {
+  font-weight: 400;
+}
+
+.out-communities {
+  display: block;
+  min-width: 16ch;
+  max-width: 34ch;
+  font: 12px/1.5 var(--font-mono);
+  color: var(--text-muted);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .out-group-title {
   margin: 0;
   font-size: 14px;
@@ -2381,6 +2823,503 @@ a:hover {
   justify-self: center;
 }
 
+/* What each tool is for, where it runs, and its less-used options */
+.tool-bestfor {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.field-hint {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
+.field-hint code,
+.out-explain code {
+  font: 0.95em var(--font-mono);
+  color: var(--text-strong);
+}
+
+.tool-advanced {
+  margin-top: 12px;
+}
+
+.tool-advanced > summary,
+.out-explain > summary,
+.out-raw > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.tool-advanced > summary::-webkit-details-marker,
+.out-explain > summary::-webkit-details-marker,
+.out-raw > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tool-advanced > summary::before,
+.out-explain > summary::before,
+.out-raw > summary::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 1.75px solid currentColor;
+  border-bottom: 1.75px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 140ms;
+}
+
+.tool-advanced[open] > summary::before,
+.out-explain[open] > summary::before,
+.out-raw[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.tool-advanced > summary:hover,
+.out-explain > summary:hover,
+.out-raw > summary:hover {
+  color: var(--text-strong);
+}
+
+.tool-advanced .tool-form {
+  margin-top: 8px;
+}
+
+.tool-runs-on {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.tool-runs-on .icon {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--text-faint);
+}
+
+abbr[title] {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+/* While a test runs */
+.out-running {
+  display: grid;
+  gap: 10px;
+}
+
+.out-running .out-empty {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.spinner-dark {
+  border-color: var(--line-strong);
+  border-top-color: var(--accent);
+}
+
+/* Errors: wrong input and waiting are not failures, so they get calmer colours */
+.out-error > div {
+  display: grid;
+  gap: 2px;
+}
+
+.out-error p {
+  font-weight: 400;
+  color: var(--text);
+}
+
+.out-error .icon {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.out-error-invalid {
+  border-color: var(--warning-line);
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.out-error-limited {
+  border-color: var(--neutral-line);
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+}
+
+/* The verdict: one line that answers the question, then what it means */
+.out-verdict {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.out-verdict[data-level="pass"] {
+  border-left-color: var(--success-solid);
+}
+
+.out-verdict[data-level="issue"] {
+  border-left-color: var(--warning-solid);
+}
+
+.out-verdict[data-level="failed"] {
+  border-left-color: var(--danger);
+}
+
+.out-verdict-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.out-verdict-head .badge {
+  height: 28px;
+  font-size: 13px;
+}
+
+.out-verdict-title {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+
+.out-verdict-detail {
+  display: grid;
+  gap: 6px;
+  max-width: 78ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* When, from where and how */
+.out-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.out-meta > div {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.out-meta dt {
+  color: var(--text-faint);
+}
+
+.out-meta dd {
+  color: var(--text);
+}
+
+.out-explain,
+.out-raw {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.out-explain-body {
+  display: grid;
+  gap: 8px;
+  max-width: 78ch;
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.out-raw .out-console {
+  margin-top: 8px;
+  max-height: 420px;
+}
+
+.out-checks {
+  display: grid;
+  gap: 16px;
+}
+
+.out-check-group {
+  display: grid;
+  gap: 8px;
+}
+
+.out-notes .badge {
+  min-width: 96px;
+}
+
+.out-statuses {
+  display: grid;
+  gap: 2px;
+}
+
+.out-answer-groups {
+  display: grid;
+  gap: 8px;
+}
+
+.out-answer-groups li {
+  display: grid;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.out-route-verdict {
+  padding: 8px 14px 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: normal;
+}
+
+.out-copyable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.copy-mini {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.copy-mini:hover {
+  border-color: var(--line);
+  background: var(--surface-hover);
+  color: var(--text-strong);
+}
+
+.copy-mini .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.spf-tree,
+.spf-tree ul {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.spf-tree ul {
+  margin: 4px 0 0 10px;
+  padding-left: 14px;
+  border-left: 1px solid var(--line);
+}
+
+.spf-node {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+/* What to check next: links that carry the target into another tool */
+.out-next {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.out-next ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.next-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  transition: border-color 120ms, background-color 120ms;
+}
+
+.next-link:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-bg);
+  color: var(--text-strong);
+  text-decoration: none;
+}
+
+.next-link .icon {
+  width: 15px;
+  height: 15px;
+  color: var(--accent);
+}
+
+/* Troubleshooting guides under the tool card */
+.workflows {
+  display: grid;
+  gap: 18px;
+}
+
+.workflows-head {
+  display: grid;
+  gap: 4px;
+}
+
+.workflows-head p {
+  font-size: 15px;
+}
+
+.workflows-grid {
+  display: grid;
+  /* Four investigations: one row on wide screens, two by two below, one column on phones. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.workflow {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.workflow-kind {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.workflow-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-strong);
+}
+
+.workflow-steps {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 0;
+  counter-reset: step;
+  list-style: none;
+}
+
+.workflow-steps li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  counter-increment: step;
+}
+
+.workflow-steps li::before {
+  content: counter(step);
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Subnet calculator modes */
+.subnet-calc {
+  display: grid;
+  gap: 4px;
+}
+
+.subnet-modes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-self: start;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.subnet-mode {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 14px var(--font);
+  cursor: pointer;
+}
+
+.subnet-mode:hover {
+  color: var(--text-strong);
+}
+
+.subnet-mode[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px var(--line), var(--shadow-sm);
+}
+
+.subnet-mode-about {
+  margin-bottom: 12px;
+}
+
+.subnet-to-split {
+  justify-self: start;
+}
+
+.port-info-conv {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
 @media (max-width: 900px) {
   .tool-tabs {
     flex-wrap: nowrap;
@@ -2390,10 +3329,6 @@ a:hover {
   .out-rows > div {
     grid-template-columns: minmax(0, 1fr);
     gap: 2px;
-  }
-
-  .common-ports-group {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   /* Three-column result tables become one block per row: name and badge, then the details. */
@@ -2435,10 +3370,6 @@ a:hover {
 
   .out-table-stack tbody tr:hover td {
     background: none;
-  }
-
-  .common-ports-label {
-    padding-top: 0;
   }
 }
 
@@ -2569,6 +3500,14 @@ a:hover {
 }
 
 @media (max-width: 820px) {
+  .common-ports-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .port-info {
+    position: static;
+  }
+
   /* The chain stacks, with a down connector between steps; the branch follows the SQL tables. */
   .path-chain,
   .path-branch {
@@ -2593,13 +3532,28 @@ a:hover {
   }
 }
 
+@media (max-width: 1100px) {
+  .workflows-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 980px) {
   .spec-layout,
+  .toolgroups,
   .case,
   .about,
   .product-hero-row,
   .install-layout {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .quick {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "label"
+      "input"
+      "actions";
   }
 
   .product-hero-text {
@@ -2709,7 +3663,8 @@ a:hover {
 }
 
 @media (max-width: 640px) {
-  .launcher {
+  .launcher,
+  .workflows-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 

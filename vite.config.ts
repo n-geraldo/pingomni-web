@@ -24,6 +24,7 @@ export default defineConfig({
                 notFound: page('404.html'),
                 toolsNetwork: page('tools/network/index.html'),
                 toolsEmail: page('tools/email/index.html'),
+                toolsBgp: page('tools/bgp/index.html'),
             },
         },
     },

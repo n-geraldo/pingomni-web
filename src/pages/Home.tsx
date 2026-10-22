@@ -1,6 +1,8 @@
+import { useState, type FormEvent } from 'react';
 import { Mark, Wordmark } from '../brand';
 import { DEMO_URL, mailto } from '../config';
 import Icon from '../Icon';
+import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { Contact, Shot, useSite } from '../shared/Layout';
 
 function Launcher() {
@@ -82,81 +84,111 @@ function Launcher() {
     );
 }
 
-// Situations RadiusOne is built for, each tied to what the product really does. No customer names or numbers.
-const USE_CASES: { title: string; scene: string; how: string[] }[] = [
-    {
-        title: 'A wireless ISP with towers and MikroTik routers',
-        scene: 'Customers connect over PPPoE through RouterOS NAS devices spread across several sites.',
-        how: [
-            'Each NAS is added once, with its RADIUS secret and SNMP settings',
-            'Suspend or expire a customer and the session is cut over RADIUS CoA',
-            'The monitoring page shows which NAS is up and how many sessions it carries',
-        ],
-    },
-    {
-        title: 'An ISP office that bills every month',
-        scene: 'Office staff spend the start of each month making invoices and chasing who has not paid.',
-        how: [
-            'Invoices and recurring billing run every night on their own',
-            'Payments get PDF receipts; overdue invoices have their own list',
-            'Customers get their notices by email or SMS',
-        ],
-    },
-    {
-        title: 'A technician at the customer’s door',
-        scene: 'The customer says the internet is down. The technician has a phone and five minutes.',
-        how: [
-            'Search by name, phone, IP or MAC from a phone',
-            'See whether the session is online, which NAS it is on and its last usage',
-            'Make the change on the spot, under a role that only allows what support needs',
-        ],
-    },
-    {
-        title: 'Moving off hand-edited FreeRADIUS',
-        scene: 'The network runs on FreeRADIUS, but every change means SQL by hand and one person who knows how.',
-        how: [
-            'RadiusOne works on the standard FreeRADIUS SQL tables, so nothing is migrated away',
-            'Authentication keeps working even while the portal is in maintenance',
-            'Every operator has their own login, and privileged roles need two-factor sign-in',
-        ],
-    },
+// The quick check's buttons: each opens its tool with the form filled in. Nothing runs until the visitor presses Run there.
+const QUICK: { tool: string; field: string; label: string }[] = [
+    { tool: 'ping', field: 'host', label: 'Ping' },
+    { tool: 'traceroute', field: 'host', label: 'Traceroute' },
+    { tool: 'dns', field: 'name', label: 'DNS lookup' },
+    { tool: 'mx', field: 'domain', label: 'MX check' },
+    { tool: 'blacklist', field: 'host', label: 'Blacklist check' },
+    { tool: 'whois', field: 'query', label: 'Registration' },
+    { tool: 'prefix', field: 'resource', label: 'BGP route' },
 ];
 
-function UseCases() {
+/** "https://user@example.com/path" as "example.com": the tools take a bare name or address. */
+const bareHost = (input: string) =>
+    input
+        .trim()
+        .replace(/^[a-z]+:\/\//i, '')
+        .replace(/[/?#].*$/, '')
+        .replace(/^.*@/, '');
+
+function QuickCheck() {
     const { root } = useSite();
+    const [value, setValue] = useState('');
+    const submit = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const host = bareHost(value);
+        const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+        const quick = QUICK.find((q) => q.tool === submitter?.value) ?? QUICK[0];
+        const group = TOOL_LIST.find((t) => t.id === quick.tool)!.group;
+        window.location.href = `${root}${TOOL_PAGES[group].path}#${quick.tool}?${new URLSearchParams({ [quick.field]: host })}`;
+    };
     return (
-        <section className="section section-surface" id="use-cases" aria-labelledby="use-cases-title">
+        <form className="quick" onSubmit={submit}>
+            <label className="quick-label" htmlFor="quick-host">
+                Check a domain, hostname or IP address
+            </label>
+            <input
+                id="quick-host"
+                className="quick-input"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="example.com"
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                required
+            />
+            <div className="quick-actions">
+                {QUICK.map((q, i) => (
+                    <button key={q.tool} type="submit" name="tool" value={q.tool} className={i === 0 ? 'btn btn-primary btn-sm' : 'btn btn-sm'}>
+                        {q.label}
+                    </button>
+                ))}
+            </div>
+        </form>
+    );
+}
+
+function FreeTools() {
+    const { root } = useSite();
+    const groups = Object.keys(TOOL_PAGES) as ToolGroup[];
+    return (
+        <section className="section section-surface" id="tools" aria-labelledby="tools-title">
             <div className="container">
                 <div className="section-head">
-                    <h2 id="use-cases-title" className="h2">
-                        Where RadiusOne fits.
+                    <h2 id="tools-title" className="h2">
+                        Free network, email and BGP tools.
                     </h2>
-                    <p className="lead">Four everyday situations in an ISP, and what RadiusOne does in each.</p>
+                    <p className="lead">
+                        {TOOL_LIST.length} checks for anyone who runs a network: from our server, from other countries through Globalping, or
+                        from the internet’s routing table. No account, nothing to install.
+                    </p>
                 </div>
-                <ol className="cases">
-                    {USE_CASES.map((c) => (
-                        <li className="case" key={c.title}>
-                            <div className="case-scene">
-                                <h3 className="h3">{c.title}</h3>
-                                <p>{c.scene}</p>
+                <QuickCheck />
+                <div className="toolgroups">
+                    {groups.map((g) => {
+                        const info = TOOL_PAGES[g];
+                        const href = `${root}${info.path}`;
+                        return (
+                            <div className="toolgroup" key={g}>
+                                <h3 className="toolgroup-head">
+                                    <a href={href}>
+                                        <span className="mega-toolgroup-icon">
+                                            <Icon name={info.icon} />
+                                        </span>
+                                        {info.title}
+                                        <Icon name="arrow" />
+                                    </a>
+                                </h3>
+                                <ul className="toolgroup-list">
+                                    {TOOL_LIST.filter((t) => t.group === g).map((t) => (
+                                        <li key={t.id}>
+                                            <a href={`${href}#${t.id}`}>
+                                                <Icon name={t.icon} />
+                                                <span>
+                                                    <strong>{t.name}</strong>
+                                                    <span>{t.blurb}</span>
+                                                </span>
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
-                            <ul className="case-how">
-                                {c.how.map((line) => (
-                                    <li key={line}>
-                                        <Icon name="check" />
-                                        {line}
-                                    </li>
-                                ))}
-                            </ul>
-                        </li>
-                    ))}
-                </ol>
-                <p className="section-foot">
-                    <a className="text-link" href={`${root}radiusone/`}>
-                        Everything RadiusOne does
-                        <Icon name="arrow" />
-                    </a>
-                </p>
+                        );
+                    })}
+                </div>
             </div>
         </section>
     );
@@ -165,7 +197,7 @@ function UseCases() {
 const COMMITMENTS: { term: string; text: string }[] = [
     {
         term: 'Self-hosted',
-        text: 'RadiusOne installs on your own Ubuntu server and your subscriber data stays there. Every PingOmni product will work the same way.',
+        text: 'Our products install on your own server and your data stays there. RadiusOne runs on Ubuntu; every product after it will work the same way.',
     },
     {
         term: 'Safe by default',
@@ -199,7 +231,8 @@ function About() {
                     </p>
                     <p className="muted">
                         We start from what an ISP actually runs (FreeRADIUS, PPPoE, NAS devices, billing) and make one product for each job.
-                        RadiusOne is the first. TicketOne for support tickets and DNSOne for DNS come next.
+                        RadiusOne is the first. TicketOne for support tickets and DNSOne for DNS come next. The free tools on this site are the
+                        checks we reach for ourselves every day.
                     </p>
                 </div>
                 <dl className="rows">
@@ -224,14 +257,17 @@ export default function Home() {
                         <h1 id="hero-title" className="display">
                             Software that ISPs run on.
                         </h1>
-                        <p className="lead">Self-hosted tools for ISPs and network operators, one product for each job.</p>
+                        <p className="lead">Self-hosted products for ISPs and network operators, and free tools for anyone who runs a network.</p>
                     </div>
                     <Launcher />
                 </div>
             </section>
-            <UseCases />
+            <FreeTools />
             <About />
-            <Contact title="Try RadiusOne, then talk to us." text="The demo runs the real portal on sample data. Click through anything; nothing you change is saved." />
+            <Contact
+                title="Talk to us."
+                text="Questions about RadiusOne, the products coming next or the tools: email us. Or try the RadiusOne demo first; nothing you change in it is saved."
+            />
         </>
     );
 }

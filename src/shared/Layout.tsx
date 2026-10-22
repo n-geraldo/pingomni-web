@@ -6,7 +6,7 @@ import Icon from '../Icon';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 
 export type Theme = 'light' | 'dark';
-export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone' | 'tools-network' | 'tools-email' | 'notfound';
+export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'notfound';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
 type Site = { page: PageId; root: string; theme: Theme };
@@ -44,7 +44,7 @@ function useMenu() {
     return { open, setOpen, ref };
 }
 
-// The Tools menu: the two tools pages side by side, each with its tools as direct links.
+// The Tools menu: the tools pages side by side, each with its tools as direct links.
 function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
     const { page, root } = useSite();
     const { open, setOpen, ref } = useMenu();
@@ -52,7 +52,7 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
         setOpen(false);
         onNavigate();
     };
-    const groups: ToolGroup[] = ['network', 'email'];
+    const groups = Object.keys(TOOL_PAGES) as ToolGroup[];
     return (
         <div className={open ? 'nav-menu open' : 'nav-menu'} ref={ref}>
             <button
@@ -102,10 +102,7 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
     );
 }
 
-const NAV: { href: string; label: string; page?: PageId }[] = [
-    { href: '#use-cases', label: 'Use cases' },
-    { href: '#about', label: 'About' },
-];
+const NAV: { href: string; label: string; page?: PageId }[] = [{ href: '#about', label: 'About' }];
 
 function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
     const { page, root, theme } = useSite();
@@ -291,6 +288,7 @@ function Footer() {
                     <nav className="footer-col" aria-labelledby="footer-products">
                         <h2 id="footer-products">Products</h2>
                         <a href={`${root}radiusone/`}>RadiusOne</a>
+                        <a href={`${root}radiusone/#use-cases`}>RadiusOne use cases</a>
                         <a className="footer-soon" href={`${root}ticketone/`}>
                             TicketOne <span>Soon</span>
                         </a>
@@ -302,7 +300,7 @@ function Footer() {
                         <h2 id="footer-company">Company</h2>
                         <a href={`${root}tools/network/`}>Network tools</a>
                         <a href={`${root}tools/email/`}>DNS & Email tools</a>
-                        <a href={`${root}#use-cases`}>Use cases</a>
+                        <a href={`${root}tools/bgp/`}>BGP & ASN tools</a>
                         <a href={`${root}#about`}>About</a>
                         <a href="#contact">Contact</a>
                     </nav>

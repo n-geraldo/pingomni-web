@@ -1,29 +1,32 @@
-// The tools on the two tools pages, also listed in the navbar's Tools menu.
+// The tools on the three tools pages, also listed in the navbar's Tools menu.
 
-export type ToolGroup = 'network' | 'email';
+export type ToolGroup = 'network' | 'email' | 'bgp';
 
 export const TOOL_PAGES: Record<ToolGroup, { title: string; path: string; blurb: string; icon: string }> = {
     network: { title: 'Network tools', path: 'tools/network/', blurb: 'Ping, traceroute, ports, bandwidth and subnet maths', icon: 'signal' },
-    email: { title: 'DNS & Email tools', path: 'tools/email/', blurb: 'DNS records, MX, SPF, DMARC, DKIM, SMTP and WHOIS', icon: 'mail' },
+    email: { title: 'DNS & Email tools', path: 'tools/email/', blurb: 'DNS records, MX, SPF, DMARC, DKIM, SMTP and registration', icon: 'mail' },
+    bgp: { title: 'BGP & ASN tools', path: 'tools/bgp/', blurb: 'AS details, routes, RPKI and a looking glass', icon: 'globe' },
 };
 
 export const TOOL_LIST: { id: string; group: ToolGroup; name: string; blurb: string; icon: string }[] = [
-    { id: 'ping', group: 'network', name: 'Ping', blurb: 'How long packets take to reach a host', icon: 'activity' },
-    { id: 'traceroute', group: 'network', name: 'Traceroute', blurb: 'The route packets take to a host', icon: 'route' },
-    { id: 'mtr', group: 'network', name: 'MTR', blurb: 'Loss and delay at every hop on the route', icon: 'chart' },
-    { id: 'port', group: 'network', name: 'Port check', blurb: 'Whether a TCP port is open on a host', icon: 'plug' },
-    { id: 'reverse', group: 'network', name: 'Reverse lookup', blurb: 'The hostname behind an IP address', icon: 'swap' },
-    { id: 'proxy', group: 'network', name: 'Proxy checker', blurb: 'Whether your connection goes through a proxy', icon: 'shield' },
-    { id: 'bandwidth', group: 'network', name: 'Bandwidth meter', blurb: 'Your download speed from our server', icon: 'gauge' },
-    { id: 'subnet', group: 'network', name: 'Network calculator', blurb: 'Subnet range from an address and mask', icon: 'calc' },
-    { id: 'mask', group: 'network', name: 'Network mask calculator', blurb: 'Network mask from a range of addresses', icon: 'grid' },
-    { id: 'dns', group: 'email', name: 'DNS lookup', blurb: 'Look up any DNS record (nslookup)', icon: 'search' },
-    { id: 'mx', group: 'email', name: 'MX check', blurb: 'The mail servers that receive a domain’s email', icon: 'mail' },
-    { id: 'ns', group: 'email', name: 'NS check', blurb: 'The name servers for a domain, and its SOA', icon: 'server' },
-    { id: 'spf', group: 'email', name: 'SPF check', blurb: 'Which servers may send email for a domain', icon: 'check' },
-    { id: 'dmarc', group: 'email', name: 'DMARC check', blurb: 'What receivers do with mail that fails checks', icon: 'shield' },
-    { id: 'dkim', group: 'email', name: 'DKIM check', blurb: 'The signing key published for a selector', icon: 'key' },
-    { id: 'smtp', group: 'email', name: 'SMTP check', blurb: 'Connect to a domain’s mail server on port 25', icon: 'message' },
-    { id: 'whois', group: 'email', name: 'WHOIS', blurb: 'Registration and contact info for a domain or IP', icon: 'id' },
-    { id: 'blacklist', group: 'email', name: 'Blacklist check', blurb: 'Whether a mail server’s IP is on spam lists', icon: 'ban' },
+    { id: 'ping', group: 'network', name: 'Ping', blurb: 'Whether a host answers, and the round-trip time', icon: 'activity' },
+    { id: 'traceroute', group: 'network', name: 'Traceroute', blurb: 'The path to a host and where responses stop', icon: 'route' },
+    { id: 'mtr', group: 'network', name: 'MTR', blurb: 'Recurring loss or delay, hop by hop', icon: 'chart' },
+    { id: 'port', group: 'network', name: 'Port check', blurb: 'Whether a TCP service is reachable from our server', icon: 'plug' },
+    { id: 'reverse', group: 'network', name: 'Reverse lookup', blurb: 'The hostname (PTR) of an IP, and whether it points back', icon: 'swap' },
+    { id: 'proxy', group: 'network', name: 'Proxy checker', blurb: 'Proxy-related headers in your own request', icon: 'shield' },
+    { id: 'bandwidth', group: 'network', name: 'Bandwidth meter', blurb: 'Download speed between you and our server', icon: 'gauge' },
+    { id: 'subnet', group: 'network', name: 'Subnet calculator', blurb: 'Subnet range, mask from a range, and splitting', icon: 'calc' },
+    { id: 'dns', group: 'email', name: 'DNS lookup', blurb: 'Records, status and TTLs, or answers across locations', icon: 'search' },
+    { id: 'mx', group: 'email', name: 'MX check', blurb: 'Which servers receive a domain’s email', icon: 'mail' },
+    { id: 'ns', group: 'email', name: 'NS check', blurb: 'Authoritative name servers, their serials, and the SOA', icon: 'server' },
+    { id: 'spf', group: 'email', name: 'SPF check', blurb: 'Which servers may send a domain’s email, and lookup count', icon: 'check' },
+    { id: 'dmarc', group: 'email', name: 'DMARC check', blurb: 'What receivers are asked to do with failing mail', icon: 'shield' },
+    { id: 'dkim', group: 'email', name: 'DKIM check', blurb: 'The public signing key for one selector', icon: 'key' },
+    { id: 'smtp', group: 'email', name: 'SMTP check', blurb: 'Whether a domain’s mail server answers on port 25', icon: 'message' },
+    { id: 'whois', group: 'email', name: 'Registration lookup', blurb: 'Registrar, dates and status of a domain or IP (RDAP/WHOIS)', icon: 'id' },
+    { id: 'blacklist', group: 'email', name: 'Blacklist check', blurb: 'Whether an IP or domain is on public spam lists', icon: 'ban' },
+    { id: 'asn', group: 'bgp', name: 'AS lookup', blurb: 'Who runs an AS, what it announces, and its neighbours', icon: 'nodes' },
+    { id: 'prefix', group: 'bgp', name: 'Prefix lookup', blurb: 'Which AS announces an address, RPKI status and upstreams', icon: 'route' },
+    { id: 'lg', group: 'bgp', name: 'Looking glass', blurb: 'The BGP paths networks worldwide use to reach a prefix', icon: 'eye' },
 ];

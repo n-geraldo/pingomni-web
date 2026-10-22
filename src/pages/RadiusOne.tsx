@@ -49,6 +49,79 @@ const REQUIREMENTS: { term: string; text: string }[] = [
 
 const INSTALL = 'sudo bash install.sh --domain radius.example.com';
 
+// Situations RadiusOne is built for, each tied to what the product really does. No customer names or numbers.
+const USE_CASES: { title: string; scene: string; how: string[] }[] = [
+    {
+        title: 'A wireless ISP with towers and MikroTik routers',
+        scene: 'Customers connect over PPPoE through RouterOS NAS devices spread across several sites.',
+        how: [
+            'Each NAS is added once, with its RADIUS secret and SNMP settings',
+            'Suspend or expire a customer and the session is cut over RADIUS CoA',
+            'The monitoring page shows which NAS is up and how many sessions it carries',
+        ],
+    },
+    {
+        title: 'An ISP office that bills every month',
+        scene: 'Office staff spend the start of each month making invoices and chasing who has not paid.',
+        how: [
+            'Invoices and recurring billing run every night on their own',
+            'Payments get PDF receipts; overdue invoices have their own list',
+            'Customers get their notices by email or SMS',
+        ],
+    },
+    {
+        title: 'A technician at the customer’s door',
+        scene: 'The customer says the internet is down. The technician has a phone and five minutes.',
+        how: [
+            'Search by name, phone, IP or MAC from a phone',
+            'See whether the session is online, which NAS it is on and its last usage',
+            'Make the change on the spot, under a role that only allows what support needs',
+        ],
+    },
+    {
+        title: 'Moving off hand-edited FreeRADIUS',
+        scene: 'The network runs on FreeRADIUS, but every change means SQL by hand and one person who knows how.',
+        how: [
+            'RadiusOne works on the standard FreeRADIUS SQL tables, so nothing is migrated away',
+            'Authentication keeps working even while the portal is in maintenance',
+            'Every operator has their own login, and privileged roles need two-factor sign-in',
+        ],
+    },
+];
+
+function UseCases() {
+    return (
+        <section className="section section-surface" id="use-cases" aria-labelledby="use-cases-title">
+            <div className="container">
+                <div className="section-head">
+                    <h2 id="use-cases-title" className="h2">
+                        Where RadiusOne fits.
+                    </h2>
+                    <p className="lead">Four everyday situations in an ISP, and what RadiusOne does in each.</p>
+                </div>
+                <ol className="cases">
+                    {USE_CASES.map((c) => (
+                        <li className="case" key={c.title}>
+                            <div className="case-scene">
+                                <h3 className="h3">{c.title}</h3>
+                                <p>{c.scene}</p>
+                            </div>
+                            <ul className="case-how">
+                                {c.how.map((line) => (
+                                    <li key={line}>
+                                        <Icon name="check" />
+                                        {line}
+                                    </li>
+                                ))}
+                            </ul>
+                        </li>
+                    ))}
+                </ol>
+            </div>
+        </section>
+    );
+}
+
 function CopyCommand() {
     const [copied, setCopied] = useState(false);
     const copy = async () => {
@@ -197,7 +270,9 @@ export default function RadiusOne() {
 
             <NetworkPath />
 
-            <section className="section section-surface" id="install" aria-labelledby="install-title">
+            <UseCases />
+
+            <section className="section section-bg" id="install" aria-labelledby="install-title">
                 <div className="container install-layout">
                     <div className="install">
                         <h2 id="install-title" className="h2">

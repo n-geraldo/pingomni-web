@@ -1,969 +1,57 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Icon from '../Icon';
-import {
-    dnsFrom,
-    locationsFor,
-    mtrFrom,
-    pingFrom,
-    TEST_FROM,
-    traceFrom,
-    type DnsProbe,
-    type MtrRun,
-    type PingProbe,
-    type TraceProbe,
-} from '../lib/globalping';
-import { rangeToMasks, subnet } from '../lib/ipcalc';
-import { copyText } from '../lib/copy';
+import { api, ToolError, type Result } from '../lib/api';
 import { toText } from '../lib/textOutput';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { useSite } from '../shared/Layout';
+import { BGP_SPECS } from '../tools/bgp';
+import { EMAIL_SPECS } from '../tools/email';
+import { NETWORK_SPECS } from '../tools/network';
+import { CommonPorts } from '../tools/ports';
+import { SubnetCalculator } from '../tools/subnet';
+import type { Field, Progress, ToolSpec } from '../tools/types';
+import { CopyButton, Meta, Mono, NextSteps, Raw, type Next, type Values } from '../tools/ui';
 
 // ---------------------------------------------------------------------------
-// The tools: two groups, each tool a form that runs on our server (/api/) or in the browser.
+// The tools: three groups, each tool a form that runs on our server (/api/), on Globalping probes, or in the browser.
+// Every tool says what it is for, where it runs, and after a run: what was found, the evidence, and what to check next.
 // ---------------------------------------------------------------------------
 
-type Field = { name: string; label: string; placeholder: string; options?: string[]; width?: 'narrow' | 'medium' };
-type Result = Record<string, any>;
-type ToolSpec = {
-    id: string;
-    fields: Field[];
-    run?: (values: Record<string, string>) => Promise<Result>;
-    render: (r: Result) => ReactNode;
-    note?: string;
+const subnetSpec: ToolSpec = {
+    id: 'subnet',
+    action: 'Calculate',
+    bestFor: 'Planning address ranges: network boundaries, masks, ranges to CIDR, and splitting.',
+    fields: [],
+    runsOn: () => 'Runs in your browser; nothing is sent anywhere.',
+    custom: (initial) => <SubnetCalculator initial={initial} />,
 };
+
 type Tool = ToolSpec & (typeof TOOL_LIST)[number];
 
-class ToolError extends Error {}
-
-// The "from" choice shared by ping, traceroute and DNS: our server, or Globalping probes elsewhere.
-const fromField = (label: string): Field => ({ name: 'from', label, placeholder: '', options: TEST_FROM.map((f) => f.label), width: 'medium' });
-
-async function viaGlobalping<T>(run: () => Promise<T>): Promise<T> {
-    try {
-        return await run();
-    } catch (err) {
-        throw new ToolError(err instanceof Error ? err.message : 'The test failed.');
-    }
-}
-
-async function api(tool: string, params: Record<string, string>): Promise<Result> {
-    const query = new URLSearchParams({ tool, ...params });
-    let res: Response;
-    try {
-        res = await fetch(`/api/?${query}`, { headers: { Accept: 'application/json' } });
-    } catch {
-        throw new ToolError('Could not reach our server. Check your connection and try again.');
-    }
-    const data = await res.json().catch(() => null);
-    if (!data || !data.ok) throw new ToolError(data?.error ?? `The server answered ${res.status}.`);
-    return data;
-}
-
-const ms = (v: number | null | undefined) => (v == null ? '—' : `${v.toFixed(1)} ms`);
-const date = (v?: string) => (v ? new Date(v).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
-
-function Rows({ rows }: { rows: [string, ReactNode][] }) {
-    return (
-        <dl className="out-rows">
-            {rows.map(([k, v]) => (
-                <div key={k}>
-                    <dt>{k}</dt>
-                    <dd>{v ?? '—'}</dd>
-                </div>
-            ))}
-        </dl>
-    );
-}
-
-function Table({
-    head,
-    rows,
-    empty,
-    compact = false,
-    stack = false,
-}: {
-    head: string[];
-    rows: ReactNode[][];
-    empty: string;
-    compact?: boolean;
-    stack?: boolean;
-}) {
-    if (!rows.length) return <p className="out-empty">{empty}</p>;
-    return (
-        <div className="out-table-wrap">
-            <table className={['out-table', compact && 'out-table-compact', stack && 'out-table-stack'].filter(Boolean).join(' ')}>
-                <thead>
-                    <tr>
-                        {head.map((h) => (
-                            <th key={h}>{h}</th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.map((r, i) => (
-                        <tr key={i}>
-                            {r.map((c, j) => (
-                                <td key={j}>{c}</td>
-                            ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
-}
-
-function Status({ level, children }: { level: 'ok' | 'warning' | 'error' | 'neutral'; children: ReactNode }) {
-    const cls = { ok: 'badge-success', warning: 'badge-warning', error: 'badge-danger', neutral: 'badge-neutral' }[level];
-    return <span className={`badge ${cls}`}>{children}</span>;
-}
-
-function Notes({ notes }: { notes: { level: 'ok' | 'warning' | 'error'; text: string }[] }) {
-    return (
-        <ul className="out-notes">
-            {notes.map((n) => (
-                <li key={n.text}>
-                    <Status level={n.level}>{n.level === 'ok' ? 'Good' : n.level === 'warning' ? 'Check' : 'Problem'}</Status>
-                    <span>{n.text}</span>
-                </li>
-            ))}
-        </ul>
-    );
-}
-
-const Mono = ({ children }: { children: ReactNode }) => <code className="out-mono">{children}</code>;
-
-/** "example.com 93.184.216.34", or just the address when that is what was entered. */
-const Target = ({ host, ip }: { host: string; ip: string }) => (host === ip ? <Mono>{ip}</Mono> : <>{host} <Mono>{ip}</Mono></>);
-const Record_ = ({ text }: { text: string }) => <pre className="out-record">{text}</pre>;
-
-function Contacts({ contacts }: { contacts: Result[] }) {
-    const shown = contacts.filter((c) => c.fn || c.org || c.email || c.tel || c.address);
-    if (!shown.length) return <p className="out-empty">The registry publishes no contact details (most hide them for privacy).</p>;
-    return (
-        <Table
-            head={['Role', 'Name', 'Email', 'Phone', 'Address']}
-            rows={shown.map((c) => [c.roles.join(', ') || '—', c.fn ?? c.org ?? '—', c.email ?? '—', c.tel ?? '—', c.address ?? '—'])}
-            empty=""
-        />
-    );
-}
-
-// Bandwidth: download test data from our server and time it, with live progress.
-async function measureBandwidth(onProgress: (mbps: number, pct: number) => void): Promise<Result> {
-    const latencies: number[] = [];
-    for (let i = 0; i < 3; i++) {
-        const t = performance.now();
-        await api('myip', {});
-        latencies.push(performance.now() - t);
-    }
-    const download = async (mb: number) => {
-        const res = await fetch(`/api/?tool=bandwidth&mb=${mb}&t=${Date.now()}`, { cache: 'no-store' });
-        if (!res.ok || !res.body) {
-            const data = await res.json().catch(() => null);
-            throw new ToolError(data?.error ?? 'The download test could not start.');
-        }
-        const reader = res.body.getReader();
-        const total = mb * 1024 * 1024;
-        const start = performance.now();
-        let got = 0;
-        for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            got += value.length;
-            const secs = (performance.now() - start) / 1000;
-            if (secs > 0.05) onProgress((got * 8) / secs / 1e6, Math.min(100, (got / total) * 100));
-        }
-        const secs = (performance.now() - start) / 1000;
-        return { bytes: got, secs, mbps: (got * 8) / secs / 1e6 };
-    };
-    let run = await download(5);
-    if (run.secs < 2) run = await download(25);
-    return { ...run, latency: Math.min(...latencies) };
-}
-
-const SPECS: ToolSpec[] = [
-    {
-        id: 'ping',
-        fields: [
-            { name: 'host', label: 'Host or IP', placeholder: 'example.com' },
-            fromField('Ping from'),
-        ],
-        run: async (v) => {
-            const locations = locationsFor(v.from);
-            return locations ? viaGlobalping(() => pingFrom(v.host, locations)) : api('ping', { host: v.host });
-        },
-        note: 'Other locations use Globalping, a free network of probes around the world, run from your browser.',
-        render: (r) =>
-            r.probes ? (
-                <PingWorld r={r} />
-            ) : (
-            <>
-                <div className="out-summary">
-                    <Status level={r.received === 0 ? 'error' : r.received < r.sent ? 'warning' : 'ok'}>
-                        {r.received} of {r.sent} replies
-                    </Status>
-                    <span>
-                        <Target host={r.host} ip={r.ip} />
-                    </span>
-                </div>
-                <Rows rows={[['Minimum', ms(r.min)], ['Average', ms(r.avg)], ['Maximum', ms(r.max)]]} />
-                <Table
-                    head={['Reply', 'TTL', 'Time']}
-                    rows={r.replies.map((x: Result) => [`#${x.seq}`, x.ttl, ms(x.ms)])}
-                    empty="No replies. The host may block ping (ICMP) or be offline."
-                />
-            </>
-            ),
-    },
-    {
-        id: 'traceroute',
-        fields: [
-            { name: 'host', label: 'Host or IP', placeholder: 'example.com' },
-            fromField('Trace from'),
-        ],
-        run: async (v) => {
-            const locations = locationsFor(v.from);
-            return locations ? viaGlobalping(() => traceFrom(v.host, locations)) : api('traceroute', { host: v.host });
-        },
-        note: 'A trace can take up to half a minute. Other locations use Globalping, a free network of probes around the world, run from your browser.',
-        render: (r) =>
-            r.traces ? (
-                <TraceWorld r={r} />
-            ) : (
-            <>
-                <div className="out-summary">
-                    <span>
-                        From our server to <Target host={r.host} ip={r.ip} />, {r.hops.length} hops
-                    </span>
-                </div>
-                <Table
-                    head={['Hop', 'Address', 'Name', 'Loss', 'Average', 'Best']}
-                    rows={r.hops.map((h: Result) => [
-                        h.hop,
-                        h.host ? <Mono>{h.host}</Mono> : <span className="faint">No answer</span>,
-                        h.name && h.name !== h.host ? h.name : '—',
-                        `${h.loss}%`,
-                        ms(h.avg),
-                        ms(h.best),
-                    ])}
-                    empty="No hops were recorded."
-                />
-            </>
-            ),
-    },
-    {
-        id: 'mtr',
-        fields: [
-            { name: 'host', label: 'Host or IP', placeholder: 'example.com' },
-            fromField('Run from'),
-        ],
-        run: async (v) => {
-            const locations = locationsFor(v.from);
-            return locations ? viaGlobalping(() => mtrFrom(v.host, locations)) : api('mtr', { host: v.host });
-        },
-        note: 'Sends 5 rounds of packets along the route, so it takes up to half a minute. Other locations use Globalping, run from your browser.',
-        render: (r) => <MtrView r={r} />,
-    },
-    {
-        id: 'port',
-        fields: [
-            { name: 'host', label: 'Host or IP', placeholder: 'example.com' },
-            { name: 'port', label: 'Port', placeholder: '443', width: 'narrow' },
-        ],
-        run: (v) => api('port', v),
-        render: (r) => (r.results ? <AllPorts r={r} /> : <OnePort r={r} />),
-    },
-    {
-        id: 'reverse',
-        fields: [{ name: 'ip', label: 'IP address', placeholder: '8.8.8.8' }],
-        run: (v) => api('reverse', v),
-        render: (r) => (
-            <Rows
-                rows={[
-                    ['IP address', <Mono>{r.ip}</Mono>],
-                    ['Hostname (PTR)', r.hostname ?? <span className="faint">No PTR record</span>],
-                    [
-                        'Forward check',
-                        r.hostname ? (
-                            <Status level={r.confirmed ? 'ok' : 'warning'}>{r.confirmed ? 'Hostname points back to this IP' : 'Hostname does not point back'}</Status>
-                        ) : (
-                            '—'
-                        ),
-                    ],
-                ]}
-            />
-        ),
-    },
-    {
-        id: 'proxy',
-        fields: [],
-        run: () => api('proxy', {}),
-        render: (r) => {
-            const headers = Object.entries(r.headers as Record<string, string>);
-            return (
-                <>
-                    <div className="out-summary out-summary-big">
-                        <Status level={r.detected ? 'warning' : 'ok'}>{r.detected ? 'Proxy detected' : 'No proxy detected'}</Status>
-                        <span>
-                            Our server sees you as <Mono>{r.ip}</Mono>
-                            {r.hostname && <> ({r.hostname})</>}
-                        </span>
-                    </div>
-                    <Table head={['Header', 'Value']} rows={headers.map(([k, v]) => [k, <Mono>{v}</Mono>])} empty="Your requests carry no proxy headers." />
-                    {r.hostnameHint && <p className="out-empty">Your address’s hostname looks like a proxy or VPN.</p>}
-                </>
-            );
-        },
-    },
-    {
-        id: 'bandwidth',
-        fields: [],
-        render: (r) => (
-            <>
-                <div className="out-speed">
-                    <span className="out-speed-value">{r.mbps.toFixed(1)}</span>
-                    <span className="out-speed-unit">Mbit/s download</span>
-                </div>
-                <Rows
-                    rows={[
-                        ['Data received', `${(r.bytes / 1024 / 1024).toFixed(1)} MB in ${r.secs.toFixed(2)} s`],
-                        ['Round trip to our server', ms(r.latency)],
-                    ]}
-                />
-            </>
-        ),
-    },
-    {
-        id: 'subnet',
-        fields: [{ name: 'cidr', label: 'Address and mask', placeholder: '192.168.1.10/24 or 192.168.1.10 255.255.255.0' }],
-        run: async (v) => ({ rows: subnet(v.cidr) }),
-        render: (r) => <Rows rows={r.rows.map((x: Result) => [x.label, x.mono ? <Mono>{x.value}</Mono> : x.value])} />,
-    },
-    {
-        id: 'mask',
-        fields: [
-            { name: 'first', label: 'First address', placeholder: '192.168.0.0' },
-            { name: 'last', label: 'Last address', placeholder: '192.168.3.255' },
-        ],
-        run: async (v) => rangeToMasks(v.first, v.last),
-        render: (r) => (
-            <>
-                <Rows
-                    rows={[
-                        ['Smallest network that holds the range', <Mono>{r.cover.cidr}</Mono>],
-                        ['Its mask', <Mono>{r.cover.mask}</Mono>],
-                        ['Addresses in it', r.cover.size.toLocaleString('en')],
-                        ['Exact match', <Status level={r.exact ? 'ok' : 'neutral'}>{r.exact ? 'The range is exactly one network' : 'The range needs several networks'}</Status>],
-                    ]}
-                />
-                {!r.exact && (
-                    <Table
-                        head={['Network', 'Mask', 'Addresses']}
-                        rows={r.blocks.map((b: Result) => [<Mono>{b.cidr}</Mono>, <Mono>{b.mask}</Mono>, b.size.toLocaleString('en')])}
-                        empty=""
-                    />
-                )}
-            </>
-        ),
-    },
-
-    {
-        id: 'dns',
-        fields: [
-            { name: 'name', label: 'Domain or hostname', placeholder: 'example.com' },
-            { name: 'type', label: 'Record', placeholder: '', options: ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'SOA', 'CAA', 'SRV'], width: 'narrow' },
-            fromField('Look up from'),
-        ],
-        run: async (v) => {
-            const locations = locationsFor(v.from);
-            if (!locations) return api('dns', { name: v.name, type: v.type });
-            if (v.type === 'ALL') throw new ToolError('Pick one record type to look it up from other locations.');
-            return viaGlobalping(() => dnsFrom(v.name, v.type, locations));
-        },
-        note: 'Look up from other locations to see whether a DNS change has reached every country (propagation). Uses Globalping, run from your browser.',
-        render: (r) =>
-            r.lookups ? (
-                <DnsWorld r={r} />
-            ) : (
-                <Table
-                    head={['Type', 'TTL', 'Value']}
-                    rows={r.records.map((x: Result) => [x.type, x.ttl, <Mono>{x.value}</Mono>])}
-                    empty={`No ${r.type === 'ALL' ? '' : `${r.type} `}records for ${r.name}.`}
-                />
-            ),
-    },
-    {
-        id: 'mx',
-        fields: [{ name: 'domain', label: 'Domain', placeholder: 'example.com' }],
-        run: (v) => api('mx', v),
-        render: (r) => (
-            <Table
-                head={['Priority', 'Mail server', 'Addresses', 'TTL']}
-                rows={r.records.map((x: Result) => [x.priority, x.host, <Mono>{x.ips.join(', ') || 'Does not resolve'}</Mono>, x.ttl])}
-                empty={`${r.domain} has no MX records, so it cannot receive email.`}
-            />
-        ),
-    },
-    {
-        id: 'ns',
-        fields: [{ name: 'domain', label: 'Domain', placeholder: 'example.com' }],
-        run: (v) => api('ns', v),
-        render: (r) => (
-            <>
-                <Table
-                    head={['Name server', 'Addresses', 'TTL']}
-                    rows={r.records.map((x: Result) => [x.host, <Mono>{x.ips.join(', ') || 'Does not resolve'}</Mono>, x.ttl])}
-                    empty={`No NS records for ${r.domain}.`}
-                />
-                {r.soa && (
-                    <Rows
-                        rows={[
-                            ['Primary server', r.soa.primary],
-                            ['Contact', r.soa.contact],
-                            ['Serial', <Mono>{r.soa.serial}</Mono>],
-                            ['Refresh / retry / expire', `${r.soa.refresh} / ${r.soa.retry} / ${r.soa.expire} s`],
-                        ]}
-                    />
-                )}
-            </>
-        ),
-    },
-    {
-        id: 'spf',
-        fields: [{ name: 'domain', label: 'Domain', placeholder: 'example.com' }],
-        run: (v) => api('spf', v),
-        render: (r) => (
-            <>
-                {r.record && <Record_ text={r.record} />}
-                <Notes notes={r.notes} />
-            </>
-        ),
-    },
-    {
-        id: 'dmarc',
-        fields: [{ name: 'domain', label: 'Domain', placeholder: 'example.com' }],
-        run: (v) => api('dmarc', v),
-        render: (r) => (
-            <>
-                {r.record && <Record_ text={r.record} />}
-                <Notes notes={r.notes} />
-                {r.record && <Rows rows={Object.entries(r.tags as Record<string, string>).map(([k, v]) => [k, <Mono>{v}</Mono>])} />}
-            </>
-        ),
-    },
-    {
-        id: 'dkim',
-        fields: [
-            { name: 'domain', label: 'Domain', placeholder: 'example.com' },
-            { name: 'selector', label: 'Selector', placeholder: 'default', width: 'narrow' },
-        ],
-        run: (v) => api('dkim', v),
-        render: (r) =>
-            !r.record ? (
-                <p className="out-empty">
-                    No DKIM key at <Mono>{r.name}</Mono>. Check the selector: it is the <Mono>s=</Mono> value in a message’s DKIM-Signature header.
-                </p>
-            ) : (
-                <>
-                    <Record_ text={r.record} />
-                    <Rows
-                        rows={[
-                            ['Record', <Mono>{r.name}</Mono>],
-                            ['Key type', r.tags.k ?? 'rsa'],
-                            [
-                                'Key',
-                                r.tags.p === '' ? (
-                                    <Status level="warning">Revoked (empty key)</Status>
-                                ) : r.bits ? (
-                                    <Status level={r.bits >= 2048 ? 'ok' : r.bits >= 1024 ? 'warning' : 'error'}>{r.bits}-bit</Status>
-                                ) : (
-                                    'Present'
-                                ),
-                            ],
-                        ]}
-                    />
-                </>
-            ),
-    },
-    {
-        id: 'smtp',
-        fields: [{ name: 'host', label: 'Domain or mail server', placeholder: 'example.com' }],
-        run: (v) => api('smtp', v),
-        render: (r) =>
-            !r.connected ? (
-                <div className="out-summary out-summary-big">
-                    <Status level="error">No connection</Status>
-                    <span>
-                        <Target host={r.server} ip={r.ip} />: {r.error}
-                    </span>
-                </div>
-            ) : (
-                <>
-                    <div className="out-summary out-summary-big">
-                        <Status level="ok">Connected</Status>
-                        <span>
-                            <Target host={r.server} ip={r.ip} /> answered in {r.ms} ms
-                        </span>
-                    </div>
-                    <Rows
-                        rows={[
-                            ['Banner', <Mono>{r.banner}</Mono>],
-                            ['STARTTLS', <Status level={r.starttls ? 'ok' : 'warning'}>{r.starttls ? 'Offered' : 'Not offered'}</Status>],
-                            ['Extensions', r.capabilities.join(', ') || '—'],
-                        ]}
-                    />
-                </>
-            ),
-    },
-    {
-        id: 'whois',
-        fields: [{ name: 'query', label: 'Domain or IP', placeholder: 'example.com' }],
-        run: (v) => api('whois', v),
-        render: (r) =>
-            r.kind === 'domain' ? (
-                <>
-                    <Rows
-                        rows={[
-                            ['Domain', r.name],
-                            ['Registered', date(r.events.registration)],
-                            ['Expires', date(r.events.expiration)],
-                            ['Last changed', date(r.events['last changed'])],
-                            ['Status', r.status.join(', ') || '—'],
-                            ['Name servers', r.nameservers.join(', ') || '—'],
-                            ['DNSSEC', r.dnssec == null ? '—' : r.dnssec ? 'Signed' : 'Not signed'],
-                            ['Source', r.source],
-                        ]}
-                    />
-                    <Contacts contacts={r.contacts} />
-                </>
-            ) : (
-                <>
-                    <Rows
-                        rows={[
-                            ['Network', r.name],
-                            ['Range', <Mono>{r.range}</Mono>],
-                            ['Handle', r.handle],
-                            ['Type', r.type],
-                            ['Country', r.country],
-                            ['Registered', date(r.events.registration)],
-                            ['Source', r.source],
-                        ]}
-                    />
-                    <Contacts contacts={r.contacts} />
-                </>
-            ),
-    },
-    {
-        id: 'blacklist',
-        fields: [{ name: 'host', label: 'IP, mail server or domain', placeholder: 'mail.example.com' }],
-        run: (v) => api('blacklist', v),
-        note: 'Checks the common IP blacklists, plus the domain blacklists when you enter a domain. Takes a few seconds.',
-        render: (r) => <Blacklists r={r} />,
-    },
-];
-
+const SPECS = [...NETWORK_SPECS, subnetSpec, ...EMAIL_SPECS, ...BGP_SPECS];
 const TOOLS: Tool[] = TOOL_LIST.map((meta) => ({ ...SPECS.find((s) => s.id === meta.id)!, ...meta }));
 
-const PORT_STATE = {
-    open: { level: 'ok', label: 'Open' },
-    closed: { level: 'error', label: 'Closed' },
-    filtered: { level: 'warning', label: 'Filtered' },
-} as const;
-
-function OnePort({ r }: { r: Result }) {
-    const st = PORT_STATE[r.state as keyof typeof PORT_STATE];
-    return (
-        <div className="out-summary out-summary-big">
-            <Status level={st.level}>{st.label}</Status>
-            <span>
-                TCP port <strong>{r.port}</strong>
-                {PORT_NAMES.has(r.port) && <> ({PORT_NAMES.get(r.port)})</>} on <Target host={r.host} ip={r.ip} />
-                {r.state === 'open' && ` answered in ${ms(r.ms)}`}
-                {r.state === 'closed' && ' refused the connection'}
-                {r.state === 'filtered' && ' did not answer (a firewall may be dropping it)'}
-            </span>
-        </div>
-    );
+/** "#mx?domain=example.com" as the tool and the values to fill in. #mask is the old address of the subnet calculator. */
+function parseHash(hash: string): { id: string; values: Values } {
+    const [id, query = ''] = hash.replace(/^#/, '').split('?');
+    return { id: id === 'mask' ? 'subnet' : id, values: Object.fromEntries(new URLSearchParams(query)) };
 }
 
-function AllPorts({ r }: { r: Result }) {
-    const open = r.results.filter((x: Result) => x.state === 'open');
-    return (
-        <>
-            <div className="out-summary out-summary-big">
-                <Status level={open.length ? 'ok' : 'neutral'}>
-                    {open.length} open of {r.results.length}
-                </Status>
-                <span>
-                    Common ports on <Target host={r.host} ip={r.ip} />
-                </span>
-            </div>
-            <Table
-                head={['Port', 'Service', 'State', 'Time']}
-                rows={r.results.map((x: Result) => {
-                    const st = PORT_STATE[x.state as keyof typeof PORT_STATE];
-                    return [<Mono>{x.port}</Mono>, PORT_NAMES.get(x.port) ?? '—', <Status level={st.level}>{st.label}</Status>, ms(x.ms)];
-                })}
-                empty=""
-                compact
-            />
-            <p className="tool-note">Closed: the host refused the connection. Filtered: no answer within 4 seconds, usually a firewall.</p>
-        </>
-    );
+/** A link to a tool with its form filled in, on this page or the other tools page. Nothing runs until the visitor asks. */
+function toolHref(next: Next, group: ToolGroup, root: string): string {
+    const meta = TOOL_LIST.find((t) => t.id === next.tool)!;
+    const query = new URLSearchParams(Object.entries(next.values).filter((e): e is [string, string] => !!e[1])).toString();
+    const hash = `#${next.tool}${query ? `?${query}` : ''}`;
+    return meta.group === group ? hash : `${root}${TOOL_PAGES[meta.group].path}${hash}`;
 }
 
-// Ping results from Globalping probes: one row per location, fastest first.
-function PingWorld({ r }: { r: Result }) {
-    const probes = [...(r.probes as PingProbe[])].sort((a, b) => (a.avg ?? Infinity) - (b.avg ?? Infinity));
-    const answered = probes.filter((p) => p.avg != null);
-    const fastest = answered[0];
-    return (
-        <>
-            <div className="out-summary">
-                <Status level={answered.length === 0 ? 'error' : answered.length < probes.length ? 'warning' : 'ok'}>
-                    {answered.length} of {probes.length} locations replied
-                </Status>
-                <span>
-                    {r.target}
-                    {probes[0]?.resolved && probes[0].resolved !== r.target && <> <Mono>{probes[0].resolved}</Mono></>}
-                    {fastest && <>, fastest from {fastest.city} ({ms(fastest.avg)})</>}
-                </span>
-            </div>
-            <Table
-                head={['Location', 'Network', 'Loss', 'Minimum', 'Average', 'Maximum']}
-                rows={probes.map((p) => [
-                    <Place p={p} />,
-                    <span className="faint">{p.network} (AS{p.asn})</span>,
-                    p.loss == null ? '—' : <Status level={p.loss === 0 ? 'ok' : p.loss < 100 ? 'warning' : 'error'}>{p.loss}%</Status>,
-                    ms(p.min),
-                    ms(p.avg),
-                    ms(p.max),
-                ])}
-                empty="No probes answered."
-            />
-        </>
-    );
-}
+const defaults = (fields: Field[]) => Object.fromEntries(fields.map((f) => [f.name, f.options ? f.options[0].value : '']));
 
-const Place = ({ p }: { p: { city: string; country: string } }) => (
-    <span className="out-place">
-        <strong>{p.city}</strong> <span className="faint">{p.country}</span>
-    </span>
-);
-
-// Traceroutes from Globalping probes: one collapsible route per location.
-function TraceWorld({ r }: { r: Result }) {
-    const traces = r.traces as TraceProbe[];
-    return (
-        <>
-            <div className="out-summary">
-                <span>
-                    Routes to {r.target}
-                    {traces[0]?.resolved && traces[0].resolved !== r.target && <> <Mono>{traces[0].resolved}</Mono></>} from {traces.length}{' '}
-                    {traces.length === 1 ? 'location' : 'locations'}
-                </span>
-            </div>
-            <div className="out-routes">
-                {traces.map((t, i) => {
-                    const last = [...t.hops].reverse().find((h) => h.avg != null);
-                    const reached = t.hops.some((h) => h.address && h.address === t.resolved);
-                    return (
-                        <details className="out-route" key={i} open={traces.length === 1}>
-                            <summary>
-                                <Place p={t} />
-                                <span className="faint out-route-net">
-                                    {t.network} (AS{t.asn})
-                                </span>
-                                <span className="out-route-meta">
-                                    {t.hops.length} hops · {ms(last?.avg)}
-                                </span>
-                                <Status level={reached ? 'ok' : 'warning'}>{reached ? 'Reached' : 'Not reached'}</Status>
-                            </summary>
-                            <Table
-                                head={['Hop', 'Address', 'Name', 'Time']}
-                                rows={t.hops.map((h, n) => [
-                                    n + 1,
-                                    h.address ? <Mono>{h.address}</Mono> : <span className="faint">No answer</span>,
-                                    h.name ?? '—',
-                                    ms(h.avg),
-                                ])}
-                                empty="No hops were recorded."
-                                compact
-                            />
-                        </details>
-                    );
-                })}
-            </div>
-        </>
-    );
-}
-
-function MtrTable({ hops }: { hops: MtrRun['hops'] }) {
-    return (
-        <Table
-            head={['Hop', 'Host', 'ASN', 'Loss', 'Sent', 'Average', 'Best', 'Worst', 'Spread']}
-            rows={hops.map((h, n) => [
-                n + 1,
-                h.address ? (
-                    <span className="out-host">
-                        {h.name && <span>{h.name}</span>}
-                        <Mono>{h.address}</Mono>
-                    </span>
-                ) : (
-                    <span className="faint">No answer</span>
-                ),
-                h.asn ? <span className="faint">AS{h.asn}</span> : '—',
-                h.address ? <Status level={h.loss === 0 ? 'ok' : h.loss < 50 ? 'warning' : 'error'}>{Math.round(h.loss)}%</Status> : '—',
-                h.sent,
-                ms(h.avg),
-                ms(h.best),
-                ms(h.worst),
-                ms(h.stdev),
-            ])}
-            empty="No hops were recorded."
-            compact
-        />
-    );
-}
-
-// MTR: per-hop loss and delay, from our server or from Globalping probes (one collapsible run per location).
-function MtrView({ r }: { r: Result }) {
-    const runs = r.runs as MtrRun[];
-    const finalLoss = (run: MtrRun) => {
-        const last = run.hops[run.hops.length - 1];
-        return last?.address ? last.loss : 100;
-    };
-    return (
-        <>
-            <div className="out-summary">
-                <span>
-                    MTR to <Target host={r.target} ip={r.resolved ?? r.target} />
-                    {runs.length > 1 && <> from {runs.length} locations</>}
-                    {runs.length === 1 && !runs[0].place && <> from our server</>}
-                </span>
-            </div>
-            {runs.length === 1 && !runs[0].place ? (
-                <MtrTable hops={runs[0].hops} />
-            ) : (
-                <div className="out-routes">
-                    {runs.map((run, i) => {
-                        const loss = finalLoss(run);
-                        const last = [...run.hops].reverse().find((h) => h.avg != null);
-                        return (
-                            <details className="out-route" key={i} open={runs.length === 1}>
-                                <summary>
-                                    {run.place && <Place p={run.place} />}
-                                    {run.place && (
-                                        <span className="faint out-route-net">
-                                            {run.place.network} (AS{run.place.asn})
-                                        </span>
-                                    )}
-                                    <span className="out-route-meta">
-                                        {run.hops.length} hops · {ms(last?.avg)}
-                                    </span>
-                                    <Status level={loss === 0 ? 'ok' : loss < 50 ? 'warning' : 'error'}>{Math.round(loss)}% loss at the end</Status>
-                                </summary>
-                                <MtrTable hops={run.hops} />
-                            </details>
-                        );
-                    })}
-                </div>
-            )}
-            <p className="tool-note">
-                Loss on a middle hop that does not carry on to the hops after it is usually that router limiting its replies, not a real
-                problem. Loss that starts at one hop and stays to the end shows where trouble begins.
-            </p>
-        </>
-    );
-}
-
-// DNS answers from resolvers around the world; differing answers usually mean a change is still spreading.
-function DnsWorld({ r }: { r: Result }) {
-    const lookups = r.lookups as DnsProbe[];
-    const key = (l: DnsProbe) => l.answers.map((a) => a.value).sort().join('|');
-    const variants = new Set(lookups.filter((l) => l.answers.length).map(key));
-    const empty = lookups.filter((l) => !l.answers.length).length;
-    return (
-        <>
-            <div className="out-summary">
-                <Status level={variants.size > 1 ? 'warning' : variants.size === 1 && !empty ? 'ok' : empty === lookups.length ? 'error' : 'warning'}>
-                    {variants.size > 1
-                        ? 'Answers differ'
-                        : variants.size === 1 && !empty
-                          ? 'Same answer everywhere'
-                          : empty === lookups.length
-                            ? 'No records'
-                            : 'Some locations have no answer'}
-                </Status>
-                <span>
-                    {r.type} records for {r.name} from {lookups.length} locations
-                </span>
-            </div>
-            <Table
-                head={['Location', 'Resolver', 'Answer', 'TTL', 'Time']}
-                rows={lookups.map((l) => [
-                    <Place p={l} />,
-                    l.resolver === 'private' ? <span className="faint">Local resolver</span> : <Mono>{l.resolver ?? '—'}</Mono>,
-                    l.answers.length ? (
-                        <span className="out-answers">
-                            {[...l.answers].sort((a, b) => a.value.localeCompare(b.value, 'en', { numeric: true })).map((a, i) => (
-                                <Mono key={i}>{a.value}</Mono>
-                            ))}
-                        </span>
-                    ) : (
-                        <span className="faint">{l.code && l.code !== 'NOERROR' ? l.code : 'No records'}</span>
-                    ),
-                    l.answers[0]?.ttl ?? '—',
-                    l.ms == null ? '—' : `${l.ms} ms`,
-                ])}
-                empty="No locations answered."
-            />
-            {variants.size > 1 && (
-                <p className="tool-note">
-                    Different answers can mean a change is still spreading, or that the domain answers by location on purpose (common for
-                    large sites and CDNs). Compare with the TTL: old answers disappear once it runs out.
-                </p>
-            )}
-        </>
-    );
-}
-
-const LIST_ORDER = { listed: 0, unknown: 1, clean: 2 } as const;
-
-// Lists put their lookup or delisting page in the reason text; make those addresses clickable.
-function Linkified({ text }: { text: string }) {
-    return (
-        <>
-            {text.split(/(https?:\/\/[^\s"<>]+)/).map((part, i) =>
-                /^https?:\/\//.test(part) ? (
-                    <a key={i} href={part} target="_blank" rel="noopener noreferrer nofollow" className="out-link">
-                        {part.replace(/^https?:\/\//, '').slice(0, 48)}
-                        {part.length > 56 ? '…' : ''}
-                    </a>
-                ) : (
-                    part
-                ),
-            )}
-        </>
-    );
-}
-
-function ListTable({ title, rows }: { title: string; rows: Result[] }) {
-    if (!rows.length) return null;
-    const sorted = [...rows].sort((a, b) => LIST_ORDER[a.state as keyof typeof LIST_ORDER] - LIST_ORDER[b.state as keyof typeof LIST_ORDER]);
-    return (
-        <div className="out-group">
-            <h3 className="out-group-title">
-                {title} <span className="faint">({rows.length})</span>
-            </h3>
-            <Table
-                head={['List', 'Result', 'Details']}
-                rows={sorted.map((x) => [
-                    x.list,
-                    <Status level={x.state === 'listed' ? 'error' : x.state === 'clean' ? 'ok' : 'neutral'}>
-                        {x.state === 'listed' ? 'Listed' : x.state === 'clean' ? 'Clean' : 'No answer'}
-                    </Status>,
-                    x.reason ? <Linkified text={x.reason} /> : x.state === 'listed' ? `Code ${x.codes.join(', ')}` : '',
-                ])}
-                empty=""
-                stack
-            />
-        </div>
-    );
-}
-
-function Blacklists({ r }: { r: Result }) {
-    const count = (state: string) => r.results.filter((x: Result) => x.state === state).length;
-    const listed = count('listed');
-    const ipRows = r.results.filter((x: Result) => x.kind === 'ip');
-    const domainRows = r.results.filter((x: Result) => x.kind === 'domain');
-    return (
-        <>
-            <div className="out-summary out-summary-big">
-                <Status level={listed ? 'error' : 'ok'}>{listed ? `Listed on ${listed}` : 'Not listed'}</Status>
-                <span>
-                    {r.domain && <>{r.domain} </>}
-                    {r.ip && <Mono>{r.ip}</Mono>} checked against {r.results.length} lists
-                </span>
-            </div>
-            <div className="out-counts">
-                <span>
-                    <strong>{listed}</strong> listed
-                </span>
-                <span>
-                    <strong>{count('clean')}</strong> clean
-                </span>
-                <span>
-                    <strong>{count('unknown')}</strong> no answer
-                </span>
-            </div>
-            <ListTable title={r.ip ? `IP blacklists for ${r.ip}` : 'IP blacklists'} rows={ipRows} />
-            <ListTable title={`Domain blacklists for ${r.domain}`} rows={domainRows} />
-        </>
-    );
-}
-
-// Well-known TCP ports, with the ones ISPs reach for on MikroTik routers. UDP services (DNS over UDP, RADIUS, SNMP) cannot be tested with a TCP connect.
-const COMMON_PORTS: { group: string; ports: [number, string][] }[] = [
-    { group: 'Web', ports: [[80, 'HTTP'], [443, 'HTTPS'], [8080, 'HTTP alt'], [8443, 'HTTPS alt']] },
-    { group: 'Email', ports: [[25, 'SMTP'], [465, 'SMTPS'], [587, 'Submission'], [110, 'POP3'], [995, 'POP3S'], [143, 'IMAP'], [993, 'IMAPS']] },
-    { group: 'Remote access', ports: [[22, 'SSH'], [23, 'Telnet'], [3389, 'RDP'], [5900, 'VNC']] },
-    { group: 'MikroTik', ports: [[8291, 'Winbox'], [8728, 'RouterOS API'], [8729, 'API over TLS']] },
-    { group: 'Files and DNS', ports: [[21, 'FTP'], [53, 'DNS (TCP)'], [445, 'SMB']] },
-    { group: 'Databases', ports: [[3306, 'MySQL / MariaDB'], [5432, 'PostgreSQL'], [6379, 'Redis'], [27017, 'MongoDB']] },
-    { group: 'VPN', ports: [[1723, 'PPTP'], [1194, 'OpenVPN (TCP)']] },
-];
-
-const PORT_NAMES = new Map(COMMON_PORTS.flatMap((g) => g.ports));
-
-function CommonPorts({
-    current,
-    disabled,
-    onPick,
-    onCheckAll,
-}: {
-    current?: string;
-    disabled: boolean;
-    onPick: (port: number) => void;
-    onCheckAll: () => void;
-}) {
-    const count = COMMON_PORTS.reduce((n, g) => n + g.ports.length, 0);
-    return (
-        <div className="common-ports">
-            <div className="common-ports-head">
-                <h3 className="common-ports-title">Common ports</h3>
-                <button type="button" className="btn btn-sm" disabled={disabled} onClick={onCheckAll}>
-                    <Icon name="grid" />
-                    Check all {count} ports
-                </button>
-            </div>
-            <div className="common-ports-groups">
-                {COMMON_PORTS.map((g) => (
-                    <div className="common-ports-group" key={g.group}>
-                        <span className="common-ports-label">{g.group}</span>
-                        <div className="common-ports-list">
-                            {g.ports.map(([port, name]) => (
-                                <button
-                                    type="button"
-                                    key={port}
-                                    className="port-chip"
-                                    aria-pressed={current === String(port)}
-                                    disabled={disabled}
-                                    onClick={() => onPick(port)}
-                                    title={`Check port ${port} (${name})`}
-                                >
-                                    <span className="port-chip-num">{port}</span>
-                                    <span>{name}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
+type RunState =
+    | { status: 'idle' }
+    | { status: 'running'; started: number; progress?: Progress }
+    | { status: 'done'; result: Result; at: Date; values: Values }
+    | { status: 'error'; error: ToolError; field?: string };
 
 type View = 'table' | 'text';
 
@@ -976,11 +64,8 @@ function savedView(): View {
 }
 
 // Every result can be read as tables or as command-line text with a Copy button; the choice is remembered.
-function ResultView({ tool, result }: { tool: Tool; result: Result }) {
+function ResultView({ tool, result, at, values, hrefFor }: { tool: Tool; result: Result; at: Date; values: Values; hrefFor: (n: Next) => string }) {
     const [view, setView] = useState<View>(savedView);
-    const [copied, setCopied] = useState(false);
-    const text = view === 'text' ? toText(tool.id, result) : '';
-
     const choose = (v: View) => {
         setView(v);
         try {
@@ -989,70 +74,92 @@ function ResultView({ tool, result }: { tool: Tool; result: Result }) {
             // Private mode: the choice lasts for this page only.
         }
     };
-
-    const copy = async () => {
-        if (await copyText(toText(tool.id, result))) {
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1600);
-        }
-    };
-
+    const text = toText(tool.id, result);
+    const raw = tool.raw?.(result) ?? '';
     return (
         <>
             <div className="out-bar">
                 <div className="out-view" role="group" aria-label="Show results as">
                     <button type="button" aria-pressed={view === 'table'} onClick={() => choose('table')}>
                         <Icon name="grid" />
-                        Table
+                        Summary
                     </button>
                     <button type="button" aria-pressed={view === 'text'} onClick={() => choose('text')}>
                         <Icon name="code" />
                         Text
                     </button>
                 </div>
-                <button type="button" className="btn btn-sm out-copy" onClick={copy}>
-                    <Icon name={copied ? 'check' : 'copy'} />
-                    {copied ? 'Copied' : 'Copy'}
-                </button>
-                <span className="sr-only" role="status">
-                    {copied ? 'Copied to clipboard' : ''}
-                </span>
+                <CopyButton text={text} className="btn btn-sm out-copy" />
             </div>
-            {view === 'text' ? <pre className="out-console">{text}</pre> : tool.render(result)}
+            <Meta r={result} at={at} />
+            {view === 'text' ? <pre className="out-console">{text}</pre> : tool.render!(result, values)}
+            {view === 'table' && raw && <Raw text={raw} />}
+            <NextSteps steps={tool.next?.(result, values) ?? []} hrefFor={hrefFor} />
         </>
     );
 }
 
-function ToolPanel({ tool }: { tool: Tool }) {
-    const [values, setValues] = useState<Record<string, string>>({});
-    const [state, setState] = useState<{ status: 'idle' | 'running' | 'done' | 'error'; result?: Result; error?: string }>({ status: 'idle' });
-    const [progress, setProgress] = useState<{ mbps: number; pct: number } | null>(null);
-    const firstInput = useRef<HTMLInputElement>(null);
-
+function Countdown({ seconds, onDone }: { seconds: number; onDone: () => void }) {
+    const [left, setLeft] = useState(seconds);
     useEffect(() => {
-        setValues(Object.fromEntries(tool.fields.map((f) => [f.name, f.options ? f.options[0] : ''])));
-        setState({ status: 'idle' });
-        setProgress(null);
-    }, [tool.id]);
-
-    const run = async (values: Record<string, string>) => {
-        const missing = tool.fields.find((f) => !f.options && !values[f.name]?.trim());
-        if (missing) {
-            setState({ status: 'error', error: `Enter the ${missing.label.toLowerCase()}.` });
-            firstInput.current?.focus();
+        if (left <= 0) {
+            onDone();
             return;
         }
-        setState({ status: 'running' });
-        try {
-            const result =
-                tool.id === 'bandwidth'
-                    ? await measureBandwidth((mbps, pct) => setProgress({ mbps, pct }))
-                    : await tool.run!(Object.fromEntries(Object.entries(values).map(([k, v]) => [k, v.trim()])));
-            setState({ status: 'done', result });
-        } catch (err) {
-            setState({ status: 'error', error: err instanceof Error ? err.message : 'Something went wrong.' });
+        const t = window.setTimeout(() => setLeft(left - 1), 1000);
+        return () => window.clearTimeout(t);
+    }, [left]);
+    return left > 0 ? <> You can try again in {left} s.</> : null;
+}
+
+function Elapsed({ since }: { since: number }) {
+    const [now, setNow] = useState(Date.now());
+    useEffect(() => {
+        const t = window.setInterval(() => setNow(Date.now()), 1000);
+        return () => window.clearInterval(t);
+    }, []);
+    return <>{Math.max(0, Math.round((now - since) / 1000))} s</>;
+}
+
+const ERROR_TITLE: Record<ToolError['kind'], string> = {
+    invalid: 'Check the input',
+    limited: 'Please wait',
+    timeout: 'The test timed out',
+    failed: 'The test could not finish',
+};
+
+function ToolPanel({ tool, initial, hrefFor, onTarget }: { tool: Tool; initial: Values; hrefFor: (n: Next) => string; onTarget: (t: string) => void }) {
+    const [values, setValues] = useState<Values>(() => ({ ...defaults(tool.fields), ...initial }));
+    const [state, setState] = useState<RunState>({ status: 'idle' });
+    const [waiting, setWaiting] = useState(false);
+    const inputs = useRef<Record<string, HTMLInputElement | null>>({});
+    const output = useRef<HTMLDivElement>(null);
+
+    const visible = tool.fields.filter((f) => !f.showIf || f.showIf(values));
+    const main = visible.filter((f) => !f.advanced);
+    const advanced = visible.filter((f) => f.advanced);
+    const advancedChanged = advanced.some((f) => (values[f.name] ?? '') !== (defaults([f])[f.name] ?? ''));
+
+    const run = async (vals: Values) => {
+        const trimmed = Object.fromEntries(Object.entries(vals).map(([k, v]) => [k, v.trim()]));
+        const missing = visible.find((f) => !f.options && !f.optional && !trimmed[f.name]);
+        if (missing) {
+            setState({ status: 'error', error: new ToolError(`Enter the ${missing.label.toLowerCase()}${missing.placeholder ? `, for example ${missing.placeholder}` : ''}.`, 'invalid'), field: missing.name });
+            inputs.current[missing.name]?.focus();
+            return;
         }
-        setProgress(null);
+        const started = Date.now();
+        setState({ status: 'running', started });
+        try {
+            const result = await tool.run!(trimmed, (progress) => setState({ status: 'running', started, progress }));
+            setState({ status: 'done', result, at: new Date(), values: trimmed });
+            if (tool.target?.(trimmed)) onTarget(tool.target(trimmed));
+        } catch (err) {
+            const error = err instanceof ToolError ? err : new ToolError(err instanceof Error ? err.message : 'Something went wrong.');
+            setState({ status: 'error', error });
+            if (error.kind === 'limited' && error.retryAfter) setWaiting(true);
+        }
+        output.current?.focus({ preventScroll: true });
     };
 
     const submit = (e: FormEvent) => {
@@ -1060,29 +167,72 @@ function ToolPanel({ tool }: { tool: Tool }) {
         run(values);
     };
 
-    // Checks every common port on the host in one request.
-    const checkAll = async () => {
-        if (!values.host?.trim()) {
-            setState({ status: 'error', error: 'Enter the host or IP first.' });
-            firstInput.current?.focus();
-            return;
-        }
-        setState({ status: 'running' });
-        try {
-            setState({ status: 'done', result: await api('ports', { host: values.host.trim() }) });
-        } catch (err) {
-            setState({ status: 'error', error: err instanceof Error ? err.message : 'Something went wrong.' });
-        }
-    };
-
-    // Picking a common port fills it in and checks it right away.
+    // Port check extras: picking a common port fills it in and checks it; "check all" checks the fixed list.
     const pickPort = (port: number) => {
         const next = { ...values, port: String(port) };
         setValues(next);
         run(next);
     };
+    const checkAll = async () => {
+        const host = values.host?.trim();
+        if (!host) {
+            setState({ status: 'error', error: new ToolError('Enter the hostname or IP address first.', 'invalid'), field: 'host' });
+            inputs.current.host?.focus();
+            return;
+        }
+        const started = Date.now();
+        setState({ status: 'running', started });
+        try {
+            setState({ status: 'done', result: await api('ports', { host }), at: new Date(), values: { host } });
+            onTarget(host);
+        } catch (err) {
+            const error = err instanceof ToolError ? err : new ToolError('Something went wrong.');
+            setState({ status: 'error', error });
+            if (error.kind === 'limited' && error.retryAfter) setWaiting(true);
+        }
+    };
 
     const running = state.status === 'running';
+    const field = (f: Field) => {
+        const id = `f-${tool.id}-${f.name}`;
+        const invalid = state.status === 'error' && state.field === f.name;
+        return (
+            <div key={f.name} className={f.width ? `field field-${f.width}` : 'field'}>
+                <label htmlFor={id}>{f.label}</label>
+                {f.options ? (
+                    <select id={id} value={values[f.name] ?? f.options[0].value} onChange={(e) => setValues({ ...values, [f.name]: e.target.value })} aria-describedby={f.hint ? `${id}-hint` : undefined}>
+                        {f.options.map((o) => (
+                            <option key={o.value} value={o.value}>
+                                {o.label}
+                            </option>
+                        ))}
+                    </select>
+                ) : (
+                    <input
+                        id={id}
+                        ref={(el) => {
+                            inputs.current[f.name] = el;
+                        }}
+                        value={values[f.name] ?? ''}
+                        placeholder={f.placeholder}
+                        inputMode={f.numeric ? 'numeric' : undefined}
+                        autoComplete="off"
+                        autoCapitalize="off"
+                        spellCheck={false}
+                        aria-invalid={invalid ? true : undefined}
+                        aria-describedby={[f.hint && `${id}-hint`, invalid && `${tool.id}-error`].filter(Boolean).join(' ') || undefined}
+                        onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}
+                    />
+                )}
+                {f.hint && (
+                    <small id={`${id}-hint`} className="field-hint">
+                        {f.hint}
+                    </small>
+                )}
+            </div>
+        );
+    };
+
     return (
         <section className="tool-panel" aria-labelledby="tool-title" aria-busy={running}>
             <header className="tool-head">
@@ -1093,62 +243,160 @@ function ToolPanel({ tool }: { tool: Tool }) {
                     <h2 id="tool-title" className="h3">
                         {tool.name}
                     </h2>
-                    <p>{tool.blurb}.</p>
+                    <p>
+                        <strong className="tool-bestfor">Best for:</strong> {tool.bestFor}
+                    </p>
                 </div>
             </header>
-            <form className="tool-form" onSubmit={submit} noValidate>
-                {tool.fields.map((f, i) => (
-                    <label key={f.name} className={f.width ? `field field-${f.width}` : 'field'}>
-                        <span>{f.label}</span>
-                        {f.options ? (
-                            <select value={values[f.name] ?? f.options[0]} onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}>
-                                {f.options.map((o) => (
-                                    <option key={o}>{o}</option>
-                                ))}
-                            </select>
-                        ) : (
-                            <input
-                                ref={i === 0 ? firstInput : undefined}
-                                value={values[f.name] ?? ''}
-                                placeholder={f.placeholder}
-                                inputMode={f.name === 'port' ? 'numeric' : undefined}
-                                autoComplete="off"
-                                autoCapitalize="off"
-                                spellCheck={false}
-                                aria-invalid={state.status === 'error' && !values[f.name]?.trim() ? true : undefined}
-                                onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}
-                            />
-                        )}
-                    </label>
-                ))}
-                <button className="btn btn-primary tool-run" type="submit" disabled={running}>
-                    {running ? <span className="spinner" aria-hidden="true" /> : null}
-                    {running ? 'Running…' : tool.fields.length ? 'Run' : tool.id === 'bandwidth' ? 'Start test' : 'Check my connection'}
-                </button>
-            </form>
-            {tool.note && <p className="tool-note">{tool.note}</p>}
-            {tool.id === 'port' && <CommonPorts current={values.port} disabled={running} onPick={pickPort} onCheckAll={checkAll} />}
 
-            <div className="tool-output" role="status" aria-live="polite">
-                {running && progress && (
-                    <div className="out-speed">
-                        <span className="out-speed-value">{progress.mbps.toFixed(1)}</span>
-                        <span className="out-speed-unit">Mbit/s, {Math.round(progress.pct)}%</span>
+            {tool.custom ? (
+                tool.custom(initial)
+            ) : (
+                <>
+                    <form className="tool-form" onSubmit={submit} noValidate>
+                        {main.map(field)}
+                        <button className="btn btn-primary tool-run" type="submit" disabled={running || waiting}>
+                            {running ? <span className="spinner" aria-hidden="true" /> : null}
+                            {running ? 'Running…' : tool.action}
+                        </button>
+                    </form>
+                    {advanced.length > 0 && (
+                        <details className="tool-advanced" open={advancedChanged || undefined}>
+                            <summary>More options</summary>
+                            <div className="tool-form">{advanced.map(field)}</div>
+                        </details>
+                    )}
+                    <p className="tool-runs-on">
+                        <Icon name={tool.runsOn(values).startsWith('Runs in your browser') ? 'phone' : tool.runsOn(values).includes('Globalping') ? 'signal' : 'server'} />
+                        {tool.runsOn(values)}
+                    </p>
+                    {tool.id === 'port' && <CommonPorts current={values.port} disabled={running || waiting} onPick={pickPort} onCheckAll={checkAll} />}
+
+                    <div className="tool-output" ref={output} tabIndex={-1} aria-live="polite">
+                        {running && (
+                            <div className="out-running">
+                                {state.progress?.value ? (
+                                    <div className="out-speed">
+                                        <span className="out-speed-value">{state.progress.value.split(' ')[0]}</span>
+                                        <span className="out-speed-unit">
+                                            {state.progress.value.split(' ').slice(1).join(' ')}
+                                            {state.progress.pct != null && `, ${Math.round(state.progress.pct)}%`}
+                                        </span>
+                                    </div>
+                                ) : null}
+                                <p className="out-empty">
+                                    <span className="spinner spinner-dark" aria-hidden="true" /> {state.progress?.text ?? 'Running the test…'}{' '}
+                                    <span className="faint">
+                                        <Elapsed since={state.started} />
+                                        {tool.duration && ` · ${tool.duration}`}
+                                    </span>
+                                </p>
+                            </div>
+                        )}
+                        {state.status === 'error' && (
+                            <div className={`out-error out-error-${state.error.kind}`} id={`${tool.id}-error`} role="alert">
+                                <Icon name={state.error.kind === 'limited' ? 'refresh' : 'close'} />
+                                <div>
+                                    <strong>{ERROR_TITLE[state.error.kind]}</strong>
+                                    <p>
+                                        {state.error.message}
+                                        {waiting && state.error.retryAfter && <Countdown seconds={state.error.retryAfter} onDone={() => setWaiting(false)} />}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                        {state.status === 'done' && <ResultView tool={tool} result={state.result} at={state.at} values={state.values} hrefFor={hrefFor} />}
+                        {state.status === 'idle' && (tool.idle ?? <p className="out-empty">Results appear here after you press {tool.action}.</p>)}
                     </div>
-                )}
-                {running && !progress && <p className="out-empty">Working on it…</p>}
-                {state.status === 'error' && (
-                    <p className="out-error">
-                        <Icon name="close" />
-                        {state.error}
-                    </p>
-                )}
-                {state.status === 'done' && state.result && <ResultView tool={tool} result={state.result} />}
-                {state.status === 'idle' && (
-                    <p className="out-empty">
-                        {tool.fields.length ? 'Results appear here.' : tool.id === 'bandwidth' ? 'Downloads test data from our server and measures how fast it arrives.' : 'Shows the address and headers our server sees from you.'}
-                    </p>
-                )}
+                </>
+            )}
+        </section>
+    );
+}
+
+// Four common investigations, each a short path through the tools. Links fill in the last target; nothing runs by itself.
+const WORKFLOWS: { title: string; when: string; steps: { tool: string; field: string; extra?: Values; why: string }[] }[] = [
+    {
+        title: 'A website or service is unreachable',
+        when: 'Connectivity',
+        steps: [
+            { tool: 'ping', field: 'host', why: 'Does the host answer at all, and how fast?' },
+            { tool: 'traceroute', field: 'host', why: 'Where along the path do responses stop?' },
+            { tool: 'mtr', field: 'host', why: 'Is there loss that carries through to the destination?' },
+            { tool: 'port', field: 'host', extra: { port: '443' }, why: 'Is the service’s own TCP port reachable?' },
+        ],
+    },
+    {
+        title: 'A domain does not resolve correctly',
+        when: 'Domain and DNS',
+        steps: [
+            { tool: 'dns', field: 'name', why: 'What do resolvers answer, and with which status?' },
+            { tool: 'ns', field: 'domain', why: 'Do all name servers answer and agree?' },
+            { tool: 'whois', field: 'query', why: 'Is it registered, active, and delegated to those servers?' },
+            { tool: 'port', field: 'host', extra: { port: '443' }, why: 'Does the address it resolves to accept connections?' },
+        ],
+    },
+    {
+        title: 'Email is not arriving or lands in spam',
+        when: 'Email',
+        steps: [
+            { tool: 'mx', field: 'domain', why: 'Which servers receive the domain’s mail?' },
+            { tool: 'spf', field: 'domain', why: 'Which servers may send as the domain?' },
+            { tool: 'dmarc', field: 'domain', why: 'What happens to mail that fails?' },
+            { tool: 'dkim', field: 'domain', why: 'Is the signing key published? (needs a selector)' },
+            { tool: 'smtp', field: 'host', why: 'Does the mail server answer on port 25?' },
+            { tool: 'blacklist', field: 'host', why: 'Is the sending server on spam lists?' },
+        ],
+    },
+    {
+        title: 'A network is unreachable from some places',
+        when: 'Routing',
+        steps: [
+            { tool: 'prefix', field: 'resource', why: 'Is it announced, by which AS, and does RPKI allow it?' },
+            { tool: 'lg', field: 'resource', why: 'What path does each network have to it?' },
+            { tool: 'traceroute', field: 'host', why: 'Which networks does traffic cross from here?' },
+            { tool: 'whois', field: 'query', why: 'Who is the address space registered to?' },
+        ],
+    },
+];
+
+function Workflows({ target, hrefFor }: { target: string; hrefFor: (n: Next) => string }) {
+    const isIp = /^[\d.]+$|:/.test(target);
+    return (
+        <section className="workflows" aria-labelledby="workflows-title">
+            <div className="workflows-head">
+                <h2 id="workflows-title" className="h3">
+                    Troubleshooting step by step
+                </h2>
+                <p className="faint">
+                    {target ? (
+                        <>
+                            Links below carry <Mono>{target}</Mono> into each tool. Nothing runs until you press its button.
+                        </>
+                    ) : (
+                        'Run any tool and these links carry its target along. Nothing runs until you press a tool’s button.'
+                    )}
+                </p>
+            </div>
+            <div className="workflows-grid">
+                {WORKFLOWS.map((w) => (
+                    <div className="workflow" key={w.title}>
+                        <span className="workflow-kind">{w.when}</span>
+                        <h3 className="workflow-title">{w.title}</h3>
+                        <ol className="workflow-steps">
+                            {w.steps.map((s) => {
+                                const meta = TOOL_LIST.find((t) => t.id === s.tool)!;
+                                const carry = target && !(isIp && ['domain', 'name'].includes(s.field) && s.tool !== 'dns');
+                                return (
+                                    <li key={s.tool}>
+                                        <a href={hrefFor({ tool: s.tool, label: meta.name, values: carry ? { [s.field]: target, ...s.extra } : { ...s.extra } })}>{meta.name}</a>
+                                        <span className="faint">{s.why}</span>
+                                    </li>
+                                );
+                            })}
+                        </ol>
+                    </div>
+                ))}
             </div>
         </section>
     );
@@ -1171,23 +419,32 @@ function MyIp() {
 const HERO: Record<ToolGroup, { title: string; lead: string }> = {
     network: {
         title: 'Network tools.',
-        lead: 'Ping or trace a host from our server, test a port, measure your download speed, or work out a subnet. Free, no sign-up.',
+        lead: 'Ping, trace or MTR a host from our server or from other countries, test a TCP port, measure your download speed, or plan a subnet. Free, no sign-up.',
     },
     email: {
         title: 'DNS & Email tools.',
-        lead: 'Look up DNS records and check a domain’s email setup: MX, SPF, DMARC, DKIM, its mail server and blacklists. Free, no sign-up.',
+        lead: 'Look up DNS records and compare them across locations, and check a domain’s email setup: MX, SPF, DMARC, DKIM, its mail server, registration and spam lists. Free, no sign-up.',
+    },
+    bgp: {
+        title: 'BGP & ASN tools.',
+        lead: 'Look up an autonomous system, find which network announces an address and whether RPKI allows it, and see the BGP paths networks around the world use to reach it. Free, no sign-up.',
     },
 };
 
 export default function Tools({ group }: { group: ToolGroup }) {
     const { root } = useSite();
     const tools = TOOLS.filter((t) => t.group === group);
-    const fromHash = () => tools.find((t) => `#${t.id}` === window.location.hash) ?? tools[0];
-    // The pre-rendered page shows the first tool; the one in the address (#mx) is picked once the page runs.
-    const [tool, setTool] = useState<Tool>(tools[0]);
+    // The pre-rendered page shows the first tool; the one in the address (#mx?domain=…) is picked once the page runs.
+    const [current, setCurrent] = useState<{ tool: Tool; initial: Values; n: number }>({ tool: tools[0], initial: {}, n: 0 });
+    const [target, setTarget] = useState('');
 
     useEffect(() => {
-        const onHash = () => setTool(fromHash());
+        const onHash = () => {
+            const { id, values } = parseHash(window.location.hash);
+            const tool = tools.find((t) => t.id === id);
+            setCurrent((c) => ({ tool: tool ?? tools[0], initial: tool ? values : {}, n: c.n + 1 }));
+            if (tool && Object.keys(values).length) document.getElementById('tool-card')?.scrollIntoView({ block: 'start' });
+        };
         onHash();
         window.addEventListener('hashchange', onHash);
         return () => window.removeEventListener('hashchange', onHash);
@@ -1195,8 +452,9 @@ export default function Tools({ group }: { group: ToolGroup }) {
 
     const pick = (t: Tool) => {
         history.replaceState(null, '', `#${t.id}`);
-        setTool(t);
+        setCurrent((c) => ({ tool: t, initial: {}, n: c.n + 1 }));
     };
+    const hrefFor = (n: Next) => toolHref(n, group, root);
 
     return (
         <>
@@ -1212,15 +470,17 @@ export default function Tools({ group }: { group: ToolGroup }) {
 
             <section className="tools-main">
                 <div className="container tools-stack">
-                    <div className="tool-card">
+                    <div className="tool-card" id="tool-card">
                         <div className="tool-tabs" role="tablist" aria-label={TOOL_PAGES[group].title}>
                             {tools.map((t) => (
                                 <button
                                     type="button"
                                     role="tab"
                                     key={t.id}
-                                    aria-selected={t.id === tool.id}
+                                    aria-selected={t.id === current.tool.id}
+                                    aria-controls="tool-panel"
                                     className="tool-tab"
+                                    title={t.blurb}
                                     onClick={() => pick(t)}
                                 >
                                     <Icon name={t.icon} />
@@ -1228,13 +488,19 @@ export default function Tools({ group }: { group: ToolGroup }) {
                                 </button>
                             ))}
                         </div>
-                        <ToolPanel tool={tool} />
+                        <div id="tool-panel" role="tabpanel">
+                            <ToolPanel key={`${current.tool.id}-${current.n}`} tool={current.tool} initial={current.initial} hrefFor={hrefFor} onTarget={setTarget} />
+                        </div>
                     </div>
+
+                    <Workflows target={target} hrefFor={hrefFor} />
 
                     <p className="tools-fineprint small faint">
                         {group === 'network'
-                            ? 'Ping, traceroute and port checks run from our server and only reach public addresses. Each visitor has a limit of a few tests a minute. The calculators run in your browser.'
-                            : 'Lookups run from our server. SMTP checks only connect to public addresses, and each visitor has a limit of a few tests a minute.'}{' '}
+                            ? 'Tests from our server only reach public addresses, and each visitor can run a few a minute. Tests from other countries run on Globalping, a free network of probes, and count against your connection’s hourly Globalping allowance. The subnet calculator runs in your browser.'
+                            : group === 'email'
+                              ? 'Lookups run from our server. Connections (SMTP, name server checks) only go to public addresses, and each visitor can run a few tests a minute. DNS comparisons from other countries run on Globalping.'
+                              : 'Routing data comes from RIPEstat (RIPE NCC’s Routing Information Service), network details from PeeringDB and AS names from Team Cymru. Answers are kept for up to 5 minutes, so a route that just changed can take that long to show.'}{' '}
                         Built by PingOmni, makers of <a href={`${root}radiusone/`}>RadiusOne</a>.
                     </p>
                 </div>

@@ -19,14 +19,14 @@ Set these at build time in `.env` (or `.env.production`):
 | Variable | Default | Used for |
 |---|---|---|
 | `VITE_SITE_URL` | `https://pingomni.com` | Canonical links, Open Graph tags, structured data, sitemap.xml and robots.txt |
-| `VITE_DEMO_URL` | `http://10.4.100.101:8090/` | "Try the demo" buttons (the static RadiusOne demo) |
+| `VITE_DEMO_URL` | `/radiusone/demo/` | "Try the demo" buttons. nginx serves the static RadiusOne demo (`/opt/radiusone-demo/dist`) at this path |
 | `VITE_CONTACT_EMAIL` | `hello@pingomni.com` | Contact and "Tell me when it's ready" links |
 
 ## Network tools
 
-Two pages, both in the navbar's Tools menu. `/tools/network/`: ping, traceroute, MTR, port check, reverse lookup, proxy checker, bandwidth meter, network calculator and mask calculator. `/tools/email/`: DNS lookup, MX, NS, SPF, DMARC, DKIM, SMTP, WHOIS and blacklist checks. Each tool has its own address (`/tools/email/#mx`), and old `/tools/#...` links forward to the right page. The tool names live in `src/lib/toolList.ts`.
+Three pages, all in the navbar's Tools menu. `/tools/network/`: ping, traceroute, MTR, port check, reverse lookup, proxy checker, bandwidth meter and subnet calculator (address and mask, range to mask, splitting, prefix map). `/tools/email/`: DNS lookup, MX, NS, SPF, DMARC, DKIM, SMTP, WHOIS and blacklist checks. `/tools/bgp/`: AS lookup, prefix lookup (origin, RPKI, visibility, upstreams, common AS paths) and a looking glass. Each tool has its own address (`/tools/email/#mx`), and old `/tools/#...` links forward to the right page. The tool names live in `src/lib/toolList.ts`.
 
-The calculators run in the browser. Everything else calls `api/index.php` (`/api/?tool=<name>`). The API needs PHP 8.3 with curl and openssl, plus `ping` and `mtr` on the server. WHOIS uses the public RDAP service (rdap.org).
+The calculators run in the browser. Everything else calls `api/index.php` (`/api/?tool=<name>`). The API needs PHP 8.3 with curl and openssl, plus `ping` and `mtr` on the server. WHOIS uses the public RDAP service (rdap.org). The BGP tools use RIPEstat (stat.ripe.net, RIPE NCC's RIS route collectors, called with `sourceapp=pingomni`), PeeringDB's public API and Team Cymru's AS-name DNS service (`AS<n>.asn.cymru.com`), none of which need a key; answers are cached for 5 minutes in the API's temp directory. Traceroute and MTR from our server show the networks crossed, named through the same Team Cymru service.
 
 - Ping, traceroute, port and SMTP checks only reach public addresses; private, loopback, link-local, CGNAT and reserved ranges are refused.
 - Each visitor gets 10 outbound tests and 40 lookups a minute (counted in the system temp folder), and nginx caps the API at 60 requests a minute per IP.
@@ -57,7 +57,7 @@ sudo cp deploy/nginx.conf /etc/nginx/sites-available/pingomni-web && sudo nginx 
 
 ## Files
 
-- `index.html`, `radiusone/`, `ticketone/`, `dnsone/`, `tools/network/`, `tools/email/`: one HTML file per page, so every address works on any static host.
+- `index.html`, `radiusone/`, `ticketone/`, `dnsone/`, `tools/network/`, `tools/email/`, `tools/bgp/`: one HTML file per page, so every address works on any static host.
 - `src/pages/`: the home, RadiusOne and coming-soon pages; `src/shared/Layout.tsx`: header, footer, contact band and theme switch.
 - `src/site.css`: tokens (same names and values as the portal's `resources/css/app.css`) and styles.
 - `src/brand.tsx`: the family marks (one tile, gradient and teal "ping" dot; one letter per product) and wordmarks.

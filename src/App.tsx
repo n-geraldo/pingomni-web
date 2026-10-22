@@ -12,6 +12,7 @@ const PAGES: Record<PageId, () => React.ReactNode> = {
     dnsone: () => <ComingSoon brand="dnsone" />,
     'tools-network': () => <Tools group="network" />,
     'tools-email': () => <Tools group="email" />,
+    'tools-bgp': () => <Tools group="bgp" />,
     notfound: () => <NotFound />,
 };
 

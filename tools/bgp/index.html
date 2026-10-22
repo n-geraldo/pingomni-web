@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Free BGP tools: AS lookup, BGP route, RPKI and looking glass | PingOmni</title>
+        <meta name="description" content="Free BGP and ASN tools: look up any autonomous system, find which network announces an IP and whether RPKI allows it, and see BGP paths from route collectors worldwide." />
+        <link rel="canonical" href="%VITE_SITE_URL%/tools/bgp/" />
+        <meta name="theme-color" content="#151b24" />
+        <link rel="icon" href="../../favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="../../apple-touch-icon.png" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="PingOmni" />
+        <meta property="og:title" content="Free BGP tools: AS lookup, BGP route, RPKI and looking glass | PingOmni" />
+        <meta property="og:description" content="Free BGP and ASN tools: look up any autonomous system, find which network announces an IP and whether RPKI allows it, and see BGP paths from route collectors worldwide." />
+        <meta property="og:url" content="%VITE_SITE_URL%/tools/bgp/" />
+        <meta property="og:image" content="%VITE_SITE_URL%/og/tools-bgp.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Free BGP tools: AS lookup, BGP route, RPKI and looking glass | PingOmni" />
+        <meta name="twitter:description" content="Free BGP and ASN tools: look up any autonomous system, find which network announces an IP and whether RPKI allows it, and see BGP paths from route collectors worldwide." />
+        <meta name="twitter:image" content="%VITE_SITE_URL%/og/tools-bgp.png" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@graph": [
+                    {
+                        "@type": "WebApplication",
+                        "name": "PingOmni BGP and ASN tools",
+                        "url": "%VITE_SITE_URL%/tools/bgp/",
+                        "applicationCategory": "UtilitiesApplication",
+                        "operatingSystem": "Any",
+                        "browserRequirements": "Requires JavaScript",
+                        "isAccessibleForFree": true,
+                        "offers": {
+                            "@type": "Offer",
+                            "price": "0",
+                            "priceCurrency": "USD"
+                        },
+                        "featureList": [
+                            "AS lookup",
+                            "AS neighbours and upstreams",
+                            "Announced prefixes",
+                            "BGP prefix lookup",
+                            "RPKI origin validation",
+                            "BGP looking glass",
+                            "AS path on traceroute and MTR"
+                        ],
+                        "publisher": {
+                            "@id": "%VITE_SITE_URL%/#organization"
+                        }
+                    },
+                    {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "PingOmni",
+                                "item": "%VITE_SITE_URL%/"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 2,
+                                "name": "BGP & ASN tools",
+                                "item": "%VITE_SITE_URL%/tools/bgp/"
+                            }
+                        ]
+                    }
+                ]
+            }
+        </script>
+        <script>
+            // Apply the saved theme before first paint, so the page never flashes the wrong one.
+            try {
+                var t = localStorage.getItem('pingomni-theme');
+                if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+            } catch (e) {}
+        </script>
+    </head>
+    <body>
+        <div id="root" data-page="tools-bgp" data-root="../../"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
+</html>
