@@ -1930,6 +1930,83 @@ a:hover {
   color: var(--text-faint);
 }
 
+/* Port check: common ports to pick from, grouped by what they are for */
+.common-ports {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.common-ports-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.common-ports-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.common-ports-group {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: start;
+  gap: 6px 12px;
+}
+
+.common-ports-label {
+  padding-top: 6px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.common-ports-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.port-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: 13px var(--font);
+  cursor: pointer;
+  transition: border-color 120ms, background-color 120ms, color 120ms;
+}
+
+.port-chip:hover:not(:disabled) {
+  border-color: var(--accent-line);
+  background: var(--accent-bg);
+}
+
+.port-chip[aria-pressed="true"] {
+  border-color: var(--accent-solid);
+  color: var(--accent);
+}
+
+.port-chip:disabled {
+  opacity: .6;
+  cursor: progress;
+}
+
+.port-chip-num {
+  font: 600 13px var(--font-mono);
+  color: var(--text-strong);
+}
+
+.port-chip[aria-pressed="true"] .port-chip-num {
+  color: var(--accent);
+}
+
 .tool-output {
   display: grid;
   gap: 16px;
@@ -2132,6 +2209,14 @@ a:hover {
   .out-rows > div {
     grid-template-columns: minmax(0, 1fr);
     gap: 2px;
+  }
+
+  .common-ports-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .common-ports-label {
+    padding-top: 0;
   }
 }
 

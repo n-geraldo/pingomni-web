@@ -209,7 +209,8 @@ const SPECS: ToolSpec[] = [
                     {r.state === 'open' ? 'Open' : r.state === 'closed' ? 'Closed' : 'Filtered'}
                 </Status>
                 <span>
-                    TCP port <strong>{r.port}</strong> on <Target host={r.host} ip={r.ip} />
+                    TCP port <strong>{r.port}</strong>
+                    {PORT_NAMES.has(r.port) && <> ({PORT_NAMES.get(r.port)})</>} on <Target host={r.host} ip={r.ip} />
                     {r.state === 'open' && ` answered in ${ms(r.ms)}`}
                     {r.state === 'closed' && ' refused the connection'}
                     {r.state === 'filtered' && ' did not answer (a firewall may be dropping it)'}
@@ -520,6 +521,50 @@ const SPECS: ToolSpec[] = [
 
 const TOOLS: Tool[] = TOOL_LIST.map((meta) => ({ ...SPECS.find((s) => s.id === meta.id)!, ...meta }));
 
+// Well-known TCP ports, with the ones ISPs reach for on MikroTik routers. UDP services (DNS over UDP, RADIUS, SNMP) cannot be tested with a TCP connect.
+const COMMON_PORTS: { group: string; ports: [number, string][] }[] = [
+    { group: 'Web', ports: [[80, 'HTTP'], [443, 'HTTPS'], [8080, 'HTTP alt'], [8443, 'HTTPS alt']] },
+    { group: 'Email', ports: [[25, 'SMTP'], [465, 'SMTPS'], [587, 'Submission'], [110, 'POP3'], [995, 'POP3S'], [143, 'IMAP'], [993, 'IMAPS']] },
+    { group: 'Remote access', ports: [[22, 'SSH'], [23, 'Telnet'], [3389, 'RDP'], [5900, 'VNC']] },
+    { group: 'MikroTik', ports: [[8291, 'Winbox'], [8728, 'RouterOS API'], [8729, 'API over TLS']] },
+    { group: 'Files and DNS', ports: [[21, 'FTP'], [53, 'DNS (TCP)'], [445, 'SMB']] },
+    { group: 'Databases', ports: [[3306, 'MySQL / MariaDB'], [5432, 'PostgreSQL'], [6379, 'Redis'], [27017, 'MongoDB']] },
+    { group: 'VPN', ports: [[1723, 'PPTP'], [1194, 'OpenVPN (TCP)']] },
+];
+
+const PORT_NAMES = new Map(COMMON_PORTS.flatMap((g) => g.ports));
+
+function CommonPorts({ current, disabled, onPick }: { current?: string; disabled: boolean; onPick: (port: number) => void }) {
+    return (
+        <div className="common-ports">
+            <h3 className="common-ports-title">Common ports</h3>
+            <div className="common-ports-groups">
+                {COMMON_PORTS.map((g) => (
+                    <div className="common-ports-group" key={g.group}>
+                        <span className="common-ports-label">{g.group}</span>
+                        <div className="common-ports-list">
+                            {g.ports.map(([port, name]) => (
+                                <button
+                                    type="button"
+                                    key={port}
+                                    className="port-chip"
+                                    aria-pressed={current === String(port)}
+                                    disabled={disabled}
+                                    onClick={() => onPick(port)}
+                                    title={`Check port ${port} (${name})`}
+                                >
+                                    <span className="port-chip-num">{port}</span>
+                                    <span>{name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 function ToolPanel({ tool }: { tool: Tool }) {
     const [values, setValues] = useState<Record<string, string>>({});
     const [state, setState] = useState<{ status: 'idle' | 'running' | 'done' | 'error'; result?: Result; error?: string }>({ status: 'idle' });
@@ -532,8 +577,7 @@ function ToolPanel({ tool }: { tool: Tool }) {
         setProgress(null);
     }, [tool.id]);
 
-    const submit = async (e: FormEvent) => {
-        e.preventDefault();
+    const run = async (values: Record<string, string>) => {
         const missing = tool.fields.find((f) => !f.options && !values[f.name]?.trim());
         if (missing) {
             setState({ status: 'error', error: `Enter the ${missing.label.toLowerCase()}.` });
@@ -551,6 +595,18 @@ function ToolPanel({ tool }: { tool: Tool }) {
             setState({ status: 'error', error: err instanceof Error ? err.message : 'Something went wrong.' });
         }
         setProgress(null);
+    };
+
+    const submit = (e: FormEvent) => {
+        e.preventDefault();
+        run(values);
+    };
+
+    // Picking a common port fills it in and checks it right away.
+    const pickPort = (port: number) => {
+        const next = { ...values, port: String(port) };
+        setValues(next);
+        run(next);
     };
 
     const running = state.status === 'running';
@@ -598,6 +654,7 @@ function ToolPanel({ tool }: { tool: Tool }) {
                 </button>
             </form>
             {tool.note && <p className="tool-note">{tool.note}</p>}
+            {tool.id === 'port' && <CommonPorts current={values.port} disabled={running} onPick={pickPort} />}
 
             <div className="tool-output" role="status" aria-live="polite">
                 {running && progress && (
