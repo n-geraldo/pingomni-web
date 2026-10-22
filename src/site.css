@@ -1,23 +1,23 @@
-/* PingOmni site. Tokens are the RadiusOne portal's (resources/css/app.css), same names and values,
-   so the site and the product stay one system and dark mode is a token swap. */
+/* PingOmni site, "Daylight" version: a light, open stage in the light theme, graphite in the dark one.
+   Token names are the RadiusOne portal's (resources/css/app.css), so dark mode is a token swap. */
 
 :root {
   color-scheme: light;
 
-  --font: "IBM Plex Sans Variable", "IBM Plex Sans", "Segoe UI", -apple-system, system-ui, Roboto, Arial, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  --font: "Chivo Variable", "Segoe UI", -apple-system, system-ui, Roboto, Arial, sans-serif;
+  --font-mono: "Chivo Mono Variable", ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 
-  --bg: #f4f6fa;
+  --bg: #eef2f6;
   --surface: #ffffff;
-  --surface-2: #f7f9fc;
-  --surface-hover: #eef3fc;
-  --line: #e2e7ef;
-  --line-strong: #c9d2df;
-  --text: #2b3950;
-  --text-strong: #13213a;
-  --text-muted: #56637a;
-  --text-faint: #66728a;
-  --wordmark: #13213a;
+  --surface-2: #f6f8fa;
+  --surface-hover: #edf2fa;
+  --line: #e1e6ec;
+  --line-strong: #c8d0da;
+  --text: #2a3442;
+  --text-strong: #1a2330;
+  --text-muted: #545f6e;
+  --text-faint: #636e7f;
+  --wordmark: #1a2330;
 
   --accent: #1f5fd6;
   --accent-hover: #194fb3;
@@ -36,16 +36,23 @@
   --warning-bg: #fdf3e1;
   --warning-line: #f0d29b;
 
-  /* The stage is the portal's sidebar colour: always dark, in both themes. */
-  --stage: #0a1836;
-  --stage-line: rgba(148, 178, 236, .14);
-  --stage-raised: rgba(148, 178, 236, .06);
-  --on-stage: #eef3fb;
-  --on-stage-muted: #b4c0d6;
-  --on-stage-faint: #8d9bb6;
-  --on-stage-accent: #8fb5f8;
-  --live: #5eead4;
-  --grid-line: rgba(148, 178, 236, .07);
+  /* The stage is the top and bottom band of every page: open daylight in the light theme, graphite in the dark one. */
+  --stage: #ffffff;
+  --stage-line: #e1e6ec;
+  --stage-line-strong: #c8d0da;
+  --stage-line-hover: #8f9aab;
+  --stage-raised: #f6f8fa;
+  --stage-hover: rgba(26, 35, 48, .05);
+  --stage-active: rgba(26, 35, 48, .08);
+  --stage-focus: 0 0 0 3px rgba(31, 95, 214, .22);
+  --on-stage: #1a2330;
+  --on-stage-muted: #4c5767;
+  --on-stage-faint: #636e7f;
+  --on-stage-accent: #1f5fd6;
+  --on-stage-wordmark-accent: #1f5fd6;
+  --console-bg: #f6f8fa;
+  --live: #0b7a6e;
+  --live-ring: rgba(11, 122, 110, .16);
 
   --focus: 0 0 0 3px rgba(31, 95, 214, .28);
   --shadow-sm: 0 1px 2px rgba(15, 20, 26, .05);
@@ -53,8 +60,9 @@
   --shadow-shot: 0 24px 48px rgba(5, 8, 12, .32), 0 2px 6px rgba(5, 8, 12, .2);
 
   --radius-sm: 6px;
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
 
   --container: 1160px;
   --gutter: clamp(16px, 4vw, 32px);
@@ -65,17 +73,17 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0a1120;
-  --surface: #0f1829;
-  --surface-2: #131d31;
-  --surface-hover: #18243c;
-  --line: #222f47;
-  --line-strong: #31415f;
-  --text: #d3dcea;
-  --text-strong: #eef3fb;
-  --text-muted: #a2b0c8;
-  --text-faint: #8291ad;
-  --wordmark: #eef3fb;
+  --bg: #0e1217;
+  --surface: #151a21;
+  --surface-2: #1a2029;
+  --surface-hover: #1f2631;
+  --line: #262e39;
+  --line-strong: #36404d;
+  --text: #d5dbe3;
+  --text-strong: #eef1f5;
+  --text-muted: #a3adbb;
+  --text-faint: #8a95a5;
+  --wordmark: #eef1f5;
   --accent: #6c9ef6;
   --accent-hover: #8fb5f8;
   --accent-solid: #2f6bd8;
@@ -90,7 +98,22 @@
   --warning-solid: #d4932a;
   --warning-bg: rgba(234, 181, 90, .12);
   --warning-line: rgba(234, 181, 90, .34);
-  --stage: #060d1f;
+  --stage: #0b0e13;
+  --stage-line: rgba(255, 255, 255, .08);
+  --stage-line-strong: rgba(255, 255, 255, .18);
+  --stage-line-hover: rgba(255, 255, 255, .36);
+  --stage-raised: rgba(255, 255, 255, .04);
+  --stage-hover: rgba(255, 255, 255, .06);
+  --stage-active: rgba(255, 255, 255, .1);
+  --stage-focus: 0 0 0 3px rgba(108, 158, 246, .3);
+  --on-stage: #eef1f5;
+  --on-stage-muted: #b3bcc8;
+  --on-stage-faint: #8e99a8;
+  --on-stage-accent: #8fb5f8;
+  --on-stage-wordmark-accent: #6c9ef6;
+  --console-bg: rgba(255, 255, 255, .03);
+  --live: #5eead4;
+  --live-ring: rgba(94, 234, 212, .18);
   --focus: 0 0 0 3px rgba(108, 158, 246, .35);
   --shadow-sm: none;
   --shadow-pop: 0 10px 28px rgba(0, 0, 0, .5);
@@ -100,17 +123,17 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #0a1120;
-    --surface: #0f1829;
-    --surface-2: #131d31;
-    --surface-hover: #18243c;
-    --line: #222f47;
-    --line-strong: #31415f;
-    --text: #d3dcea;
-    --text-strong: #eef3fb;
-    --text-muted: #a2b0c8;
-    --text-faint: #8291ad;
-    --wordmark: #eef3fb;
+    --bg: #0e1217;
+    --surface: #151a21;
+    --surface-2: #1a2029;
+    --surface-hover: #1f2631;
+    --line: #262e39;
+    --line-strong: #36404d;
+    --text: #d5dbe3;
+    --text-strong: #eef1f5;
+    --text-muted: #a3adbb;
+    --text-faint: #8a95a5;
+    --wordmark: #eef1f5;
     --accent: #6c9ef6;
     --accent-hover: #8fb5f8;
     --accent-solid: #2f6bd8;
@@ -125,7 +148,22 @@
     --warning-solid: #d4932a;
     --warning-bg: rgba(234, 181, 90, .12);
     --warning-line: rgba(234, 181, 90, .34);
-    --stage: #060d1f;
+    --stage: #0b0e13;
+    --stage-line: rgba(255, 255, 255, .08);
+    --stage-line-strong: rgba(255, 255, 255, .18);
+    --stage-line-hover: rgba(255, 255, 255, .36);
+    --stage-raised: rgba(255, 255, 255, .04);
+    --stage-hover: rgba(255, 255, 255, .06);
+    --stage-active: rgba(255, 255, 255, .1);
+    --stage-focus: 0 0 0 3px rgba(108, 158, 246, .3);
+    --on-stage: #eef1f5;
+    --on-stage-muted: #b3bcc8;
+    --on-stage-faint: #8e99a8;
+    --on-stage-accent: #8fb5f8;
+    --on-stage-wordmark-accent: #6c9ef6;
+    --console-bg: rgba(255, 255, 255, .03);
+    --live: #5eead4;
+    --live-ring: rgba(94, 234, 212, .18);
     --focus: 0 0 0 3px rgba(108, 158, 246, .35);
     --shadow-sm: none;
     --shadow-pop: 0 10px 28px rgba(0, 0, 0, .5);
@@ -322,7 +360,7 @@ a:hover {
 
 .stage .wordmark-accent,
 .site-header .wordmark-accent {
-  color: #6c9ef6;
+  color: var(--on-stage-wordmark-accent);
 }
 
 /* The ping: one ring leaves the teal dot. Green from a product you can use, amber from one that is coming. */
@@ -504,12 +542,12 @@ a:hover {
 
 .site-nav a[aria-current="page"] {
   color: var(--on-stage);
-  background: rgba(255, 255, 255, .1);
+  background: var(--stage-active);
 }
 
 .site-nav a:hover {
   color: var(--on-stage);
-  background: rgba(255, 255, 255, .06);
+  background: var(--stage-hover);
   text-decoration: none;
 }
 
@@ -536,7 +574,7 @@ a:hover {
 .nav-menu-btn[data-current],
 .nav-menu.open .nav-menu-btn {
   color: var(--on-stage);
-  background: rgba(255, 255, 255, .06);
+  background: var(--stage-hover);
 }
 
 .nav-menu-btn .icon {
@@ -576,8 +614,8 @@ a:hover {
 
 .site-nav .mega-toolgroup-head:hover,
 .site-nav .mega-toolgroup-head[aria-current="page"] {
-  border-color: rgba(255, 255, 255, .18);
-  background: rgba(255, 255, 255, .07);
+  border-color: var(--stage-line-strong);
+  background: var(--stage-hover);
 }
 
 .mega-toolgroup-icon {
@@ -640,7 +678,7 @@ a:hover {
 
 .site-nav .mega-toolgroup ul a:hover {
   color: var(--on-stage);
-  background: rgba(255, 255, 255, .06);
+  background: var(--stage-hover);
 }
 
 .mega-toolgroup ul .icon {
@@ -664,7 +702,7 @@ a:hover {
   background: var(--stage);
   border-top: 1px solid var(--stage-line);
   border-bottom: 1px solid var(--stage-line);
-  box-shadow: 0 24px 40px rgba(5, 8, 12, .35);
+  box-shadow: 0 28px 48px -16px rgba(26, 35, 48, .22);
 }
 
 .nav-menu.open .mega {
@@ -788,8 +826,8 @@ a:hover {
 
 .site-nav .mega-soon a:hover,
 .site-nav .mega-soon a[aria-current="page"] {
-  border-color: rgba(255, 255, 255, .18);
-  background: rgba(255, 255, 255, .07);
+  border-color: var(--stage-line-strong);
+  background: var(--stage-hover);
   color: var(--on-stage);
 }
 
@@ -836,7 +874,7 @@ a:hover {
 
 .site-header .icon-btn:hover {
   color: var(--on-stage);
-  background: rgba(255, 255, 255, .06);
+  background: var(--stage-hover);
 }
 
 .menu-btn {
@@ -851,22 +889,6 @@ a:hover {
   isolation: isolate;
   background: var(--stage);
   color: var(--on-stage-muted);
-}
-
-/* A fine measurement grid on every dark band, fading out toward the edges: the graph paper engineers plot latency on. */
-.stage::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-position: -1px -1px;
-  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 0%, #000 20%, transparent 80%);
-  mask-image: radial-gradient(ellipse 90% 80% at 50% 0%, #000 20%, transparent 80%);
-  pointer-events: none;
 }
 
 .contact {
@@ -896,13 +918,13 @@ a:hover {
 
 .stage .btn-ghost {
   background: transparent;
-  border-color: rgba(255, 255, 255, .22);
+  border-color: var(--stage-line-strong);
   color: var(--on-stage);
 }
 
 .stage .btn-ghost:hover {
-  background: rgba(255, 255, 255, .07);
-  border-color: rgba(255, 255, 255, .4);
+  background: var(--stage-hover);
+  border-color: var(--stage-line-hover);
 }
 
 .hero {
@@ -910,19 +932,6 @@ a:hover {
   overflow: hidden;
   padding: clamp(32px, 5vw, 56px) 0 clamp(48px, 7vw, 88px);
   isolation: isolate;
-}
-
-/* The one glow the brand allows: behind the open product, never over text. */
-.hero::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  right: -10%;
-  top: 18%;
-  width: 70%;
-  height: 80%;
-  background: radial-gradient(closest-side, rgba(47, 107, 240, .18), transparent);
-  pointer-events: none;
 }
 
 .hero-head {
@@ -952,7 +961,7 @@ a:hover {
 .console {
   border: 1px solid var(--stage-line);
   border-radius: var(--radius-lg);
-  background: rgba(3, 9, 24, .55);
+  background: var(--console-bg);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
@@ -978,7 +987,7 @@ a:hover {
 
 .console-live[data-state="on"] {
   background: var(--live);
-  box-shadow: 0 0 0 3px rgba(94, 234, 212, .18);
+  box-shadow: 0 0 0 3px var(--live-ring);
 }
 
 .console-ip {
@@ -1207,8 +1216,8 @@ a:hover {
 }
 
 .tile-closed:hover {
-  border-color: rgba(255, 255, 255, .16);
-  background: rgba(255, 255, 255, .06);
+  border-color: var(--stage-line-strong);
+  background: var(--stage-hover);
 }
 
 .tile-closed .mark {
@@ -1235,9 +1244,9 @@ a:hover {
 }
 
 .stage .badge-success {
-  background: rgba(92, 207, 140, .12);
-  border-color: rgba(92, 207, 140, .32);
-  color: #5ccf8c;
+  background: var(--success-bg);
+  border-color: var(--success-line);
+  color: var(--success);
 }
 
 .tile-open .badge-success {
@@ -1256,9 +1265,9 @@ a:hover {
 }
 
 .stage .badge-warning {
-  background: rgba(234, 181, 90, .12);
-  border-color: rgba(234, 181, 90, .34);
-  color: #eab55a;
+  background: var(--warning-bg);
+  border-color: var(--warning-line);
+  color: var(--warning);
 }
 
 .tile-link {
@@ -1486,7 +1495,7 @@ a:hover {
   padding: 0 14px 0 34px;
   border: 1px solid var(--stage-line);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, .04);
+  background: var(--stage-raised);
   color: var(--on-stage);
   font: 15px var(--font-mono);
   caret-color: var(--live);
@@ -1498,14 +1507,14 @@ a:hover {
 }
 
 .quick-input:hover {
-  border-color: rgba(148, 178, 236, .3);
+  border-color: var(--stage-line-hover);
 }
 
 .quick-input:focus {
   outline: none;
-  border-color: #6c9ef6;
-  background: rgba(255, 255, 255, .06);
-  box-shadow: 0 0 0 3px rgba(108, 158, 246, .3);
+  border-color: var(--on-stage-wordmark-accent);
+  background: var(--stage-hover);
+  box-shadow: var(--stage-focus);
 }
 
 .quick-actions {
@@ -1522,8 +1531,8 @@ a:hover {
 }
 
 .quick-actions .btn:not(.btn-primary):hover {
-  background: rgba(255, 255, 255, .06);
-  border-color: rgba(148, 178, 236, .32);
+  background: var(--stage-hover);
+  border-color: var(--stage-line-hover);
   color: var(--on-stage);
 }
 
@@ -1877,19 +1886,6 @@ a:hover {
   padding: clamp(40px, 6vw, 72px) 0 clamp(120px, 14vw, 160px);
 }
 
-.tools-hero::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  top: 30%;
-  width: min(900px, 90vw);
-  height: 70%;
-  transform: translateX(-50%);
-  background: radial-gradient(closest-side, rgba(47, 107, 240, .22), transparent);
-  pointer-events: none;
-}
-
 .tools-hero-inner {
   display: grid;
   justify-items: center;
@@ -1923,7 +1919,7 @@ a:hover {
   height: 7px;
   border-radius: 50%;
   background: var(--live);
-  box-shadow: 0 0 0 3px rgba(94, 234, 212, .18);
+  box-shadow: 0 0 0 3px var(--live-ring);
 }
 
 .tools-myip .out-mono {
@@ -2627,13 +2623,13 @@ a:hover {
   overflow: auto;
   padding: 16px 18px;
   border-radius: var(--radius);
-  background: #050c1d;
-  border: 1px solid #1a2a4a;
-  color: #d3dcea;
+  background: #0b0e13;
+  border: 1px solid #232a33;
+  color: #d5dbe3;
   font: 13px/1.6 var(--font-mono);
   white-space: pre;
   tab-size: 4;
-  scrollbar-color: #2e4168 transparent;
+  scrollbar-color: #36404d transparent;
 }
 
 .out-console::selection {
@@ -3553,6 +3549,106 @@ abbr[title] {
 }
 
 /* --------------------------------------------------------------------------
+   Daylight: shape and layout choices that set this version apart
+   -------------------------------------------------------------------------- */
+/* Controls are pills; panels are soft 16px rectangles. */
+.btn,
+.badge,
+.tool-tab,
+.icon-btn {
+  border-radius: var(--radius-pill);
+}
+
+.site-header {
+  background: color-mix(in srgb, var(--stage) 86%, transparent);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  backdrop-filter: saturate(160%) blur(14px);
+}
+
+.h2 {
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 700;
+  letter-spacing: -.035em;
+}
+
+.display {
+  font-weight: 700;
+  letter-spacing: -.045em;
+}
+
+/* Home hero: the headline is the picture. Set huge, with the lead tucked against its last line. */
+.hero {
+  padding-top: clamp(48px, 8vw, 104px);
+}
+
+.hero-head {
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(28px, 4vw, 48px);
+}
+
+.hero-copy {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 34ch);
+  align-items: end;
+  gap: 20px clamp(32px, 5vw, 72px);
+}
+
+.hero-head .display {
+  font-size: clamp(46px, 8.4vw, 116px);
+  line-height: .92;
+  letter-spacing: -.055em;
+}
+
+.hero-head .lead {
+  padding-bottom: .4em;
+}
+
+/* The console becomes one instrument strip: the reading on the left, the prompt on the right. */
+.console {
+  display: grid;
+  grid-template-columns: minmax(220px, auto) minmax(0, 1fr);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.console-bar {
+  align-items: flex-start;
+  padding: 20px;
+  border-bottom: 0;
+  border-right: 1px solid var(--stage-line);
+}
+
+.console-bar > span:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.console-live {
+  margin-top: 7px;
+}
+
+.console-ip {
+  margin-left: 0;
+  font-size: 20px;
+  letter-spacing: -.01em;
+}
+
+.console-host {
+  margin-left: 0;
+}
+
+.quick {
+  padding: 20px;
+}
+
+.hero .launcher {
+  margin-top: clamp(8px, 2vw, 24px);
+}
+
+.contact {
+  border-top: 1px solid var(--stage-line);
+}
+
+/* --------------------------------------------------------------------------
    Responsive
    -------------------------------------------------------------------------- */
 @media (max-width: 900px) {
@@ -3614,8 +3710,15 @@ abbr[title] {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .hero-head {
+  .hero-head,
+  .hero-copy,
+  .console {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .console-bar {
+    border-right: 0;
+    border-bottom: 1px solid var(--stage-line);
   }
 
   .product-hero-text {
