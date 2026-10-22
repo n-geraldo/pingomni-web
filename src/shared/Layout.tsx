@@ -31,9 +31,13 @@ const NAV: { href: string; label: string }[] = [
 ];
 
 function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
-    const { page, root } = useSite();
+    const { page, root, theme } = useSite();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    const close = () => {
+        setOpen(false);
+        onNavigate();
+    };
     const current = PRODUCTS.some((p) => p.page === page);
 
     useEffect(() => {
@@ -61,29 +65,55 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
                 Products
                 <Icon name="chevron" />
             </button>
-            <ul className="nav-menu-list" id="products-menu">
-                {PRODUCTS.map((p) => (
-                    <li key={p.page}>
-                        <a
-                            href={`${root}${p.href}`}
-                            aria-current={p.page === page ? 'page' : undefined}
-                            onClick={() => {
-                                setOpen(false);
-                                onNavigate();
-                            }}
-                        >
-                            <Mark brand={p.page} size={32} />
-                            <span className="nav-menu-text">
-                                <span className="nav-menu-name">
-                                    <Wordmark brand={p.page} />
-                                    {p.soon && <span className="nav-menu-soon">Coming soon</span>}
-                                </span>
-                                <span className="nav-menu-job">{p.job}</span>
-                            </span>
-                        </a>
-                    </li>
-                ))}
-            </ul>
+            <div className="mega" id="products-menu">
+                <div className="container mega-grid">
+                    <div className="mega-feature">
+                        <div className="mega-feature-head">
+                            <Mark brand="radiusone" size={36} />
+                            <Wordmark brand="radiusone" />
+                            <span className="badge badge-success">Available</span>
+                        </div>
+                        <p className="mega-feature-job">The ISP back office on FreeRADIUS: subscribers, plans, billing and NAS monitoring.</p>
+                        <div className="mega-feature-body">
+                            <a className="mega-shot" href={`${root}radiusone/`} tabIndex={-1} aria-hidden="true" onClick={close}>
+                                <img src={`${root}shots/dashboard-${theme}.jpg`} alt="" width={1800} height={1500} loading="lazy" />
+                            </a>
+                            <div className="mega-feature-links">
+                                <a
+                                    className="text-link"
+                                    href={`${root}radiusone/`}
+                                    aria-current={page === 'radiusone' ? 'page' : undefined}
+                                    onClick={close}
+                                >
+                                    RadiusOne overview
+                                    <Icon name="arrow" />
+                                </a>
+                                <a className="text-link" href={DEMO_URL} target="_blank" rel="noopener" onClick={close}>
+                                    Try the demo
+                                    <Icon name="external" />
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="mega-soon">
+                        <p className="mega-soon-title">Coming soon</p>
+                        <ul>
+                            {PRODUCTS.filter((p) => p.soon).map((p) => (
+                                <li key={p.page}>
+                                    <a href={`${root}${p.href}`} aria-current={p.page === page ? 'page' : undefined} onClick={close}>
+                                        <Mark brand={p.page} size={32} />
+                                        <span className="mega-soon-text">
+                                            <Wordmark brand={p.page} />
+                                            <span className="mega-soon-job">{p.job}</span>
+                                        </span>
+                                        <Icon name="arrow" />
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
