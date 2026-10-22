@@ -14,7 +14,7 @@ const SPEC: { area: string; icon: string; items: string[] }[] = [
     {
         area: 'Billing',
         icon: 'billing',
-        items: ['Invoices and recurring billing every night', 'Payments with PDF receipts', 'A list of overdue invoices'],
+        items: ['Recurring invoices generated every night', 'Payments with PDF receipts', 'Overdue invoices in one list'],
     },
     {
         area: 'Network',
@@ -41,10 +41,10 @@ const SPEC: { area: string; icon: string; items: string[] }[] = [
 const REQUIREMENTS: { term: string; text: string }[] = [
     { term: 'Operating system', text: 'Ubuntu 24.04 LTS, server or minimal' },
     { term: 'Server', text: '2 CPU cores, 4 GB RAM and 20 GB disk to start; more database memory for thousands of clients' },
-    { term: 'Access', text: 'root, or a user who can run sudo' },
-    { term: 'Internet', text: 'Needed during the install' },
+    { term: 'Access', text: 'Root, or a user with sudo rights' },
+    { term: 'Internet', text: 'Required during installation' },
     { term: 'Domain', text: 'Optional: a DNS name for a trusted Let’s Encrypt certificate' },
-    { term: 'Routers', text: 'MikroTik RouterOS, tested end to end. Cisco IOS XE in Beta' },
+    { term: 'Routers', text: 'MikroTik RouterOS, tested end to end; Cisco IOS XE in Beta' },
 ];
 
 const INSTALL = 'sudo bash install.sh --domain radius.example.com';
@@ -56,17 +56,17 @@ const USE_CASES: { title: string; scene: string; how: string[] }[] = [
         scene: 'Customers connect over PPPoE through RouterOS NAS devices spread across several sites.',
         how: [
             'Each NAS is added once, with its RADIUS secret and SNMP settings',
-            'Suspend or expire a customer and the session is cut over RADIUS CoA',
-            'The monitoring page shows which NAS is up and how many sessions it carries',
+            'Suspend or expire a customer, and RadiusOne ends the session over RADIUS CoA',
+            'The monitoring page shows which NAS devices are up and how many sessions each carries',
         ],
     },
     {
         title: 'An ISP office that bills every month',
-        scene: 'Office staff spend the start of each month making invoices and chasing who has not paid.',
+        scene: 'Office staff spend the first days of every month writing invoices and chasing late payers.',
         how: [
-            'Invoices and recurring billing run every night on their own',
-            'Payments get PDF receipts; overdue invoices have their own list',
-            'Customers get their notices by email or SMS',
+            'Recurring invoices are generated automatically every night',
+            'Every payment gets a PDF receipt; overdue invoices sit in their own list',
+            'Customers receive their notices by email or SMS',
         ],
     },
     {
@@ -74,17 +74,17 @@ const USE_CASES: { title: string; scene: string; how: string[] }[] = [
         scene: 'The customer says the internet is down. The technician has a phone and five minutes.',
         how: [
             'Search by name, phone, IP or MAC from a phone',
-            'See whether the session is online, which NAS it is on and its last usage',
-            'Make the change on the spot, under a role that only allows what support needs',
+            'See whether the session is online, which NAS carries it and its latest usage',
+            'Fix it on the spot, under a role limited to what support needs',
         ],
     },
     {
         title: 'Moving off hand-edited FreeRADIUS',
-        scene: 'The network runs on FreeRADIUS, but every change means SQL by hand and one person who knows how.',
+        scene: 'The network runs on FreeRADIUS, but every change means hand-written SQL, and only one person knows how.',
         how: [
-            'RadiusOne works on the standard FreeRADIUS SQL tables, so nothing is migrated away',
+            'RadiusOne works directly on the standard FreeRADIUS SQL tables, so there is nothing to migrate',
             'Authentication keeps working even while the portal is in maintenance',
-            'Every operator has their own login, and privileged roles need two-factor sign-in',
+            'Every operator gets their own login, and privileged roles require two-factor sign-in',
         ],
     },
 ];
@@ -158,8 +158,8 @@ function NetworkPath() {
                         Where it sits in your network.
                     </h2>
                     <p className="lead">
-                        RadiusOne writes to the same SQL tables FreeRADIUS already reads. It is never in the login path, so subscribers keep
-                        signing in even while the portal is in maintenance.
+                        RadiusOne writes to the same SQL tables FreeRADIUS already reads. It never sits in the login path, so subscribers keep
+                        connecting even while the portal is down for maintenance.
                     </p>
                 </div>
                 <div className="path">
@@ -279,11 +279,11 @@ export default function RadiusOne() {
                             One command on a fresh server.
                         </h2>
                         <p className="lead">
-                            The installer sets up the portal, the database and FreeRADIUS, connected and secured, with a Let’s Encrypt
-                            certificate for your domain.
+                            The installer sets up the portal, the database and FreeRADIUS, already connected and secured, with a Let’s
+                            Encrypt certificate for your domain.
                         </p>
                         <CopyCommand />
-                        <p className="small muted">Updates and rollback happen later from inside the portal.</p>
+                        <p className="small muted">Later updates and rollbacks run from inside the portal.</p>
                     </div>
                     <dl className="rows">
                         {REQUIREMENTS.map((r) => (
@@ -296,7 +296,7 @@ export default function RadiusOne() {
                 </div>
             </section>
 
-            <Contact title="See it on sample data." text="The demo runs the real RadiusOne portal. Click through anything; nothing you change is saved." />
+            <Contact title="See it on sample data." text="The demo runs the real RadiusOne portal on sample data. Click through anything; nothing you change is saved." />
         </>
     );
 }

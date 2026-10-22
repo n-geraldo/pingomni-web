@@ -29,7 +29,7 @@ function Launcher() {
                     <ul className="tile-points">
                         <li>
                             <Icon name="clients" />
-                            PPPoE clients, plans, static IPs and expiry
+                            PPPoE subscribers, plans, static IPs and expiry
                         </li>
                         <li>
                             <Icon name="billing" />
@@ -41,7 +41,7 @@ function Launcher() {
                         </li>
                         <li>
                             <Icon name="shield" />
-                            Roles with two-factor sign-in, encrypted backups
+                            Operator roles, two-factor sign-in and encrypted backups
                         </li>
                     </ul>
                     <div className="actions">
@@ -159,15 +159,14 @@ function HeroConsole() {
     return (
         <div className="console">
             <div className="console-bar">
-                <span className="console-live" data-state={me === undefined ? 'wait' : me ? 'on' : 'off'} />
-                {me === undefined && <span>Finding your address</span>}
-                {me && (
-                    <span>
-                        You are <code className="console-ip">{me.ip}</code>
-                        {me.hostname && <span className="console-host">{me.hostname}</span>}
-                    </span>
-                )}
-                {me === null && <span>Run any check from our server or from other countries</span>}
+                <span className="console-label">
+                    <span className="console-live" data-state={me === undefined ? 'wait' : me ? 'on' : 'off'} />
+                    {me === undefined && 'Finding your address'}
+                    {me && 'Your IP address'}
+                    {me === null && 'Run any check from our server or from other countries'}
+                </span>
+                {me && <code className="console-ip">{me.ip}</code>}
+                {me?.hostname && <span className="console-host">{me.hostname}</span>}
             </div>
             <QuickCheck />
         </div>
@@ -185,8 +184,8 @@ function FreeTools() {
                         Free network, email and BGP tools.
                     </h2>
                     <p className="lead">
-                        {TOOL_LIST.length} checks for anyone who runs a network: from our server, from other countries through Globalping, or
-                        from the internet’s routing table. No account, nothing to install.
+                        {TOOL_LIST.length} checks for anyone who runs a network. Run them from our server, from probes in other countries through
+                        Globalping, or against the internet’s live routing table. No account, nothing to install.
                     </p>
                 </div>
                 <div className="toolgroups">
@@ -229,23 +228,23 @@ function FreeTools() {
 const COMMITMENTS: { term: string; text: string }[] = [
     {
         term: 'Self-hosted',
-        text: 'Our products install on your own server and your data stays there. RadiusOne runs on Ubuntu; every product after it will work the same way.',
+        text: 'Our products install on your own server, and your data stays there. RadiusOne runs on Ubuntu, and every product after it will work the same way.',
     },
     {
         term: 'Safe by default',
         text: 'Operators get only the access their role needs, privileged roles must use two-factor sign-in, and backups are encrypted.',
     },
     {
-        term: 'Built for real ISP size',
-        text: 'Lists, search and exports are built for thousands of subscribers, not for a demo with ten.',
+        term: 'Built for real ISP scale',
+        text: 'Lists, search and exports are designed for thousands of subscribers, not a ten-row demo.',
     },
     {
         term: 'Desk and field',
-        text: 'Every task the office does on a desktop is built to work on a technician’s phone too.',
+        text: 'Every task the office handles at a desk also works on a technician’s phone.',
     },
     {
         term: 'One family',
-        text: 'Products share one look, one set of roles and the same habits, so the next one feels familiar on day one.',
+        text: 'Every product shares one look, one set of roles and the same workflows, so each new one feels familiar from day one.',
     },
 ];
 
@@ -291,7 +290,7 @@ export default function Home() {
                                 Software that ISPs run on.
                             </h1>
                             <p className="lead">
-                                Self-hosted products for ISPs and network operators, and {TOOL_LIST.length} free tools for anyone who runs a
+                                Self-hosted software for ISPs and network operators, plus {TOOL_LIST.length} free tools for anyone who runs a
                                 network.
                             </p>
                         </div>
@@ -304,7 +303,7 @@ export default function Home() {
             <About />
             <Contact
                 title="Talk to us."
-                text="Questions about RadiusOne, the products coming next or the tools: email us. Or try the RadiusOne demo first; nothing you change in it is saved."
+                text="Email us with questions about RadiusOne, the products coming next or the free tools. Or explore the RadiusOne demo first; nothing you change there is saved."
             />
         </>
     );

@@ -11,7 +11,7 @@ export default function NotFound() {
                 <h1 id="hero-title" className="display">
                     This page does not exist.
                 </h1>
-                <p className="lead">The address may be mistyped, or the page has moved. These are the places most people are looking for:</p>
+                <p className="lead">The address may be mistyped, or the page may have moved. Most visitors are looking for one of these:</p>
                 <div className="actions">
                     <a className="btn btn-primary btn-lg" href={root}>
                         PingOmni home

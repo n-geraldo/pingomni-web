@@ -196,7 +196,7 @@ const dns: ToolSpec = {
     runsOn: (v) =>
         locationsFor(v.from)
             ? `Runs on Globalping probes (${v.from}), started from your browser. Each probe asks ${v.resolver && RESOLVER_IP[v.resolver] ? RESOLVER_LABEL[v.resolver] : 'its own resolver'}.`
-            : `Runs from our server in ${SERVER_LOCATION}, asking ${RESOLVER_LABEL[v.resolver || 'system'].replace(/^The/, 'the')}.`,
+            : `Runs from our server in ${SERVER_LOCATION}, asking ${RESOLVER_LABEL[v.resolver || 'system'].replace(/^(The|Our) /, (m) => m.toLowerCase())}.`,
     duration: 'usually 1–10 seconds',
     run: async (v) => {
         const locations = locationsFor(v.from);

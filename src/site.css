@@ -977,6 +977,12 @@ a:hover {
   font-size: 14px;
 }
 
+.console-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .console-live {
   width: 8px;
   height: 8px;
@@ -3551,6 +3557,38 @@ abbr[title] {
 /* --------------------------------------------------------------------------
    Daylight: shape and layout choices that set this version apart
    -------------------------------------------------------------------------- */
+/* Tool tabs sit on an even grid: every row lines up, and no tab is left alone on a line. */
+.tool-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 6px;
+}
+
+.tool-tab {
+  justify-content: flex-start;
+}
+
+/* Form rows line up on the inputs: fields align at the top, so a hint under one field never lifts it above the others,
+   and the run button drops by one label line (13px at 1.6, plus the 6px gap) to sit level with the inputs. */
+.tool-form {
+  align-items: flex-start;
+}
+
+.tool-form > .field ~ .btn {
+  margin-top: calc(13px * 1.6 + 6px);
+}
+
+/* On phones the tabs go back to one row that scrolls sideways, and every field takes the full width. */
+@media (max-width: 640px) {
+  .tool-tabs {
+    display: flex;
+  }
+
+  .tool-form > .field {
+    flex-basis: 100%;
+  }
+}
+
 /* Controls are pills; panels are soft 16px rectangles. */
 .btn,
 .badge,
@@ -3611,19 +3649,13 @@ abbr[title] {
 }
 
 .console-bar {
+  flex-direction: column;
   align-items: flex-start;
+  justify-content: flex-start;
+  gap: 6px;
   padding: 20px;
   border-bottom: 0;
   border-right: 1px solid var(--stage-line);
-}
-
-.console-bar > span:last-child {
-  display: grid;
-  gap: 4px;
-}
-
-.console-live {
-  margin-top: 7px;
 }
 
 .console-ip {
