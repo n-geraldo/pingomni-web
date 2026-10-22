@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Icon from '../Icon';
+import { PING_FROM, pingFrom, type Probe } from '../lib/globalping';
 import { rangeToMasks, subnet } from '../lib/ipcalc';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { useSite } from '../shared/Layout';
@@ -8,7 +9,7 @@ import { useSite } from '../shared/Layout';
 // The tools: two groups, each tool a form that runs on our server (/api/) or in the browser.
 // ---------------------------------------------------------------------------
 
-type Field = { name: string; label: string; placeholder: string; options?: string[]; width?: 'narrow' };
+type Field = { name: string; label: string; placeholder: string; options?: string[]; width?: 'narrow' | 'medium' };
 type Result = Record<string, any>;
 type ToolSpec = {
     id: string;
@@ -160,9 +161,24 @@ async function measureBandwidth(onProgress: (mbps: number, pct: number) => void)
 const SPECS: ToolSpec[] = [
     {
         id: 'ping',
-        fields: [{ name: 'host', label: 'Host or IP', placeholder: 'example.com' }],
-        run: (v) => api('ping', v),
-        render: (r) => (
+        fields: [
+            { name: 'host', label: 'Host or IP', placeholder: 'example.com' },
+            { name: 'from', label: 'Ping from', placeholder: '', options: PING_FROM.map((f) => f.label), width: 'medium' },
+        ],
+        run: async (v) => {
+            const from = PING_FROM.find((f) => f.label === v.from);
+            if (!from?.locations) return api('ping', { host: v.host });
+            try {
+                return await pingFrom(v.host, from.locations);
+            } catch (err) {
+                throw new ToolError(err instanceof Error ? err.message : 'The test failed.');
+            }
+        },
+        note: 'Other locations use Globalping, a free network of probes around the world, run from your browser.',
+        render: (r) =>
+            r.probes ? (
+                <PingWorld r={r} />
+            ) : (
             <>
                 <div className="out-summary">
                     <Status level={r.received === 0 ? 'error' : r.received < r.sent ? 'warning' : 'ok'}>
@@ -179,7 +195,7 @@ const SPECS: ToolSpec[] = [
                     empty="No replies. The host may block ping (ICMP) or be offline."
                 />
             </>
-        ),
+            ),
     },
     {
         id: 'traceroute',
@@ -546,6 +562,41 @@ function AllPorts({ r }: { r: Result }) {
     );
 }
 
+// Ping results from Globalping probes: one row per location, fastest first.
+function PingWorld({ r }: { r: Result }) {
+    const probes = [...(r.probes as Probe[])].sort((a, b) => (a.avg ?? Infinity) - (b.avg ?? Infinity));
+    const answered = probes.filter((p) => p.avg != null);
+    const fastest = answered[0];
+    return (
+        <>
+            <div className="out-summary">
+                <Status level={answered.length === 0 ? 'error' : answered.length < probes.length ? 'warning' : 'ok'}>
+                    {answered.length} of {probes.length} locations replied
+                </Status>
+                <span>
+                    {r.target}
+                    {probes[0]?.resolved && probes[0].resolved !== r.target && <> <Mono>{probes[0].resolved}</Mono></>}
+                    {fastest && <>, fastest from {fastest.city} ({ms(fastest.avg)})</>}
+                </span>
+            </div>
+            <Table
+                head={['Location', 'Network', 'Loss', 'Minimum', 'Average', 'Maximum']}
+                rows={probes.map((p) => [
+                    <span className="out-place">
+                        <strong>{p.city}</strong> <span className="faint">{p.country}</span>
+                    </span>,
+                    <span className="faint">{p.network} (AS{p.asn})</span>,
+                    p.loss == null ? '—' : <Status level={p.loss === 0 ? 'ok' : p.loss < 100 ? 'warning' : 'error'}>{p.loss}%</Status>,
+                    ms(p.min),
+                    ms(p.avg),
+                    ms(p.max),
+                ])}
+                empty="No probes answered."
+            />
+        </>
+    );
+}
+
 const LIST_ORDER = { listed: 0, unknown: 1, clean: 2 } as const;
 
 // Lists put their lookup or delisting page in the reason text; make those addresses clickable.
@@ -757,7 +808,7 @@ function ToolPanel({ tool }: { tool: Tool }) {
             </header>
             <form className="tool-form" onSubmit={submit} noValidate>
                 {tool.fields.map((f, i) => (
-                    <label key={f.name} className={f.width === 'narrow' ? 'field field-narrow' : 'field'}>
+                    <label key={f.name} className={f.width ? `field field-${f.width}` : 'field'}>
                         <span>{f.label}</span>
                         {f.options ? (
                             <select value={values[f.name] ?? f.options[0]} onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}>

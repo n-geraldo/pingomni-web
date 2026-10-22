@@ -1951,6 +1951,15 @@ a:hover {
   flex: 0 1 140px;
 }
 
+.field-medium {
+  flex: 0 1 220px;
+}
+
+.out-place strong {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
 .field span {
   font-size: 13px;
   font-weight: 600;
