@@ -1019,10 +1019,8 @@ const HERO: Record<ToolGroup, { title: string; lead: string }> = {
 export default function Tools({ group }: { group: ToolGroup }) {
     const { root } = useSite();
     const tools = TOOLS.filter((t) => t.group === group);
-    const other: ToolGroup = group === 'network' ? 'email' : 'network';
     const fromHash = () => tools.find((t) => `#${t.id}` === window.location.hash) ?? tools[0];
     const [tool, setTool] = useState<Tool>(fromHash);
-    const card = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const onHash = () => setTool(fromHash());
@@ -1030,10 +1028,9 @@ export default function Tools({ group }: { group: ToolGroup }) {
         return () => window.removeEventListener('hashchange', onHash);
     }, []);
 
-    const pick = (t: Tool, scroll = false) => {
+    const pick = (t: Tool) => {
         history.replaceState(null, '', `#${t.id}`);
         setTool(t);
-        if (scroll) card.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     return (
@@ -1050,7 +1047,7 @@ export default function Tools({ group }: { group: ToolGroup }) {
 
             <section className="tools-main">
                 <div className="container tools-stack">
-                    <div className="tool-card" ref={card}>
+                    <div className="tool-card">
                         <div className="tool-tabs" role="tablist" aria-label={TOOL_PAGES[group].title}>
                             {tools.map((t) => (
                                 <button
@@ -1067,42 +1064,6 @@ export default function Tools({ group }: { group: ToolGroup }) {
                             ))}
                         </div>
                         <ToolPanel tool={tool} />
-                    </div>
-
-                    <div className="tools-catalog">
-                        <h2 className="h3">All {TOOL_PAGES[group].title.toLowerCase().replace('dns', 'DNS')}</h2>
-                        <ul className="tools-grid">
-                            {tools.map((t) => (
-                                <li key={t.id}>
-                                    <a
-                                        href={`#${t.id}`}
-                                        className="tools-grid-item"
-                                        aria-current={t.id === tool.id ? 'true' : undefined}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            pick(t, true);
-                                        }}
-                                    >
-                                        <span className="tools-grid-icon">
-                                            <Icon name={t.icon} />
-                                        </span>
-                                        <strong>{t.name}</strong>
-                                        <span>{t.blurb}</span>
-                                    </a>
-                                </li>
-                            ))}
-                            <li>
-                                <a className="tools-grid-item tools-grid-other" href={`${root}${TOOL_PAGES[other].path}`}>
-                                    <span className="tools-grid-icon">
-                                        <Icon name={TOOL_PAGES[other].icon} />
-                                    </span>
-                                    <strong>
-                                        {TOOL_PAGES[other].title} <Icon name="arrow" />
-                                    </strong>
-                                    <span>{TOOL_PAGES[other].blurb}</span>
-                                </a>
-                            </li>
-                        </ul>
                     </div>
 
                     <p className="tools-fineprint small faint">
