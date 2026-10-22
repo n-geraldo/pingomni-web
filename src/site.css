@@ -1662,150 +1662,246 @@ a:hover {
   color: var(--neutral-text);
 }
 
+/* Tools pages: a centred dark header, then one floating card that holds the tool, then a grid of every tool. */
 .tools-hero {
-  padding: clamp(36px, 5vw, 64px) 0;
+  padding: clamp(40px, 6vw, 72px) 0 clamp(120px, 14vw, 160px);
 }
 
-.tools-hero-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px 48px;
+.tools-hero::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 30%;
+  width: min(900px, 90vw);
+  height: 70%;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(47, 107, 240, .22), transparent);
+  pointer-events: none;
 }
 
-.tools-hero-row > div {
+.tools-hero-inner {
   display: grid;
-  gap: 14px;
-  max-width: 680px;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
 }
 
 .tools-hero .display {
-  font-size: clamp(34px, 4.4vw, 52px);
+  font-size: clamp(36px, 5vw, 58px);
+}
+
+.tools-hero .lead {
+  max-width: 62ch;
 }
 
 .tools-myip {
-  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
   border: 1px solid var(--stage-line);
-  border-radius: var(--radius);
+  border-radius: 999px;
   background: var(--stage-raised);
   color: var(--on-stage-muted);
   font-size: 14px;
+}
+
+.tools-myip::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success-solid);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, .25);
 }
 
 .tools-myip .out-mono {
   color: var(--on-stage);
 }
 
-.tools-section {
-  padding-top: clamp(32px, 4vw, 48px);
+.tools-main {
+  padding-bottom: var(--section-y);
+  background: var(--bg);
 }
 
-.tools-layout {
+.tools-stack {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
+  gap: clamp(40px, 6vw, 64px);
+  max-width: calc(1040px + 2 * var(--gutter));
 }
 
-.tools-nav {
-  position: sticky;
-  top: calc(var(--header-h) + 16px);
-  display: grid;
-  gap: 20px;
-}
-
-.tools-list {
-  display: grid;
-  gap: 2px;
-}
-
-.tools-list a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: var(--radius);
-  color: var(--text);
-  font-weight: 400;
-  font-size: 15px;
-  transition: background-color 120ms, color 120ms;
-}
-
-.tools-list a .icon {
-  color: var(--text-faint);
-}
-
-.tools-list a:hover {
-  background: var(--surface-hover);
-  text-decoration: none;
-}
-
-.tools-list a[aria-current] {
+.tool-card {
+  position: relative;
+  z-index: 1;
+  margin-top: clamp(-120px, -12vw, -96px);
+  scroll-margin-top: calc(var(--header-h) + 16px);
   background: var(--surface);
-  color: var(--accent);
-  font-weight: 600;
-  box-shadow: 0 0 0 1px var(--line), var(--shadow-sm);
-}
-
-.tools-list a[aria-current] .icon {
-  color: var(--accent);
-}
-
-/* A way across to the other tools page, under the list. */
-.tools-other {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  color: var(--text);
-  font-weight: 400;
-  transition: border-color 120ms;
+  border-radius: 20px;
+  box-shadow: 0 30px 60px -20px rgba(15, 20, 26, .28), 0 2px 6px rgba(15, 20, 26, .06);
+  overflow: hidden;
 }
 
-.tools-other:hover {
-  border-color: var(--line-strong);
-  text-decoration: none;
+:root[data-theme="dark"] .tool-card {
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .7);
 }
 
-.tools-other > .icon:first-child {
-  color: var(--accent);
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tool-card {
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .7);
+  }
 }
 
-.tools-other > span {
-  display: grid;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
+/* Pill tabs across the top of the card; they scroll sideways when there is not room for all. */
+.tool-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: thin;
 }
 
-.tools-other strong {
-  font-weight: 600;
-  color: var(--text-strong);
-  font-size: 15px;
-}
-
-.tools-other span span {
-  font-size: 13px;
+.tool-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
   color: var(--text-muted);
+  font: 500 14px var(--font);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms, color 140ms, border-color 140ms, box-shadow 140ms;
 }
 
-.tools-other > .icon:last-child {
+.tool-tab .icon {
   width: 16px;
   height: 16px;
-  color: var(--text-faint);
+}
+
+.tool-tab:hover {
+  color: var(--text-strong);
+  background: var(--surface-hover);
+}
+
+.tool-tab[aria-selected="true"] {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm), 0 1px 3px rgba(15, 20, 26, .06);
 }
 
 .tool-panel {
   min-width: 0;
-  padding: clamp(20px, 3vw, 28px);
-  background: var(--surface);
+  padding: clamp(20px, 3.4vw, 36px);
+}
+
+/* The selected tab already shows the tool's icon. */
+.tool-card .tool-icon {
+  display: none;
+}
+
+/* Every tool on the page as a card; picking one opens it in the card above. */
+.tools-catalog {
+  display: grid;
+  gap: 16px;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.tools-grid-item {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  height: 100%;
+  padding: 18px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 400;
+  transition: border-color 160ms, box-shadow 200ms var(--ease-out), transform 200ms var(--ease-out);
+}
+
+.tools-grid-item:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 10px 24px -12px rgba(15, 20, 26, .25);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.tools-grid-item[aria-current] {
+  border-color: var(--accent-solid);
+  box-shadow: 0 0 0 1px var(--accent-solid);
+}
+
+.tools-grid-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.tools-grid-icon .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.tools-grid-item strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.tools-grid-item strong .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.tools-grid-item > span:last-child {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.tools-grid-other {
+  background: var(--stage);
+  border-color: var(--stage);
+}
+
+.tools-grid-other strong {
+  color: var(--on-stage);
+}
+
+.tools-grid-other > span:last-child {
+  color: var(--on-stage-muted);
+}
+
+.tools-grid-other .tools-grid-icon {
+  background: var(--accent-solid);
+  color: #fff;
+}
+
+.tools-grid-other:hover {
+  border-color: var(--stage);
 }
 
 .tool-head {
@@ -2216,42 +2312,28 @@ a:hover {
 }
 
 .tools-fineprint {
-  margin-top: 28px;
-  max-width: calc(var(--container) + 2 * var(--gutter));
+  text-align: center;
+  max-width: 760px;
+  justify-self: center;
 }
 
 @media (max-width: 900px) {
-  .tools-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* On narrow screens the tool list becomes two rows of chips that scroll sideways. */
-  .tools-nav {
-    position: static;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-    min-width: 0;
-  }
-
-  .tools-list {
-    display: flex;
-    gap: 6px;
-    min-width: 0;
+  .tool-tabs {
+    flex-wrap: nowrap;
     overflow-x: auto;
-    padding: 2px 2px 6px;
-    scrollbar-width: thin;
   }
 
-  .tools-list a {
-    white-space: nowrap;
-    padding: 7px 12px;
-    border: 1px solid var(--line);
-    background: var(--surface);
-    font-size: 14px;
+  .tools-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
-  .tools-other {
-    display: none;
+  .tools-grid-item {
+    padding: 14px;
+  }
+
+  .tools-grid-item > span:last-child {
+    font-size: 13px;
   }
 
   .out-rows > div {

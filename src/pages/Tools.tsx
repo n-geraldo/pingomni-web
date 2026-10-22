@@ -844,6 +844,7 @@ export default function Tools({ group }: { group: ToolGroup }) {
     const other: ToolGroup = group === 'network' ? 'email' : 'network';
     const fromHash = () => tools.find((t) => `#${t.id}` === window.location.hash) ?? tools[0];
     const [tool, setTool] = useState<Tool>(fromHash);
+    const card = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const onHash = () => setTool(fromHash());
@@ -851,61 +852,88 @@ export default function Tools({ group }: { group: ToolGroup }) {
         return () => window.removeEventListener('hashchange', onHash);
     }, []);
 
-    const pick = (t: Tool) => {
+    const pick = (t: Tool, scroll = false) => {
         history.replaceState(null, '', `#${t.id}`);
         setTool(t);
+        if (scroll) card.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     return (
         <>
             <section className="stage tools-hero" aria-labelledby="hero-title">
-                <div className="container tools-hero-row">
-                    <div>
-                        <h1 id="hero-title" className="display">
-                            {HERO[group].title}
-                        </h1>
-                        <p className="lead">{HERO[group].lead}</p>
-                    </div>
+                <div className="container tools-hero-inner">
                     <MyIp />
+                    <h1 id="hero-title" className="display">
+                        {HERO[group].title}
+                    </h1>
+                    <p className="lead">{HERO[group].lead}</p>
                 </div>
             </section>
-            <section className="section section-bg tools-section">
-                <div className="container tools-layout">
-                    <nav className="tools-nav" aria-label={TOOL_PAGES[group].title}>
-                        <ul className="tools-list">
+
+            <section className="tools-main">
+                <div className="container tools-stack">
+                    <div className="tool-card" ref={card}>
+                        <div className="tool-tabs" role="tablist" aria-label={TOOL_PAGES[group].title}>
+                            {tools.map((t) => (
+                                <button
+                                    type="button"
+                                    role="tab"
+                                    key={t.id}
+                                    aria-selected={t.id === tool.id}
+                                    className="tool-tab"
+                                    onClick={() => pick(t)}
+                                >
+                                    <Icon name={t.icon} />
+                                    {t.name}
+                                </button>
+                            ))}
+                        </div>
+                        <ToolPanel tool={tool} />
+                    </div>
+
+                    <div className="tools-catalog">
+                        <h2 className="h3">All {TOOL_PAGES[group].title.toLowerCase().replace('dns', 'DNS')}</h2>
+                        <ul className="tools-grid">
                             {tools.map((t) => (
                                 <li key={t.id}>
                                     <a
                                         href={`#${t.id}`}
+                                        className="tools-grid-item"
                                         aria-current={t.id === tool.id ? 'true' : undefined}
                                         onClick={(e) => {
                                             e.preventDefault();
-                                            pick(t);
+                                            pick(t, true);
                                         }}
                                     >
-                                        <Icon name={t.icon} />
-                                        <span>{t.name}</span>
+                                        <span className="tools-grid-icon">
+                                            <Icon name={t.icon} />
+                                        </span>
+                                        <strong>{t.name}</strong>
+                                        <span>{t.blurb}</span>
                                     </a>
                                 </li>
                             ))}
+                            <li>
+                                <a className="tools-grid-item tools-grid-other" href={`${root}${TOOL_PAGES[other].path}`}>
+                                    <span className="tools-grid-icon">
+                                        <Icon name={TOOL_PAGES[other].icon} />
+                                    </span>
+                                    <strong>
+                                        {TOOL_PAGES[other].title} <Icon name="arrow" />
+                                    </strong>
+                                    <span>{TOOL_PAGES[other].blurb}</span>
+                                </a>
+                            </li>
                         </ul>
-                        <a className="tools-other" href={`${root}${TOOL_PAGES[other].path}`}>
-                            <Icon name={TOOL_PAGES[other].icon} />
-                            <span>
-                                <strong>{TOOL_PAGES[other].title}</strong>
-                                <span>{TOOL_PAGES[other].blurb}</span>
-                            </span>
-                            <Icon name="arrow" />
-                        </a>
-                    </nav>
-                    <ToolPanel tool={tool} />
+                    </div>
+
+                    <p className="tools-fineprint small faint">
+                        {group === 'network'
+                            ? 'Ping, traceroute and port checks run from our server and only reach public addresses. Each visitor has a limit of a few tests a minute. The calculators run in your browser.'
+                            : 'Lookups run from our server. SMTP checks only connect to public addresses, and each visitor has a limit of a few tests a minute.'}{' '}
+                        Built by PingOmni, makers of <a href={`${root}radiusone/`}>RadiusOne</a>.
+                    </p>
                 </div>
-                <p className="container tools-fineprint small faint">
-                    {group === 'network'
-                        ? 'Ping, traceroute and port checks run from our server and only reach public addresses. Each visitor has a limit of a few tests a minute. The calculators run in your browser.'
-                        : 'Lookups run from our server. SMTP checks only connect to public addresses, and each visitor has a limit of a few tests a minute.'}{' '}
-                    Built by PingOmni, makers of <a href={`${root}radiusone/`}>RadiusOne</a>.
-                </p>
             </section>
         </>
     );
