@@ -23,14 +23,14 @@ Set these at build time (for example in `.env.production`):
 
 ## Network tools
 
-Two pages, both in the navbar's Tools menu. `/tools/network/`: ping, traceroute, port check, reverse lookup, proxy checker, bandwidth meter, network calculator and mask calculator. `/tools/email/`: DNS lookup, MX, NS, SPF, DMARC, DKIM, SMTP, WHOIS and blacklist checks. Each tool has its own address (`/tools/email/#mx`), and old `/tools/#...` links forward to the right page. The tool names live in `src/lib/toolList.ts`.
+Two pages, both in the navbar's Tools menu. `/tools/network/`: ping, traceroute, MTR, port check, reverse lookup, proxy checker, bandwidth meter, network calculator and mask calculator. `/tools/email/`: DNS lookup, MX, NS, SPF, DMARC, DKIM, SMTP, WHOIS and blacklist checks. Each tool has its own address (`/tools/email/#mx`), and old `/tools/#...` links forward to the right page. The tool names live in `src/lib/toolList.ts`.
 
 The calculators run in the browser. Everything else calls `api/index.php` (`/api/?tool=<name>`). The API needs PHP 8.3 with curl and openssl, plus `ping` and `mtr` on the server. WHOIS uses the public RDAP service (rdap.org).
 
 - Ping, traceroute, port and SMTP checks only reach public addresses; private, loopback, link-local, CGNAT and reserved ranges are refused.
 - Each visitor gets 10 outbound tests and 40 lookups a minute (counted in the system temp folder), and nginx caps the API at 60 requests a minute per IP.
 - The blacklist check queries 27 IP lists (plus 5 domain lists for a domain) in parallel with `dig`, at most 6 runs a minute. A listing only counts if the list does not also list a test address, so dead lists that answer "listed" for everything show "No answer". Spamhaus refuses queries through public resolvers such as 1.1.1.1; a local recursive resolver on the server would fix that.
-- Ping, traceroute and DNS lookup can also run from other countries through [Globalping](https://globalping.io), a free, open network of probes (`src/lib/globalping.ts`). The visitor's browser calls its API directly, so each visitor uses their own free allowance (250 tests an hour) and nothing goes through our server.
+- Ping, traceroute, MTR and DNS lookup can also run from other countries through [Globalping](https://globalping.io), a free, open network of probes (`src/lib/globalping.ts`). The visitor's browser calls its API directly, so each visitor uses their own free allowance (250 tests an hour) and nothing goes through our server.
 - "Check all common ports" tests one fixed list of 27 ports in parallel (4-second timeout), never a range the visitor picks, and is limited to 3 runs a minute. The list is in `api/index.php` and `src/pages/Tools.tsx`; keep them in step.
 - The API runs in its own PHP-FPM pool, so slow tools never take workers from other sites.
 

@@ -300,6 +300,42 @@ function toolTraceroute(): array
     return ['host' => $host, 'ip' => $ip, 'hops' => $hops];
 }
 
+function toolMtr(): array
+{
+    rateLimit('heavy', HEAVY_PER_MINUTE);
+    [$host, $ips] = publicTarget(param('host'));
+    $ip = $ips[0];
+    [, $out] = run(['mtr', '--json', '-c', '5', '-b', '-z', '-m', '24', str_contains($ip, ':') ? '-6' : '-4', $ip], 45);
+    $data = json_decode($out, true);
+    if (!is_array($data)) {
+        fail('The MTR run did not finish. Try again.', 502);
+    }
+    $hops = [];
+    foreach ($data['report']['hubs'] ?? [] as $h) {
+        // mtr -b labels a hop "one.one.one.one (1.1.1.1)", "158.173.160.1" or "???"; -z adds "ASN": "AS13335" or "AS???".
+        $label = (string) $h['host'];
+        $asn = preg_match('/^AS(\d+)$/', (string) ($h['ASN'] ?? ''), $m) ? (int) $m[1] : null;
+        $name = null;
+        $addr = $label;
+        if (preg_match('/^(.*) \(([^)]+)\)$/', $label, $m)) {
+            [$name, $addr] = [$m[1] !== $m[2] ? $m[1] : null, $m[2]];
+        }
+        $silent = $addr === '???';
+        $hops[] = [
+            'address' => $silent ? null : $addr,
+            'name' => $name,
+            'asn' => $asn,
+            'loss' => (float) $h['Loss%'],
+            'sent' => (int) $h['Snt'],
+            'avg' => $silent ? null : (float) $h['Avg'],
+            'best' => $silent ? null : (float) $h['Best'],
+            'worst' => $silent ? null : (float) $h['Wrst'],
+            'stdev' => $silent ? null : (float) $h['StDev'],
+        ];
+    }
+    return ['target' => $host, 'resolved' => $ip, 'runs' => [['place' => null, 'hops' => $hops]]];
+}
+
 function toolPort(): array
 {
     rateLimit('heavy', HEAVY_PER_MINUTE);
@@ -802,7 +838,7 @@ function toolBlacklist(): array
 // ---------------------------------------------------------------------------
 
 $tools = [
-    'myip' => 'toolMyIp', 'ping' => 'toolPing', 'traceroute' => 'toolTraceroute', 'port' => 'toolPort', 'ports' => 'toolPorts',
+    'myip' => 'toolMyIp', 'ping' => 'toolPing', 'traceroute' => 'toolTraceroute', 'mtr' => 'toolMtr', 'port' => 'toolPort', 'ports' => 'toolPorts',
     'reverse' => 'toolReverse', 'proxy' => 'toolProxy', 'bandwidth' => 'toolBandwidth', 'dns' => 'toolDns',
     'mx' => 'toolMx', 'ns' => 'toolNs', 'spf' => 'toolSpf', 'dmarc' => 'toolDmarc', 'dkim' => 'toolDkim',
     'smtp' => 'toolSmtp', 'whois' => 'toolWhois', 'blacklist' => 'toolBlacklist',

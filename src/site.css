@@ -1862,10 +1862,12 @@ a:hover {
 
 .out-routes {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
 }
 
 .out-route {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -1917,6 +1919,16 @@ a:hover {
 
 .out-route .out-table-wrap {
   margin: 0 12px 12px;
+}
+
+.out-host {
+  display: grid;
+  gap: 1px;
+}
+
+.out-host > span {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .out-answers {
@@ -2101,6 +2113,7 @@ a:hover {
 
 .tool-output {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   margin-top: 24px;
   padding-top: 20px;

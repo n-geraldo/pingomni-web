@@ -132,6 +132,48 @@ export async function traceFrom(target: string, locations: Location[]) {
     };
 }
 
+export type MtrHop = {
+    address: string | null;
+    name: string | null;
+    asn: number | null;
+    loss: number;
+    sent: number;
+    avg: number | null;
+    best: number | null;
+    worst: number | null;
+    stdev: number | null;
+};
+
+export type MtrRun = { place: ProbeInfo | null; hops: MtrHop[] };
+
+export async function mtrFrom(target: string, locations: Location[]) {
+    const results = await measure({ type: 'mtr', target, locations: halved(locations), measurementOptions: { packets: 5, protocol: 'ICMP' } });
+    return {
+        target,
+        resolved: results[0]?.result.resolvedAddress ?? null,
+        runs: results.map(
+            (x): MtrRun => ({
+                place: probeInfo(x),
+                hops: (x.result.hops ?? []).map((h: any) => {
+                    const st = h.stats ?? {};
+                    const silent = !h.resolvedAddress;
+                    return {
+                        address: h.resolvedAddress ?? null,
+                        name: h.resolvedHostname && h.resolvedHostname !== h.resolvedAddress ? h.resolvedHostname : null,
+                        asn: h.asn?.[0] ?? null,
+                        loss: st.loss ?? 100,
+                        sent: st.total ?? 0,
+                        avg: silent ? null : (st.avg ?? null),
+                        best: silent ? null : (st.min ?? null),
+                        worst: silent ? null : (st.max ?? null),
+                        stdev: silent ? null : (st.stDev ?? null),
+                    };
+                }),
+            }),
+        ),
+    };
+}
+
 export async function dnsFrom(name: string, type: string, locations: Location[]) {
     const results = await measure({ type: 'dns', target: name, locations, measurementOptions: { query: { type } } });
     return {

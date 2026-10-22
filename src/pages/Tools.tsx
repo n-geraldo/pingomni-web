@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Icon from '../Icon';
-import { dnsFrom, locationsFor, pingFrom, TEST_FROM, traceFrom, type DnsProbe, type PingProbe, type TraceProbe } from '../lib/globalping';
+import {
+    dnsFrom,
+    locationsFor,
+    mtrFrom,
+    pingFrom,
+    TEST_FROM,
+    traceFrom,
+    type DnsProbe,
+    type MtrRun,
+    type PingProbe,
+    type TraceProbe,
+} from '../lib/globalping';
 import { rangeToMasks, subnet } from '../lib/ipcalc';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { useSite } from '../shared/Layout';
@@ -238,6 +249,19 @@ const SPECS: ToolSpec[] = [
                 />
             </>
             ),
+    },
+    {
+        id: 'mtr',
+        fields: [
+            { name: 'host', label: 'Host or IP', placeholder: 'example.com' },
+            fromField('Run from'),
+        ],
+        run: async (v) => {
+            const locations = locationsFor(v.from);
+            return locations ? viaGlobalping(() => mtrFrom(v.host, locations)) : api('mtr', { host: v.host });
+        },
+        note: 'Sends 5 rounds of packets along the route, so it takes up to half a minute. Other locations use Globalping, run from your browser.',
+        render: (r) => <MtrView r={r} />,
     },
     {
         id: 'port',
@@ -669,6 +693,85 @@ function TraceWorld({ r }: { r: Result }) {
                     );
                 })}
             </div>
+        </>
+    );
+}
+
+function MtrTable({ hops }: { hops: MtrRun['hops'] }) {
+    return (
+        <Table
+            head={['Hop', 'Host', 'ASN', 'Loss', 'Sent', 'Average', 'Best', 'Worst', 'Spread']}
+            rows={hops.map((h, n) => [
+                n + 1,
+                h.address ? (
+                    <span className="out-host">
+                        {h.name && <span>{h.name}</span>}
+                        <Mono>{h.address}</Mono>
+                    </span>
+                ) : (
+                    <span className="faint">No answer</span>
+                ),
+                h.asn ? <span className="faint">AS{h.asn}</span> : '—',
+                h.address ? <Status level={h.loss === 0 ? 'ok' : h.loss < 50 ? 'warning' : 'error'}>{Math.round(h.loss)}%</Status> : '—',
+                h.sent,
+                ms(h.avg),
+                ms(h.best),
+                ms(h.worst),
+                ms(h.stdev),
+            ])}
+            empty="No hops were recorded."
+            compact
+        />
+    );
+}
+
+// MTR: per-hop loss and delay, from our server or from Globalping probes (one collapsible run per location).
+function MtrView({ r }: { r: Result }) {
+    const runs = r.runs as MtrRun[];
+    const finalLoss = (run: MtrRun) => {
+        const last = run.hops[run.hops.length - 1];
+        return last?.address ? last.loss : 100;
+    };
+    return (
+        <>
+            <div className="out-summary">
+                <span>
+                    MTR to <Target host={r.target} ip={r.resolved ?? r.target} />
+                    {runs.length > 1 && <> from {runs.length} locations</>}
+                    {runs.length === 1 && !runs[0].place && <> from our server</>}
+                </span>
+            </div>
+            {runs.length === 1 && !runs[0].place ? (
+                <MtrTable hops={runs[0].hops} />
+            ) : (
+                <div className="out-routes">
+                    {runs.map((run, i) => {
+                        const loss = finalLoss(run);
+                        const last = [...run.hops].reverse().find((h) => h.avg != null);
+                        return (
+                            <details className="out-route" key={i} open={runs.length === 1}>
+                                <summary>
+                                    {run.place && <Place p={run.place} />}
+                                    {run.place && (
+                                        <span className="faint out-route-net">
+                                            {run.place.network} (AS{run.place.asn})
+                                        </span>
+                                    )}
+                                    <span className="out-route-meta">
+                                        {run.hops.length} hops · {ms(last?.avg)}
+                                    </span>
+                                    <Status level={loss === 0 ? 'ok' : loss < 50 ? 'warning' : 'error'}>{Math.round(loss)}% loss at the end</Status>
+                                </summary>
+                                <MtrTable hops={run.hops} />
+                            </details>
+                        );
+                    })}
+                </div>
+            )}
+            <p className="tool-note">
+                Loss on a middle hop that does not carry on to the hops after it is usually that router limiting its replies, not a real
+                problem. Loss that starts at one hop and stays to the end shows where trouble begins.
+            </p>
         </>
     );
 }
