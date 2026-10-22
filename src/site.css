@@ -924,6 +924,27 @@ a:hover {
   align-self: start;
 }
 
+.stage .badge-success {
+  background: rgba(92, 207, 140, .12);
+  border-color: rgba(92, 207, 140, .32);
+  color: #5ccf8c;
+}
+
+.tile-open .badge-success {
+  background: var(--success-bg);
+  border-color: var(--success-line);
+  color: var(--success);
+}
+
+/* Lead marks outside a tile ping in their product's status colour too. */
+.product-hero {
+  --ping: var(--success-solid);
+}
+
+.soon-hero {
+  --ping: var(--warning-solid);
+}
+
 .stage .badge-warning {
   background: rgba(234, 181, 90, .12);
   border-color: rgba(234, 181, 90, .34);
@@ -1042,7 +1063,7 @@ a:hover {
 .install {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
+  gap: 16px;
 }
 
 .command {
@@ -1311,9 +1332,6 @@ a:hover {
   align-items: start;
 }
 
-.install {
-  gap: 16px;
-}
 
 /* Coming-soon pages */
 .soon-hero {
@@ -1410,7 +1428,7 @@ a:hover {
   font-size: 14px;
 }
 
-.footer-products .soon {
+.footer-products .footer-soon {
   color: var(--text-faint);
 }
 

@@ -74,7 +74,7 @@ function Launcher() {
                     </div>
                     <span className="badge badge-warning">Coming soon</span>
                     <a className="tile-link" href={mailto(`Tell me when ${brand === 'ticketone' ? 'TicketOne' : 'DNSOne'} is ready`)}>
-                        Tell me when it's ready
+                        Tell me when it’s ready
                     </a>
                 </article>
             ))}

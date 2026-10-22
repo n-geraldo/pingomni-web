@@ -181,12 +181,12 @@ function Footer() {
                         <a href={`${root}radiusone/`}>RadiusOne</a>
                     </li>
                     <li>
-                        <a className="soon" href={`${root}ticketone/`}>
+                        <a className="footer-soon" href={`${root}ticketone/`}>
                             TicketOne, coming soon
                         </a>
                     </li>
                     <li>
-                        <a className="soon" href={`${root}dnsone/`}>
+                        <a className="footer-soon" href={`${root}dnsone/`}>
                             DNSOne, coming soon
                         </a>
                     </li>
