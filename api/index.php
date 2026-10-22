@@ -321,6 +321,54 @@ function toolPort(): array
     return ['host' => $host, 'ip' => $ip, 'port' => $port, 'state' => $state, 'ms' => $ms];
 }
 
+// The common ports, checked together. Only this fixed list can be checked in one go (keep it in step with
+// COMMON_PORTS in src/pages/Tools.tsx), so the tool cannot be turned into a scanner of arbitrary ranges.
+const COMMON_PORTS = [80, 443, 8080, 8443, 25, 465, 587, 110, 995, 143, 993, 22, 23, 3389, 5900, 8291, 8728, 8729,
+    21, 53, 445, 3306, 5432, 6379, 27017, 1723, 1194];
+
+function toolPorts(): array
+{
+    rateLimit('scan', 3);
+    [$host, $ips] = publicTarget(param('host'));
+    $ip = $ips[0];
+    $target = str_contains($ip, ':') ? "[{$ip}]" : $ip;
+    $pending = [];
+    $started = [];
+    $results = [];
+    foreach (COMMON_PORTS as $port) {
+        $s = @stream_socket_client("tcp://{$target}:{$port}", $errno, $errstr, 4, STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT);
+        if ($s === false) {
+            $results[$port] = ['port' => $port, 'state' => 'closed', 'ms' => null];
+            continue;
+        }
+        stream_set_blocking($s, false);
+        $pending[$port] = $s;
+        $started[$port] = microtime(true);
+    }
+    // Wait up to 4 seconds in total; a socket that turns writable has either connected or been refused.
+    $deadline = microtime(true) + 4;
+    while ($pending && ($left = $deadline - microtime(true)) > 0) {
+        $write = array_values($pending);
+        $read = $except = null;
+        if (@stream_select($read, $write, $except, (int) $left, (int) (fmod($left, 1) * 1e6)) === false) {
+            break;
+        }
+        foreach ($write as $s) {
+            $port = array_search($s, $pending, true);
+            $open = @stream_socket_get_name($s, true) !== false;
+            $results[$port] = ['port' => $port, 'state' => $open ? 'open' : 'closed', 'ms' => $open ? round((microtime(true) - $started[$port]) * 1000, 1) : null];
+            fclose($s);
+            unset($pending[$port]);
+        }
+    }
+    foreach ($pending as $port => $s) {
+        $results[$port] = ['port' => $port, 'state' => 'filtered', 'ms' => null];
+        fclose($s);
+    }
+    $ordered = array_map(fn ($p) => $results[$p], COMMON_PORTS);
+    return ['host' => $host, 'ip' => $ip, 'results' => $ordered];
+}
+
 function toolReverse(): array
 {
     rateLimit('light', LIGHT_PER_MINUTE);
@@ -677,7 +725,7 @@ function toolBlacklist(): array
 // ---------------------------------------------------------------------------
 
 $tools = [
-    'myip' => 'toolMyIp', 'ping' => 'toolPing', 'traceroute' => 'toolTraceroute', 'port' => 'toolPort',
+    'myip' => 'toolMyIp', 'ping' => 'toolPing', 'traceroute' => 'toolTraceroute', 'port' => 'toolPort', 'ports' => 'toolPorts',
     'reverse' => 'toolReverse', 'proxy' => 'toolProxy', 'bandwidth' => 'toolBandwidth', 'dns' => 'toolDns',
     'mx' => 'toolMx', 'ns' => 'toolNs', 'spf' => 'toolSpf', 'dmarc' => 'toolDmarc', 'dkim' => 'toolDkim',
     'smtp' => 'toolSmtp', 'whois' => 'toolWhois', 'blacklist' => 'toolBlacklist',

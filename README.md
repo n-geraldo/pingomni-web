@@ -29,6 +29,7 @@ The calculators run in the browser. Everything else calls `api/index.php` (`/api
 
 - Ping, traceroute, port and SMTP checks only reach public addresses; private, loopback, link-local, CGNAT and reserved ranges are refused.
 - Each visitor gets 10 outbound tests and 40 lookups a minute (counted in the system temp folder), and nginx caps the API at 60 requests a minute per IP.
+- "Check all common ports" tests one fixed list of 27 ports in parallel (4-second timeout), never a range the visitor picks, and is limited to 3 runs a minute. The list is in `api/index.php` and `src/pages/Tools.tsx`; keep them in step.
 - The API runs in its own PHP-FPM pool, so slow tools never take workers from other sites.
 
 Install the configs in `deploy/`:

@@ -50,11 +50,11 @@ function Rows({ rows }: { rows: [string, ReactNode][] }) {
     );
 }
 
-function Table({ head, rows, empty }: { head: string[]; rows: ReactNode[][]; empty: string }) {
+function Table({ head, rows, empty, compact = false }: { head: string[]; rows: ReactNode[][]; empty: string; compact?: boolean }) {
     if (!rows.length) return <p className="out-empty">{empty}</p>;
     return (
         <div className="out-table-wrap">
-            <table className="out-table">
+            <table className={compact ? 'out-table out-table-compact' : 'out-table'}>
                 <thead>
                     <tr>
                         {head.map((h) => (
@@ -203,20 +203,7 @@ const SPECS: ToolSpec[] = [
             { name: 'port', label: 'Port', placeholder: '443', width: 'narrow' },
         ],
         run: (v) => api('port', v),
-        render: (r) => (
-            <div className="out-summary out-summary-big">
-                <Status level={r.state === 'open' ? 'ok' : r.state === 'closed' ? 'error' : 'warning'}>
-                    {r.state === 'open' ? 'Open' : r.state === 'closed' ? 'Closed' : 'Filtered'}
-                </Status>
-                <span>
-                    TCP port <strong>{r.port}</strong>
-                    {PORT_NAMES.has(r.port) && <> ({PORT_NAMES.get(r.port)})</>} on <Target host={r.host} ip={r.ip} />
-                    {r.state === 'open' && ` answered in ${ms(r.ms)}`}
-                    {r.state === 'closed' && ' refused the connection'}
-                    {r.state === 'filtered' && ' did not answer (a firewall may be dropping it)'}
-                </span>
-            </div>
-        ),
+        render: (r) => (r.results ? <AllPorts r={r} /> : <OnePort r={r} />),
     },
     {
         id: 'reverse',
@@ -521,6 +508,54 @@ const SPECS: ToolSpec[] = [
 
 const TOOLS: Tool[] = TOOL_LIST.map((meta) => ({ ...SPECS.find((s) => s.id === meta.id)!, ...meta }));
 
+const PORT_STATE = {
+    open: { level: 'ok', label: 'Open' },
+    closed: { level: 'error', label: 'Closed' },
+    filtered: { level: 'warning', label: 'Filtered' },
+} as const;
+
+function OnePort({ r }: { r: Result }) {
+    const st = PORT_STATE[r.state as keyof typeof PORT_STATE];
+    return (
+        <div className="out-summary out-summary-big">
+            <Status level={st.level}>{st.label}</Status>
+            <span>
+                TCP port <strong>{r.port}</strong>
+                {PORT_NAMES.has(r.port) && <> ({PORT_NAMES.get(r.port)})</>} on <Target host={r.host} ip={r.ip} />
+                {r.state === 'open' && ` answered in ${ms(r.ms)}`}
+                {r.state === 'closed' && ' refused the connection'}
+                {r.state === 'filtered' && ' did not answer (a firewall may be dropping it)'}
+            </span>
+        </div>
+    );
+}
+
+function AllPorts({ r }: { r: Result }) {
+    const open = r.results.filter((x: Result) => x.state === 'open');
+    return (
+        <>
+            <div className="out-summary out-summary-big">
+                <Status level={open.length ? 'ok' : 'neutral'}>
+                    {open.length} open of {r.results.length}
+                </Status>
+                <span>
+                    Common ports on <Target host={r.host} ip={r.ip} />
+                </span>
+            </div>
+            <Table
+                head={['Port', 'Service', 'State', 'Time']}
+                rows={r.results.map((x: Result) => {
+                    const st = PORT_STATE[x.state as keyof typeof PORT_STATE];
+                    return [<Mono>{x.port}</Mono>, PORT_NAMES.get(x.port) ?? '—', <Status level={st.level}>{st.label}</Status>, ms(x.ms)];
+                })}
+                empty=""
+                compact
+            />
+            <p className="tool-note">Closed: the host refused the connection. Filtered: no answer within 4 seconds, usually a firewall.</p>
+        </>
+    );
+}
+
 // Well-known TCP ports, with the ones ISPs reach for on MikroTik routers. UDP services (DNS over UDP, RADIUS, SNMP) cannot be tested with a TCP connect.
 const COMMON_PORTS: { group: string; ports: [number, string][] }[] = [
     { group: 'Web', ports: [[80, 'HTTP'], [443, 'HTTPS'], [8080, 'HTTP alt'], [8443, 'HTTPS alt']] },
@@ -534,10 +569,27 @@ const COMMON_PORTS: { group: string; ports: [number, string][] }[] = [
 
 const PORT_NAMES = new Map(COMMON_PORTS.flatMap((g) => g.ports));
 
-function CommonPorts({ current, disabled, onPick }: { current?: string; disabled: boolean; onPick: (port: number) => void }) {
+function CommonPorts({
+    current,
+    disabled,
+    onPick,
+    onCheckAll,
+}: {
+    current?: string;
+    disabled: boolean;
+    onPick: (port: number) => void;
+    onCheckAll: () => void;
+}) {
+    const count = COMMON_PORTS.reduce((n, g) => n + g.ports.length, 0);
     return (
         <div className="common-ports">
-            <h3 className="common-ports-title">Common ports</h3>
+            <div className="common-ports-head">
+                <h3 className="common-ports-title">Common ports</h3>
+                <button type="button" className="btn btn-sm" disabled={disabled} onClick={onCheckAll}>
+                    <Icon name="grid" />
+                    Check all {count} ports
+                </button>
+            </div>
             <div className="common-ports-groups">
                 {COMMON_PORTS.map((g) => (
                     <div className="common-ports-group" key={g.group}>
@@ -602,6 +654,21 @@ function ToolPanel({ tool }: { tool: Tool }) {
         run(values);
     };
 
+    // Checks every common port on the host in one request.
+    const checkAll = async () => {
+        if (!values.host?.trim()) {
+            setState({ status: 'error', error: 'Enter the host or IP first.' });
+            firstInput.current?.focus();
+            return;
+        }
+        setState({ status: 'running' });
+        try {
+            setState({ status: 'done', result: await api('ports', { host: values.host.trim() }) });
+        } catch (err) {
+            setState({ status: 'error', error: err instanceof Error ? err.message : 'Something went wrong.' });
+        }
+    };
+
     // Picking a common port fills it in and checks it right away.
     const pickPort = (port: number) => {
         const next = { ...values, port: String(port) };
@@ -654,7 +721,7 @@ function ToolPanel({ tool }: { tool: Tool }) {
                 </button>
             </form>
             {tool.note && <p className="tool-note">{tool.note}</p>}
-            {tool.id === 'port' && <CommonPorts current={values.port} disabled={running} onPick={pickPort} />}
+            {tool.id === 'port' && <CommonPorts current={values.port} disabled={running} onPick={pickPort} onCheckAll={checkAll} />}
 
             <div className="tool-output" role="status" aria-live="polite">
                 {running && progress && (

@@ -1937,6 +1937,19 @@ a:hover {
   margin-top: 20px;
 }
 
+.common-ports-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.common-ports-head .btn:disabled {
+  opacity: .6;
+  cursor: progress;
+}
+
 .common-ports-title {
   margin: 0;
   font-size: 13px;
@@ -2107,6 +2120,10 @@ a:hover {
   border-bottom: 1px solid var(--line);
   color: var(--text);
   vertical-align: top;
+}
+
+.out-table-compact td {
+  white-space: nowrap;
 }
 
 .out-table tr:last-child td {
