@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import ComingSoon from './pages/ComingSoon';
 import Home from './pages/Home';
 import RadiusOne from './pages/RadiusOne';
+import Tools from './pages/Tools';
 import { Layout, type PageId } from './shared/Layout';
 import './site.css';
 
@@ -16,6 +17,7 @@ const PAGES: Record<PageId, () => React.ReactNode> = {
     radiusone: () => <RadiusOne />,
     ticketone: () => <ComingSoon brand="ticketone" />,
     dnsone: () => <ComingSoon brand="dnsone" />,
+    tools: () => <Tools />,
 };
 
 createRoot(el).render(

@@ -8,6 +8,8 @@ export default defineConfig({
     // Relative asset paths: the built site works from a domain root or a sub-folder.
     base: './',
     plugins: [react()],
+    // In development, the tools API comes from the server build.
+    server: { proxy: { '/api/': process.env.API_ORIGIN ?? 'http://10.4.100.101:8091' } },
     build: {
         outDir: 'dist',
         assetsInlineLimit: 0,
@@ -18,6 +20,7 @@ export default defineConfig({
                 radiusone: page('radiusone/index.html'),
                 ticketone: page('ticketone/index.html'),
                 dnsone: page('dnsone/index.html'),
+                tools: page('tools/index.html'),
             },
         },
     },

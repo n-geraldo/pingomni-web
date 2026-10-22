@@ -5,7 +5,7 @@ import { CONTACT_EMAIL, DEMO_URL, mailto } from '../config';
 import Icon from '../Icon';
 
 export type Theme = 'light' | 'dark';
-export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone';
+export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone' | 'tools';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
 type Site = { page: PageId; root: string; theme: Theme };
@@ -25,7 +25,8 @@ const PRODUCTS: { page: Brand & PageId; href: string; job: string; soon?: boolea
     { page: 'dnsone', href: 'dnsone/', job: 'DNS for ISPs and network operators', soon: true },
 ];
 
-const NAV: { href: string; label: string }[] = [
+const NAV: { href: string; label: string; page?: PageId }[] = [
+    { href: 'tools/', label: 'Network tools', page: 'tools' },
     { href: '#use-cases', label: 'Use cases' },
     { href: '#about', label: 'About' },
 ];
@@ -119,7 +120,7 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
 }
 
 function Header({ onTheme }: { onTheme: () => void }) {
-    const { root, theme } = useSite();
+    const { page, root, theme } = useSite();
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
@@ -147,7 +148,12 @@ function Header({ onTheme }: { onTheme: () => void }) {
                 <nav className={open ? 'site-nav open' : 'site-nav'} aria-label="Main">
                     <ProductsMenu onNavigate={() => setOpen(false)} />
                     {NAV.map((item) => (
-                        <a key={item.href} href={`${root}${item.href}`} onClick={() => setOpen(false)}>
+                        <a
+                            key={item.href}
+                            href={`${root}${item.href}`}
+                            aria-current={item.page && item.page === page ? 'page' : undefined}
+                            onClick={() => setOpen(false)}
+                        >
                             {item.label}
                         </a>
                     ))}
@@ -230,6 +236,7 @@ function Footer() {
                     </nav>
                     <nav className="footer-col" aria-labelledby="footer-company">
                         <h2 id="footer-company">Company</h2>
+                        <a href={`${root}tools/`}>Network tools</a>
                         <a href={`${root}#use-cases`}>Use cases</a>
                         <a href={`${root}#about`}>About</a>
                         <a href="#contact">Contact</a>
