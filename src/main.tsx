@@ -2,6 +2,9 @@ import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import App from './App';
 import type { PageId } from './shared/Layout';
+import '@fontsource-variable/ibm-plex-sans';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
 import './site.css';
 
 // Every page is its own HTML file (index.html, radiusone/index.html, ...) that names itself in data-page

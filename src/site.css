@@ -4,20 +4,20 @@
 :root {
   color-scheme: light;
 
-  --font: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font: "IBM Plex Sans Variable", "IBM Plex Sans", "Segoe UI", -apple-system, system-ui, Roboto, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 
-  --bg: #f3f4f6;
+  --bg: #f4f6fa;
   --surface: #ffffff;
-  --surface-2: #f8f9fb;
-  --surface-hover: #f2f6fc;
-  --line: #e3e6eb;
-  --line-strong: #cdd3db;
-  --text: #1d2530;
-  --text-strong: #0f141a;
-  --text-muted: #525d6b;
-  --text-faint: #646e7c;
-  --wordmark: #0f172a;
+  --surface-2: #f7f9fc;
+  --surface-hover: #eef3fc;
+  --line: #e2e7ef;
+  --line-strong: #c9d2df;
+  --text: #2b3950;
+  --text-strong: #13213a;
+  --text-muted: #56637a;
+  --text-faint: #66728a;
+  --wordmark: #13213a;
 
   --accent: #1f5fd6;
   --accent-hover: #194fb3;
@@ -37,43 +37,45 @@
   --warning-line: #f0d29b;
 
   /* The stage is the portal's sidebar colour: always dark, in both themes. */
-  --stage: #151b24;
-  --stage-line: rgba(255, 255, 255, .08);
-  --stage-raised: rgba(255, 255, 255, .04);
-  --on-stage: #eef1f5;
-  --on-stage-muted: #b3bcc8;
-  --on-stage-faint: #8e99a8;
+  --stage: #0a1836;
+  --stage-line: rgba(148, 178, 236, .14);
+  --stage-raised: rgba(148, 178, 236, .06);
+  --on-stage: #eef3fb;
+  --on-stage-muted: #b4c0d6;
+  --on-stage-faint: #8d9bb6;
   --on-stage-accent: #8fb5f8;
+  --live: #5eead4;
+  --grid-line: rgba(148, 178, 236, .07);
 
   --focus: 0 0 0 3px rgba(31, 95, 214, .28);
   --shadow-sm: 0 1px 2px rgba(15, 20, 26, .05);
   --shadow-pop: 0 8px 20px rgba(15, 20, 26, .12), 0 1px 3px rgba(15, 20, 26, .08);
   --shadow-shot: 0 24px 48px rgba(5, 8, 12, .32), 0 2px 6px rgba(5, 8, 12, .2);
 
-  --radius-sm: 4px;
-  --radius: 6px;
-  --radius-lg: 14px;
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
 
   --container: 1160px;
   --gutter: clamp(16px, 4vw, 32px);
   --section-y: clamp(64px, 9vw, 128px);
-  --header-h: 64px;
+  --header-h: 60px;
   --ease-out: cubic-bezier(.16, 1, .3, 1);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0f1318;
-  --surface: #171c23;
-  --surface-2: #1c222a;
-  --surface-hover: #212833;
-  --line: #2a313b;
-  --line-strong: #3a4350;
-  --text: #d5dbe3;
-  --text-strong: #eef1f5;
-  --text-muted: #a3adbb;
-  --text-faint: #848f9e;
-  --wordmark: #eef1f5;
+  --bg: #0a1120;
+  --surface: #0f1829;
+  --surface-2: #131d31;
+  --surface-hover: #18243c;
+  --line: #222f47;
+  --line-strong: #31415f;
+  --text: #d3dcea;
+  --text-strong: #eef3fb;
+  --text-muted: #a2b0c8;
+  --text-faint: #8291ad;
+  --wordmark: #eef3fb;
   --accent: #6c9ef6;
   --accent-hover: #8fb5f8;
   --accent-solid: #2f6bd8;
@@ -88,7 +90,7 @@
   --warning-solid: #d4932a;
   --warning-bg: rgba(234, 181, 90, .12);
   --warning-line: rgba(234, 181, 90, .34);
-  --stage: #0c1015;
+  --stage: #060d1f;
   --focus: 0 0 0 3px rgba(108, 158, 246, .35);
   --shadow-sm: none;
   --shadow-pop: 0 10px 28px rgba(0, 0, 0, .5);
@@ -98,17 +100,17 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #0f1318;
-    --surface: #171c23;
-    --surface-2: #1c222a;
-    --surface-hover: #212833;
-    --line: #2a313b;
-    --line-strong: #3a4350;
-    --text: #d5dbe3;
-    --text-strong: #eef1f5;
-    --text-muted: #a3adbb;
-    --text-faint: #848f9e;
-    --wordmark: #eef1f5;
+    --bg: #0a1120;
+    --surface: #0f1829;
+    --surface-2: #131d31;
+    --surface-hover: #18243c;
+    --line: #222f47;
+    --line-strong: #31415f;
+    --text: #d3dcea;
+    --text-strong: #eef3fb;
+    --text-muted: #a2b0c8;
+    --text-faint: #8291ad;
+    --wordmark: #eef3fb;
     --accent: #6c9ef6;
     --accent-hover: #8fb5f8;
     --accent-solid: #2f6bd8;
@@ -123,7 +125,7 @@
     --warning-solid: #d4932a;
     --warning-bg: rgba(234, 181, 90, .12);
     --warning-line: rgba(234, 181, 90, .34);
-    --stage: #0c1015;
+    --stage: #060d1f;
     --focus: 0 0 0 3px rgba(108, 158, 246, .35);
     --shadow-sm: none;
     --shadow-pop: 0 10px 28px rgba(0, 0, 0, .5);
@@ -378,14 +380,14 @@ a:hover {
   background: var(--accent-solid);
   border-color: var(--accent-solid);
   color: var(--on-accent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 1px 2px rgba(15, 20, 26, .2);
+  box-shadow: none;
 }
 
 .btn-primary:hover {
   background: var(--accent-solid-hover);
   border-color: var(--accent-solid-hover);
   color: var(--on-accent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 6px 18px rgba(31, 95, 214, .32);
+  box-shadow: 0 0 0 4px rgba(31, 95, 214, .16);
 }
 
 .btn-sm {
@@ -851,16 +853,19 @@ a:hover {
   color: var(--on-stage-muted);
 }
 
-/* A faint grid of nodes on every dark band, fading out toward the edges: the network the products run. */
+/* A fine measurement grid on every dark band, fading out toward the edges: the graph paper engineers plot latency on. */
 .stage::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
-  background-image: radial-gradient(rgba(255, 255, 255, .085) 1px, transparent 1.3px);
-  background-size: 24px 24px;
-  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 65% 30%, #000 10%, transparent 75%);
-  mask-image: radial-gradient(ellipse 80% 70% at 65% 30%, #000 10%, transparent 75%);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 0%, #000 20%, transparent 80%);
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 0%, #000 20%, transparent 80%);
   pointer-events: none;
 }
 
@@ -921,20 +926,71 @@ a:hover {
 }
 
 .hero-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px 32px;
-  margin-bottom: clamp(24px, 3vw, 36px);
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  align-items: end;
+  gap: 28px clamp(32px, 5vw, 72px);
+  margin-bottom: clamp(28px, 3.4vw, 40px);
+}
+
+.hero-copy {
+  display: grid;
+  gap: 18px;
 }
 
 .hero-head .display {
-  font-size: clamp(32px, 4vw, 48px);
+  font-size: clamp(38px, 5.2vw, 64px);
+  line-height: 1;
+  letter-spacing: -.035em;
 }
 
 .hero-head .lead {
-  flex: 0 1 30ch;
+  max-width: 44ch;
+}
+
+/* The hero console: the visitor's live address, then a prompt that opens any tool with the host filled in. */
+.console {
+  border: 1px solid var(--stage-line);
+  border-radius: var(--radius-lg);
+  background: rgba(3, 9, 24, .55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.console-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--stage-line);
+  color: var(--on-stage-faint);
+  font-size: 14px;
+}
+
+.console-live {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--on-stage-faint);
+}
+
+.console-live[data-state="on"] {
+  background: var(--live);
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, .18);
+}
+
+.console-ip {
+  margin-left: 4px;
+  color: var(--live);
+  font: 500 14px var(--font-mono);
+}
+
+.console-host {
+  margin-left: 10px;
+  color: var(--on-stage-faint);
+  font: 13px var(--font-mono);
 }
 
 /* --------------------------------------------------------------------------
@@ -1396,63 +1452,79 @@ a:hover {
   margin-top: 32px;
 }
 
-/* Home: free tools, a quick check that opens a tool with the form filled in, then every tool by group */
+/* Quick check inside the hero console */
 .quick {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "label label"
-    "input actions";
-  gap: 8px 12px;
-  align-items: center;
-  padding: clamp(16px, 2.4vw, 24px);
-  margin-bottom: clamp(32px, 4vw, 48px);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  gap: 10px;
+  padding: 16px;
 }
 
 .quick-label {
-  grid-area: label;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-weight: 500;
+  color: var(--on-stage-muted);
+}
+
+.quick-field {
+  position: relative;
+}
+
+.quick-prompt {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--live);
+  font: 500 15px var(--font-mono);
+  pointer-events: none;
 }
 
 .quick-input {
-  grid-area: input;
   width: 100%;
   min-width: 0;
-  height: 44px;
-  padding: 0 12px;
-  border: 1px solid var(--line-strong);
+  height: 48px;
+  padding: 0 14px 0 34px;
+  border: 1px solid var(--stage-line);
   border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-strong);
+  background: rgba(255, 255, 255, .04);
+  color: var(--on-stage);
   font: 15px var(--font-mono);
-  transition: border-color 120ms, box-shadow 120ms;
+  caret-color: var(--live);
+  transition: border-color 120ms, box-shadow 120ms, background-color 120ms;
 }
 
 .quick-input::placeholder {
-  color: var(--text-faint);
-  font-family: var(--font);
+  color: var(--on-stage-faint);
 }
 
 .quick-input:hover {
-  border-color: var(--text-faint);
+  border-color: rgba(148, 178, 236, .3);
 }
 
 .quick-input:focus {
   outline: none;
-  border-color: var(--accent-solid);
-  box-shadow: var(--focus);
+  border-color: #6c9ef6;
+  background: rgba(255, 255, 255, .06);
+  box-shadow: 0 0 0 3px rgba(108, 158, 246, .3);
 }
 
 .quick-actions {
-  grid-area: actions;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+}
+
+.quick-actions .btn:not(.btn-primary) {
+  background: transparent;
+  border-color: var(--stage-line);
+  color: var(--on-stage-muted);
+  font-weight: 500;
+}
+
+.quick-actions .btn:not(.btn-primary):hover {
+  background: rgba(255, 255, 255, .06);
+  border-color: rgba(148, 178, 236, .32);
+  color: var(--on-stage);
 }
 
 .toolgroups {
@@ -1850,12 +1922,12 @@ a:hover {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--success-solid);
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, .25);
+  background: var(--live);
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, .18);
 }
 
 .tools-myip .out-mono {
-  color: var(--on-stage);
+  color: var(--live);
 }
 
 .tools-main {
@@ -1876,7 +1948,7 @@ a:hover {
   scroll-margin-top: calc(var(--header-h) + 16px);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow: 0 30px 60px -20px rgba(15, 20, 26, .28), 0 2px 6px rgba(15, 20, 26, .06);
   overflow: hidden;
 }
@@ -2216,10 +2288,8 @@ a:hover {
 }
 
 .port-info-group {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-faint);
 }
 
@@ -2270,10 +2340,8 @@ a:hover {
   margin: 0 0 4px;
   padding: 0 8px 6px;
   border-bottom: 1px solid var(--line);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-faint);
 }
 
@@ -2559,13 +2627,13 @@ a:hover {
   overflow: auto;
   padding: 16px 18px;
   border-radius: var(--radius);
-  background: #0c1015;
-  border: 1px solid #1f2630;
-  color: #d5dbe3;
+  background: #050c1d;
+  border: 1px solid #1a2a4a;
+  color: #d3dcea;
   font: 13px/1.6 var(--font-mono);
   white-space: pre;
   tab-size: 4;
-  scrollbar-color: #3a4350 transparent;
+  scrollbar-color: #2e4168 transparent;
 }
 
 .out-console::selection {
@@ -3217,15 +3285,13 @@ abbr[title] {
   gap: 8px;
   padding: 18px 20px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
 .workflow-kind {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-faint);
 }
 
@@ -3548,12 +3614,8 @@ abbr[title] {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .quick {
+  .hero-head {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "label"
-      "input"
-      "actions";
   }
 
   .product-hero-text {

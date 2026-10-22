@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Mark, Wordmark } from '../brand';
 import { DEMO_URL, mailto } from '../config';
 import Icon from '../Icon';
+import { api } from '../lib/api';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { Contact, Shot, useSite } from '../shared/Layout';
 
@@ -119,17 +120,22 @@ function QuickCheck() {
             <label className="quick-label" htmlFor="quick-host">
                 Check a domain, hostname or IP address
             </label>
-            <input
-                id="quick-host"
-                className="quick-input"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="example.com"
-                autoComplete="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                required
-            />
+            <div className="quick-field">
+                <span className="quick-prompt" aria-hidden="true">
+                    $
+                </span>
+                <input
+                    id="quick-host"
+                    className="quick-input"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    placeholder="example.com"
+                    autoComplete="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    required
+                />
+            </div>
             <div className="quick-actions">
                 {QUICK.map((q, i) => (
                     <button key={q.tool} type="submit" name="tool" value={q.tool} className={i === 0 ? 'btn btn-primary btn-sm' : 'btn btn-sm'}>
@@ -138,6 +144,33 @@ function QuickCheck() {
                 ))}
             </div>
         </form>
+    );
+}
+
+/** The visitor's own address, as our server sees it: the first live reading on the page. */
+function HeroConsole() {
+    const [me, setMe] = useState<{ ip: string; hostname?: string } | null | undefined>(undefined);
+    useEffect(() => {
+        api('myip', {}, 8000).then(
+            (r) => setMe({ ip: r.ip, hostname: r.hostname }),
+            () => setMe(null),
+        );
+    }, []);
+    return (
+        <div className="console">
+            <div className="console-bar">
+                <span className="console-live" data-state={me === undefined ? 'wait' : me ? 'on' : 'off'} />
+                {me === undefined && <span>Finding your address</span>}
+                {me && (
+                    <span>
+                        You are <code className="console-ip">{me.ip}</code>
+                        {me.hostname && <span className="console-host">{me.hostname}</span>}
+                    </span>
+                )}
+                {me === null && <span>Run any check from our server or from other countries</span>}
+            </div>
+            <QuickCheck />
+        </div>
     );
 }
 
@@ -156,7 +189,6 @@ function FreeTools() {
                         from the internet’s routing table. No account, nothing to install.
                     </p>
                 </div>
-                <QuickCheck />
                 <div className="toolgroups">
                     {groups.map((g) => {
                         const info = TOOL_PAGES[g];
@@ -254,10 +286,16 @@ export default function Home() {
             <section className="stage hero" aria-labelledby="hero-title">
                 <div className="container">
                     <div className="hero-head">
-                        <h1 id="hero-title" className="display">
-                            Software that ISPs run on.
-                        </h1>
-                        <p className="lead">Self-hosted products for ISPs and network operators, and free tools for anyone who runs a network.</p>
+                        <div className="hero-copy">
+                            <h1 id="hero-title" className="display">
+                                Software that ISPs run on.
+                            </h1>
+                            <p className="lead">
+                                Self-hosted products for ISPs and network operators, and {TOOL_LIST.length} free tools for anyone who runs a
+                                network.
+                            </p>
+                        </div>
+                        <HeroConsole />
                     </div>
                     <Launcher />
                 </div>
