@@ -353,7 +353,7 @@ const WORKFLOWS: { title: string; when: string; steps: { tool: string; field: st
         when: 'Routing',
         steps: [
             { tool: 'prefix', field: 'resource', why: 'Is it announced, by which AS, and does RPKI allow it?' },
-            { tool: 'lg', field: 'resource', why: 'What path does each network have to it?' },
+            { tool: 'lg', field: 'resource', why: 'Which paths do networks around the world take to it?' },
             { tool: 'traceroute', field: 'host', why: 'Which networks does traffic cross from here?' },
             { tool: 'whois', field: 'query', why: 'Who is the address space registered to?' },
         ],
@@ -419,7 +419,7 @@ function MyIp() {
 const HERO: Record<ToolGroup, { title: string; lead: string }> = {
     network: {
         title: 'Network tools.',
-        lead: 'Ping, trace or MTR a host from our server or from other countries, test a TCP port, measure your download speed, or plan a subnet. Free, no sign-up.',
+        lead: 'Ping, trace or run MTR to a host from our server or from other countries, test a TCP port, measure your download speed, or plan a subnet. Free, no sign-up.',
     },
     email: {
         title: 'DNS & Email tools.',
@@ -427,7 +427,7 @@ const HERO: Record<ToolGroup, { title: string; lead: string }> = {
     },
     bgp: {
         title: 'BGP & ASN tools.',
-        lead: 'Look up an autonomous system, find which network announces an address and whether RPKI allows it, and see the BGP paths networks around the world use to reach it. Free, no sign-up.',
+        lead: 'Look up an autonomous system, find which network announces an address and whether RPKI validates it, and see the BGP paths networks around the world use to reach it. Free, no sign-up.',
     },
 };
 

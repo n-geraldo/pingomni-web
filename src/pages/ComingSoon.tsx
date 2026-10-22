@@ -26,8 +26,8 @@ export default function ComingSoon({ brand }: { brand: keyof typeof PRODUCTS }) 
                     {product.job}
                 </h1>
                 <p className="lead">
-                    {product.name} is the next product in the PingOmni family. It is still being planned, so its features and release date are
-                    not set yet. It will be self-hosted and share RadiusOne’s look and roles.
+                    {product.name} is the next product in the PingOmni family. It is still in planning, so its features and release date are
+                    not set yet. Like RadiusOne, it will be self-hosted and share the same look and operator roles.
                 </p>
                 <div className="actions">
                     <a className="btn btn-primary btn-lg" href={mailto(`Tell me when ${product.name} is ready`)}>
