@@ -3648,6 +3648,13 @@ abbr[title] {
   border-top: 1px solid var(--stage-line);
 }
 
+/* On a light stage, a hairline marks where the band ends and the page begins. */
+.hero,
+.product-hero,
+.soon-hero {
+  border-bottom: 1px solid var(--stage-line);
+}
+
 /* --------------------------------------------------------------------------
    Responsive
    -------------------------------------------------------------------------- */
