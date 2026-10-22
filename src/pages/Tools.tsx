@@ -50,11 +50,23 @@ function Rows({ rows }: { rows: [string, ReactNode][] }) {
     );
 }
 
-function Table({ head, rows, empty, compact = false }: { head: string[]; rows: ReactNode[][]; empty: string; compact?: boolean }) {
+function Table({
+    head,
+    rows,
+    empty,
+    compact = false,
+    stack = false,
+}: {
+    head: string[];
+    rows: ReactNode[][];
+    empty: string;
+    compact?: boolean;
+    stack?: boolean;
+}) {
     if (!rows.length) return <p className="out-empty">{empty}</p>;
     return (
         <div className="out-table-wrap">
-            <table className={compact ? 'out-table out-table-compact' : 'out-table'}>
+            <table className={['out-table', compact && 'out-table-compact', stack && 'out-table-stack'].filter(Boolean).join(' ')}>
                 <thead>
                     <tr>
                         {head.map((h) => (
@@ -477,32 +489,10 @@ const SPECS: ToolSpec[] = [
     },
     {
         id: 'blacklist',
-        fields: [{ name: 'host', label: 'IP or mail server', placeholder: '203.0.113.10' }],
+        fields: [{ name: 'host', label: 'IP, mail server or domain', placeholder: 'mail.example.com' }],
         run: (v) => api('blacklist', v),
-        render: (r) => {
-            const listed = r.results.filter((x: Result) => x.state === 'listed').length;
-            return (
-                <>
-                    <div className="out-summary">
-                        <Status level={listed ? 'error' : 'ok'}>{listed ? `Listed on ${listed}` : 'Not listed'}</Status>
-                        <span>
-                            <Mono>{r.ip}</Mono> checked against {r.results.length} lists
-                        </span>
-                    </div>
-                    <Table
-                        head={['List', 'Result', 'Details']}
-                        rows={r.results.map((x: Result) => [
-                            x.list,
-                            <Status level={x.state === 'listed' ? 'error' : x.state === 'clean' ? 'ok' : 'neutral'}>
-                                {x.state === 'listed' ? 'Listed' : x.state === 'clean' ? 'Clean' : 'No answer'}
-                            </Status>,
-                            x.reason ?? (x.state === 'unknown' ? 'The list refused our query' : '—'),
-                        ])}
-                        empty=""
-                    />
-                </>
-            );
-        },
+        note: 'Checks the common IP blacklists, plus the domain blacklists when you enter a domain. Takes a few seconds.',
+        render: (r) => <Blacklists r={r} />,
     },
 ];
 
@@ -552,6 +542,81 @@ function AllPorts({ r }: { r: Result }) {
                 compact
             />
             <p className="tool-note">Closed: the host refused the connection. Filtered: no answer within 4 seconds, usually a firewall.</p>
+        </>
+    );
+}
+
+const LIST_ORDER = { listed: 0, unknown: 1, clean: 2 } as const;
+
+// Lists put their lookup or delisting page in the reason text; make those addresses clickable.
+function Linkified({ text }: { text: string }) {
+    return (
+        <>
+            {text.split(/(https?:\/\/[^\s"<>]+)/).map((part, i) =>
+                /^https?:\/\//.test(part) ? (
+                    <a key={i} href={part} target="_blank" rel="noopener noreferrer nofollow" className="out-link">
+                        {part.replace(/^https?:\/\//, '').slice(0, 48)}
+                        {part.length > 56 ? '…' : ''}
+                    </a>
+                ) : (
+                    part
+                ),
+            )}
+        </>
+    );
+}
+
+function ListTable({ title, rows }: { title: string; rows: Result[] }) {
+    if (!rows.length) return null;
+    const sorted = [...rows].sort((a, b) => LIST_ORDER[a.state as keyof typeof LIST_ORDER] - LIST_ORDER[b.state as keyof typeof LIST_ORDER]);
+    return (
+        <div className="out-group">
+            <h3 className="out-group-title">
+                {title} <span className="faint">({rows.length})</span>
+            </h3>
+            <Table
+                head={['List', 'Result', 'Details']}
+                rows={sorted.map((x) => [
+                    x.list,
+                    <Status level={x.state === 'listed' ? 'error' : x.state === 'clean' ? 'ok' : 'neutral'}>
+                        {x.state === 'listed' ? 'Listed' : x.state === 'clean' ? 'Clean' : 'No answer'}
+                    </Status>,
+                    x.reason ? <Linkified text={x.reason} /> : x.state === 'listed' ? `Code ${x.codes.join(', ')}` : '',
+                ])}
+                empty=""
+                stack
+            />
+        </div>
+    );
+}
+
+function Blacklists({ r }: { r: Result }) {
+    const count = (state: string) => r.results.filter((x: Result) => x.state === state).length;
+    const listed = count('listed');
+    const ipRows = r.results.filter((x: Result) => x.kind === 'ip');
+    const domainRows = r.results.filter((x: Result) => x.kind === 'domain');
+    return (
+        <>
+            <div className="out-summary out-summary-big">
+                <Status level={listed ? 'error' : 'ok'}>{listed ? `Listed on ${listed}` : 'Not listed'}</Status>
+                <span>
+                    {r.domain && <>{r.domain} </>}
+                    {r.ip && <Mono>{r.ip}</Mono>} checked against {r.results.length} lists
+                </span>
+            </div>
+            <div className="out-counts">
+                <span>
+                    <strong>{listed}</strong> listed
+                </span>
+                <span>
+                    <strong>{count('clean')}</strong> clean
+                </span>
+                <span>
+                    <strong>{count('unknown')}</strong> no answer
+                </span>
+            </div>
+            <ListTable title={r.ip ? `IP blacklists for ${r.ip}` : 'IP blacklists'} rows={ipRows} />
+            <ListTable title={`Domain blacklists for ${r.domain}`} rows={domainRows} />
         </>
     );
 }

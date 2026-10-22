@@ -2134,6 +2134,37 @@ a:hover {
   background: var(--surface-hover);
 }
 
+.out-link {
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.out-group {
+  display: grid;
+  gap: 8px;
+}
+
+.out-group-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.out-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.out-counts strong {
+  color: var(--text-strong);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .out-record {
   margin: 0;
   padding: 12px 14px;
@@ -2230,6 +2261,47 @@ a:hover {
 
   .common-ports-group {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Three-column result tables become one block per row: name and badge, then the details. */
+  .out-table-stack thead {
+    display: none;
+  }
+
+  .out-table-stack tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .out-table-stack tr:last-child {
+    border-bottom: 0;
+  }
+
+  .out-table-stack td {
+    padding: 0;
+    border: 0;
+  }
+
+  .out-table-stack td:first-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .out-table-stack td:empty {
+    display: none;
+  }
+
+  .out-table-stack td:nth-child(3) {
+    grid-column: 1 / -1;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .out-table-stack tbody tr:hover td {
+    background: none;
   }
 
   .common-ports-label {

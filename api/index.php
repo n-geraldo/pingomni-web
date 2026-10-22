@@ -685,41 +685,118 @@ function toolWhois(): array
     ];
 }
 
-const BLACKLISTS = ['zen.spamhaus.org', 'bl.spamcop.net', 'b.barracudacentral.org', 'dnsbl.sorbs.net', 'psbl.surriel.com', 'dnsbl-1.uceprotect.net', 'bl.mailspike.net', 'dnsbl.dronebl.org'];
+// Common IP blacklists (DNSBLs), checked in parallel. Each query is <reversed IP>.<list>.
+const IP_BLACKLISTS = [
+    'zen.spamhaus.org', 'bl.spamcop.net', 'b.barracudacentral.org', 'psbl.surriel.com',
+    'dnsbl-1.uceprotect.net', 'dnsbl-2.uceprotect.net', 'dnsbl-3.uceprotect.net', 'bl.mailspike.net',
+    'dnsbl.dronebl.org', 'ix.dnsbl.manitu.net', 'truncate.gbudb.net', 'dnsbl.spfbl.net', 'bl.0spam.org',
+    'all.s5h.net', 'spam.dnsbl.anonmails.de', 'dnsbl.kempt.net', 'bl.blocklist.de', 'rbl.interserver.net',
+    'bl.nordspam.com', 'backscatter.spameatingmonkey.net', 'bl.spameatingmonkey.net', 'korea.services.net',
+    'dnsbl.zapbl.net', 'bl.mxrbl.com', 'dnsrbl.swinog.ch', 'black.junkemailfilter.com', 'bl.suomispam.net',
+];
+
+// Common domain blacklists (RHSBLs, URI lists), checked when a domain is entered.
+const DOMAIN_BLACKLISTS = ['dbl.spamhaus.org', 'multi.surbl.org', 'multi.uribl.com', 'dbl.nordspam.com', 'uribl.spameatingmonkey.net'];
+
+/**
+ * Runs many DNS lookups at once with dig (a few seconds at most, however slow a list is).
+ * @param string[] $names
+ * @return array<string, string[]> name => answers
+ */
+function digMany(array $names, string $type): array
+{
+    $answers = [];
+    foreach (array_chunk($names, 25) as $batch) {
+        $procs = [];
+        foreach ($batch as $name) {
+            $p = proc_open(['timeout', '5', 'dig', '+short', '+time=2', '+tries=1', $type, $name], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+            if (is_resource($p)) {
+                $procs[$name] = [$p, $pipes];
+            }
+        }
+        foreach ($procs as $name => [$p, $pipes]) {
+            $out = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $code = proc_close($p);
+            $lines = array_values(array_filter(array_map('trim', explode("\n", (string) $out)), fn ($l) => $l !== '' && !str_starts_with($l, ';')));
+            $answers[$name] = $code === 0 ? $lines : ['timeout'];
+        }
+    }
+    return $answers;
+}
+
+/** Checks a key (reversed IP or domain) against lists; a listing counts only if the list does not also list a test key that is never listed. */
+function checkLists(string $key, string $control, array $lists, bool $domain): array
+{
+    $codes = digMany(array_map(fn ($l) => "{$key}.{$l}", $lists), 'A');
+    $listedOn = [];
+    $results = [];
+    foreach ($lists as $list) {
+        $answer = $codes["{$key}.{$list}"] ?? [];
+        $ips = array_values(array_filter($answer, fn ($a) => (bool) preg_match('/^127\.\d+\.\d+\.\d+$/', $a)));
+        if ($answer === ['timeout']) {
+            $state = 'unknown';
+            $note = 'The list did not answer in time';
+        } elseif (array_filter($ips, fn ($c) => str_starts_with($c, '127.255.255.') || ($domain && in_array($c, ['127.0.0.1', '127.0.1.255'], true)))) {
+            // 127.255.255.x, and 127.0.0.1 from URI lists, mean the list refused our query (common through public resolvers).
+            $state = 'unknown';
+            $note = 'The list refused our query';
+        } elseif ($ips) {
+            $state = 'listed';
+            $note = null;
+            $listedOn[] = $list;
+        } else {
+            $state = 'clean';
+            $note = null;
+        }
+        $results[$list] = ['list' => $list, 'kind' => $domain ? 'domain' : 'ip', 'state' => $state, 'codes' => $ips, 'reason' => $note];
+    }
+    if ($listedOn) {
+        $controls = digMany(array_map(fn ($l) => "{$control}.{$l}", $listedOn), 'A');
+        $reasons = digMany(array_map(fn ($l) => "{$key}.{$l}", $listedOn), 'TXT');
+        foreach ($listedOn as $list) {
+            if (array_filter($controls["{$control}.{$list}"] ?? [], fn ($a) => str_starts_with($a, '127.'))) {
+                $results[$list]['state'] = 'unknown';
+                $results[$list]['reason'] = 'The list answers "listed" for everything, so its result cannot be trusted';
+                continue;
+            }
+            $txt = implode(' ', array_map(fn ($t) => trim($t, '"'), $reasons["{$key}.{$list}"] ?? []));
+            $results[$list]['reason'] = $txt !== '' && $txt !== 'timeout' ? $txt : null;
+        }
+    }
+    return array_values($results);
+}
 
 function toolBlacklist(): array
 {
-    rateLimit('light', LIGHT_PER_MINUTE);
+    rateLimit('lists', 6);
     $input = normalizeHost(param('host'));
+    $domain = null;
     if (isDomain($input)) {
+        $domain = $input;
         $ips = array_values(array_filter(resolve($input), fn ($ip) => str_contains($ip, '.')));
-        if (!$ips) {
-            fail("{$input} has no IPv4 address to check.");
-        }
-        $ip = $ips[0];
+        $ip = $ips[0] ?? null;
     } elseif (filter_var($input, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
         $ip = $input;
     } else {
-        fail('Enter an IPv4 address or a hostname.');
+        fail('Enter an IPv4 address, a mail server or a domain.');
     }
-    if (!isPublicIp($ip)) {
+    if ($ip !== null && !isPublicIp($ip)) {
         fail('Only public addresses are listed on blacklists.');
     }
-    $reversed = implode('.', array_reverse(explode('.', $ip)));
     $results = [];
-    foreach (BLACKLISTS as $list) {
-        $answers = @dns_get_record("{$reversed}.{$list}", DNS_A) ?: [];
-        $codes = array_map(fn ($r) => $r['ip'], $answers);
-        // 127.255.255.x is a list refusing the query (common through public resolvers), not a listing.
-        $refused = (bool) array_filter($codes, fn ($c) => str_starts_with($c, '127.255.255.'));
-        $state = $refused ? 'unknown' : ($codes ? 'listed' : 'clean');
-        $reason = null;
-        if ($state === 'listed') {
-            $reason = implode(' ', txtRecords("{$reversed}.{$list}")) ?: null;
-        }
-        $results[] = ['list' => $list, 'state' => $state, 'codes' => $codes, 'reason' => $reason];
+    if ($ip !== null) {
+        $reversed = implode('.', array_reverse(explode('.', $ip)));
+        $results = checkLists($reversed, '1.0.0.127', IP_BLACKLISTS, false);
     }
-    return ['input' => $input, 'ip' => $ip, 'results' => $results];
+    if ($domain !== null) {
+        array_push($results, ...checkLists($domain, 'example.com', DOMAIN_BLACKLISTS, true));
+    }
+    if (!$results) {
+        fail("{$input} has no IPv4 address to check.");
+    }
+    return ['input' => $input, 'ip' => $ip, 'domain' => $domain, 'results' => $results];
 }
 
 // ---------------------------------------------------------------------------
