@@ -121,6 +121,14 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
 function Header({ onTheme }: { onTheme: () => void }) {
     const { root, theme } = useSite();
     const [open, setOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const onScroll = () => setScrolled(window.scrollY > 8);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
 
     useEffect(() => {
         if (!open) return;
@@ -130,7 +138,7 @@ function Header({ onTheme }: { onTheme: () => void }) {
     }, [open]);
 
     return (
-        <header className="site-header">
+        <header className={scrolled ? 'site-header scrolled' : 'site-header'}>
             <div className="container header-row">
                 <a className="brand" href={root} aria-label="PingOmni home">
                     <Mark brand="pingomni" size={30} />
@@ -201,37 +209,73 @@ function Footer() {
     const { root } = useSite();
     return (
         <footer className="site-footer">
-            <div className="container footer-row">
-                <a className="brand" href={root} aria-label="PingOmni home">
-                    <Mark brand="pingomni" size={24} />
-                    <Wordmark brand="pingomni" />
-                </a>
-                <ul className="footer-products">
-                    <li>
+            <div className="container">
+                <div className="footer-grid">
+                    <div className="footer-about">
+                        <a className="brand" href={root} aria-label="PingOmni home">
+                            <Mark brand="pingomni" size={28} />
+                            <Wordmark brand="pingomni" />
+                        </a>
+                        <p>Self-hosted software for ISPs and network operators, one product for each job.</p>
+                    </div>
+                    <nav className="footer-col" aria-labelledby="footer-products">
+                        <h2 id="footer-products">Products</h2>
                         <a href={`${root}radiusone/`}>RadiusOne</a>
-                    </li>
-                    <li>
                         <a className="footer-soon" href={`${root}ticketone/`}>
-                            TicketOne, coming soon
+                            TicketOne <span>Soon</span>
                         </a>
-                    </li>
-                    <li>
                         <a className="footer-soon" href={`${root}dnsone/`}>
-                            DNSOne, coming soon
+                            DNSOne <span>Soon</span>
                         </a>
-                    </li>
-                    <li>
+                    </nav>
+                    <nav className="footer-col" aria-labelledby="footer-company">
+                        <h2 id="footer-company">Company</h2>
+                        <a href={`${root}#use-cases`}>Use cases</a>
+                        <a href={`${root}#about`}>About</a>
+                        <a href="#contact">Contact</a>
+                    </nav>
+                    <div className="footer-col">
+                        <h2>Get in touch</h2>
                         <a href={mailto('Question for PingOmni')}>{CONTACT_EMAIL}</a>
-                    </li>
-                </ul>
-                <p className="small faint">© {new Date().getFullYear()} PingOmni</p>
+                        <a href={DEMO_URL} target="_blank" rel="noopener">
+                            Try the RadiusOne demo
+                        </a>
+                    </div>
+                </div>
+                <p className="footer-bottom small faint">© {new Date().getFullYear()} PingOmni</p>
             </div>
         </footer>
     );
 }
 
+// Sections below the first screen rise in once as they scroll into view. Nothing is hidden before this runs.
+function useReveal() {
+    useEffect(() => {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+        const targets = [...document.querySelectorAll<HTMLElement>('main > section')].filter(
+            (el) => el.getBoundingClientRect().top > window.innerHeight,
+        );
+        const io = new IntersectionObserver(
+            (entries) => {
+                for (const e of entries) {
+                    if (!e.isIntersecting) continue;
+                    e.target.classList.add('revealed');
+                    io.unobserve(e.target);
+                }
+            },
+            { rootMargin: '0px 0px -10% 0px' },
+        );
+        for (const el of targets) {
+            el.classList.add('reveal');
+            io.observe(el);
+        }
+        return () => io.disconnect();
+    }, []);
+}
+
 export function Layout({ page, root, children }: { page: PageId; root: string; children: ReactNode }) {
     const [theme, setTheme] = useState<Theme>(currentTheme);
+    useReveal();
     const toggle = () => {
         const next: Theme = theme === 'dark' ? 'light' : 'dark';
         document.documentElement.dataset.theme = next;

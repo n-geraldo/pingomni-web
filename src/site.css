@@ -52,7 +52,7 @@
 
   --radius-sm: 4px;
   --radius: 6px;
-  --radius-lg: 10px;
+  --radius-lg: 14px;
 
   --container: 1160px;
   --gutter: clamp(16px, 4vw, 32px);
@@ -240,17 +240,17 @@ a:hover {
 .display {
   font-size: clamp(36px, 5vw, 58px);
   font-weight: 600;
-  line-height: 1.06;
-  letter-spacing: -.025em;
+  line-height: 1.04;
+  letter-spacing: -.032em;
   color: var(--text-strong);
   text-wrap: balance;
 }
 
 .h2 {
-  font-size: clamp(26px, 3.2vw, 36px);
+  font-size: clamp(28px, 3.4vw, 40px);
   font-weight: 600;
-  line-height: 1.14;
-  letter-spacing: -.015em;
+  line-height: 1.1;
+  letter-spacing: -.024em;
   color: var(--text-strong);
   text-wrap: balance;
 }
@@ -353,13 +353,13 @@ a:hover {
   height: 44px;
   padding: 0 20px;
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
   font: 600 15px/1 var(--font);
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 120ms, border-color 120ms, color 120ms;
+  transition: background-color 120ms, border-color 120ms, color 120ms, box-shadow 200ms var(--ease-out);
 }
 
 .btn:hover {
@@ -378,12 +378,14 @@ a:hover {
   background: var(--accent-solid);
   border-color: var(--accent-solid);
   color: var(--on-accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 1px 2px rgba(15, 20, 26, .2);
 }
 
 .btn-primary:hover {
   background: var(--accent-solid-hover);
   border-color: var(--accent-solid-hover);
   color: var(--on-accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 6px 18px rgba(31, 95, 214, .32);
 }
 
 .btn-sm {
@@ -405,7 +407,7 @@ a:hover {
   height: 36px;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -464,8 +466,16 @@ a:hover {
   z-index: 50;
   height: var(--header-h);
   background: var(--stage);
+  transition: background-color 200ms;
   border-bottom: 1px solid var(--stage-line);
   color: var(--on-stage);
+}
+
+/* Once the page scrolls, the bar turns frosted: what passes under it shows through, blurred. */
+.site-header.scrolled {
+  background: color-mix(in srgb, var(--stage) 90%, transparent);
+  -webkit-backdrop-filter: saturate(150%) blur(16px);
+  backdrop-filter: saturate(150%) blur(16px);
 }
 
 .header-row {
@@ -735,8 +745,39 @@ a:hover {
    Stage (dark bands) and hero
    -------------------------------------------------------------------------- */
 .stage {
+  position: relative;
+  isolation: isolate;
   background: var(--stage);
   color: var(--on-stage-muted);
+}
+
+/* A faint grid of nodes on every dark band, fading out toward the edges: the network the products run. */
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(255, 255, 255, .085) 1px, transparent 1.3px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 65% 30%, #000 10%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 70% at 65% 30%, #000 10%, transparent 75%);
+  pointer-events: none;
+}
+
+.contact {
+  overflow: hidden;
+}
+
+/* Sections below the first screen rise in once as they arrive (set up by script, so content is never hidden without it). */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+.reveal.revealed {
+  opacity: 1;
+  transform: none;
+  transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out);
 }
 
 .stage .display,
@@ -1003,6 +1044,15 @@ a:hover {
   background: var(--stage-raised);
   border: 1px solid var(--stage-line);
   color: var(--on-stage-muted);
+}
+
+.tile-closed {
+  transition: border-color 160ms, background-color 160ms;
+}
+
+.tile-closed:hover {
+  border-color: rgba(255, 255, 255, .16);
+  background: rgba(255, 255, 255, .06);
 }
 
 .tile-closed .mark {
@@ -1508,37 +1558,92 @@ a:hover {
 
 /* Footer */
 .site-footer {
-  padding: 32px 0;
+  padding: 56px 0 28px;
   background: var(--surface);
   border-top: 1px solid var(--line);
 }
 
-.footer-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px 40px;
+.footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.footer-about {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  max-width: 320px;
+}
+
+.footer-about p {
+  color: var(--text-muted);
+  font-size: 15px;
 }
 
 .site-footer .wordmark {
-  font-size: 16px;
+  font-size: 17px;
 }
 
-.footer-products {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 24px;
-  margin-right: auto;
+.footer-col {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  font-size: 15px;
+}
+
+.footer-col h2 {
+  margin: 0 0 2px;
   font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
 }
 
-.footer-products .footer-soon {
-  color: var(--text-faint);
+.footer-col a {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.footer-col a:hover {
+  color: var(--text-strong);
+}
+
+.footer-soon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-soon span {
+  padding: 0 6px;
+  border: 1px solid var(--warning-line);
+  border-radius: var(--radius-sm);
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.footer-bottom {
+  margin-top: 44px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
 }
 
 /* --------------------------------------------------------------------------
    Responsive
    -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .footer-about {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 820px) {
   /* The chain stacks, with a down connector between steps; the branch follows the SQL tables. */
   .path-chain,
@@ -1730,6 +1835,11 @@ a:hover {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
   }
 
   .mark-ping {
