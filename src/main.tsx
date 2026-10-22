@@ -10,14 +10,16 @@ import './site.css';
 // Every page is its own HTML file (index.html, radiusone/index.html, ...) that names itself in data-page.
 const el = document.getElementById('root')!;
 const page = (el.dataset.page ?? 'home') as PageId;
-const root = page === 'home' ? './' : '../';
+// Each HTML file says how far it sits below the site root.
+const root = el.dataset.root ?? (page === 'home' ? './' : '../');
 
 const PAGES: Record<PageId, () => React.ReactNode> = {
     home: () => <Home />,
     radiusone: () => <RadiusOne />,
     ticketone: () => <ComingSoon brand="ticketone" />,
     dnsone: () => <ComingSoon brand="dnsone" />,
-    tools: () => <Tools />,
+    'tools-network': () => <Tools group="network" />,
+    'tools-email': () => <Tools group="email" />,
 };
 
 createRoot(el).render(

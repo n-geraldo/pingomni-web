@@ -23,7 +23,7 @@ Set these at build time (for example in `.env.production`):
 
 ## Network tools
 
-`/tools/` has two groups of tools. Network: ping, traceroute, port check, reverse lookup, proxy checker, bandwidth meter, network calculator and mask calculator. DNS & Email: DNS lookup, MX, NS, SPF, DMARC, DKIM, SMTP, WHOIS and blacklist checks.
+Two pages, both in the navbar's Tools menu. `/tools/network/`: ping, traceroute, port check, reverse lookup, proxy checker, bandwidth meter, network calculator and mask calculator. `/tools/email/`: DNS lookup, MX, NS, SPF, DMARC, DKIM, SMTP, WHOIS and blacklist checks. Each tool has its own address (`/tools/email/#mx`), and old `/tools/#...` links forward to the right page. The tool names live in `src/lib/toolList.ts`.
 
 The calculators run in the browser. Everything else calls `api/index.php` (`/api/?tool=<name>`). The API needs PHP 8.3 with curl and openssl, plus `ping` and `mtr` on the server. WHOIS uses the public RDAP service (rdap.org).
 
@@ -46,7 +46,7 @@ sudo cp deploy/nginx.conf /etc/nginx/sites-available/pingomni-web && sudo nginx 
 
 ## Files
 
-- `index.html`, `radiusone/`, `ticketone/`, `dnsone/`, `tools/`: one HTML file per page, so every address works on any static host.
+- `index.html`, `radiusone/`, `ticketone/`, `dnsone/`, `tools/network/`, `tools/email/`: one HTML file per page, so every address works on any static host.
 - `src/pages/`: the home, RadiusOne and coming-soon pages; `src/shared/Layout.tsx`: header, footer, contact band and theme switch.
 - `src/site.css`: tokens (same names and values as the portal's `resources/css/app.css`) and styles.
 - `src/brand.tsx`: the family marks (one tile, gradient and teal "ping" dot; one letter per product) and wordmarks.

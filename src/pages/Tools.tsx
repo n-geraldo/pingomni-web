@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Icon from '../Icon';
 import { rangeToMasks, subnet } from '../lib/ipcalc';
+import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { useSite } from '../shared/Layout';
 
 // ---------------------------------------------------------------------------
@@ -9,17 +10,14 @@ import { useSite } from '../shared/Layout';
 
 type Field = { name: string; label: string; placeholder: string; options?: string[]; width?: 'narrow' };
 type Result = Record<string, any>;
-type Tool = {
+type ToolSpec = {
     id: string;
-    group: 'network' | 'email';
-    name: string;
-    blurb: string;
-    icon: string;
     fields: Field[];
     run?: (values: Record<string, string>) => Promise<Result>;
     render: (r: Result) => ReactNode;
     note?: string;
 };
+type Tool = ToolSpec & (typeof TOOL_LIST)[number];
 
 class ToolError extends Error {}
 
@@ -147,13 +145,9 @@ async function measureBandwidth(onProgress: (mbps: number, pct: number) => void)
     return { ...run, latency: Math.min(...latencies) };
 }
 
-const TOOLS: Tool[] = [
+const SPECS: ToolSpec[] = [
     {
         id: 'ping',
-        group: 'network',
-        name: 'Ping',
-        blurb: 'How long packets take to reach a host',
-        icon: 'activity',
         fields: [{ name: 'host', label: 'Host or IP', placeholder: 'example.com' }],
         run: (v) => api('ping', v),
         render: (r) => (
@@ -177,10 +171,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'traceroute',
-        group: 'network',
-        name: 'Traceroute',
-        blurb: 'The route packets take from our server to a host',
-        icon: 'route',
         fields: [{ name: 'host', label: 'Host or IP', placeholder: 'example.com' }],
         run: (v) => api('traceroute', v),
         note: 'A trace can take up to half a minute.',
@@ -208,10 +198,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'port',
-        group: 'network',
-        name: 'Port check',
-        blurb: 'Whether a TCP port is open on a host',
-        icon: 'plug',
         fields: [
             { name: 'host', label: 'Host or IP', placeholder: 'example.com' },
             { name: 'port', label: 'Port', placeholder: '443', width: 'narrow' },
@@ -233,10 +219,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'reverse',
-        group: 'network',
-        name: 'Reverse lookup',
-        blurb: 'The hostname behind an IP address',
-        icon: 'swap',
         fields: [{ name: 'ip', label: 'IP address', placeholder: '8.8.8.8' }],
         run: (v) => api('reverse', v),
         render: (r) => (
@@ -258,10 +240,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'proxy',
-        group: 'network',
-        name: 'Proxy checker',
-        blurb: 'Whether your connection goes through a proxy',
-        icon: 'shield',
         fields: [],
         run: () => api('proxy', {}),
         render: (r) => {
@@ -283,10 +261,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'bandwidth',
-        group: 'network',
-        name: 'Bandwidth meter',
-        blurb: 'Your download speed from our server',
-        icon: 'gauge',
         fields: [],
         render: (r) => (
             <>
@@ -305,20 +279,12 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'subnet',
-        group: 'network',
-        name: 'Network calculator',
-        blurb: 'Subnet range from an address and mask',
-        icon: 'calc',
         fields: [{ name: 'cidr', label: 'Address and mask', placeholder: '192.168.1.10/24 or 192.168.1.10 255.255.255.0' }],
         run: async (v) => ({ rows: subnet(v.cidr) }),
         render: (r) => <Rows rows={r.rows.map((x: Result) => [x.label, x.mono ? <Mono>{x.value}</Mono> : x.value])} />,
     },
     {
         id: 'mask',
-        group: 'network',
-        name: 'Network mask calculator',
-        blurb: 'Network mask from a range of addresses',
-        icon: 'grid',
         fields: [
             { name: 'first', label: 'First address', placeholder: '192.168.0.0' },
             { name: 'last', label: 'Last address', placeholder: '192.168.3.255' },
@@ -347,10 +313,6 @@ const TOOLS: Tool[] = [
 
     {
         id: 'dns',
-        group: 'email',
-        name: 'DNS lookup',
-        blurb: 'Look up any DNS record (nslookup)',
-        icon: 'search',
         fields: [
             { name: 'name', label: 'Domain or hostname', placeholder: 'example.com' },
             { name: 'type', label: 'Record', placeholder: '', options: ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'SOA', 'CAA', 'SRV'], width: 'narrow' },
@@ -366,10 +328,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'mx',
-        group: 'email',
-        name: 'MX check',
-        blurb: 'The mail servers that receive a domain’s email',
-        icon: 'mail',
         fields: [{ name: 'domain', label: 'Domain', placeholder: 'example.com' }],
         run: (v) => api('mx', v),
         render: (r) => (
@@ -382,10 +340,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'ns',
-        group: 'email',
-        name: 'NS check',
-        blurb: 'The name servers for a domain, and its SOA',
-        icon: 'server',
         fields: [{ name: 'domain', label: 'Domain', placeholder: 'example.com' }],
         run: (v) => api('ns', v),
         render: (r) => (
@@ -410,10 +364,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'spf',
-        group: 'email',
-        name: 'SPF check',
-        blurb: 'Which servers may send email for a domain',
-        icon: 'check',
         fields: [{ name: 'domain', label: 'Domain', placeholder: 'example.com' }],
         run: (v) => api('spf', v),
         render: (r) => (
@@ -425,10 +375,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'dmarc',
-        group: 'email',
-        name: 'DMARC check',
-        blurb: 'What receivers do with mail that fails checks',
-        icon: 'shield',
         fields: [{ name: 'domain', label: 'Domain', placeholder: 'example.com' }],
         run: (v) => api('dmarc', v),
         render: (r) => (
@@ -441,10 +387,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'dkim',
-        group: 'email',
-        name: 'DKIM check',
-        blurb: 'The signing key published for a selector',
-        icon: 'key',
         fields: [
             { name: 'domain', label: 'Domain', placeholder: 'example.com' },
             { name: 'selector', label: 'Selector', placeholder: 'default', width: 'narrow' },
@@ -479,10 +421,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'smtp',
-        group: 'email',
-        name: 'SMTP check',
-        blurb: 'Connect to a domain’s mail server on port 25',
-        icon: 'message',
         fields: [{ name: 'host', label: 'Domain or mail server', placeholder: 'example.com' }],
         run: (v) => api('smtp', v),
         render: (r) =>
@@ -513,10 +451,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'whois',
-        group: 'email',
-        name: 'WHOIS',
-        blurb: 'Registration and contact info for a domain or IP',
-        icon: 'id',
         fields: [{ name: 'query', label: 'Domain or IP', placeholder: 'example.com' }],
         run: (v) => api('whois', v),
         render: (r) =>
@@ -555,10 +489,6 @@ const TOOLS: Tool[] = [
     },
     {
         id: 'blacklist',
-        group: 'email',
-        name: 'Blacklist check',
-        blurb: 'Whether a mail server’s IP is on spam lists',
-        icon: 'ban',
         fields: [{ name: 'host', label: 'IP or mail server', placeholder: '203.0.113.10' }],
         run: (v) => api('blacklist', v),
         render: (r) => {
@@ -588,10 +518,7 @@ const TOOLS: Tool[] = [
     },
 ];
 
-const GROUPS = [
-    { id: 'network', title: 'Network' },
-    { id: 'email', title: 'DNS & Email' },
-] as const;
+const TOOLS: Tool[] = TOOL_LIST.map((meta) => ({ ...SPECS.find((s) => s.id === meta.id)!, ...meta }));
 
 function ToolPanel({ tool }: { tool: Tool }) {
     const [values, setValues] = useState<Record<string, string>>({});
@@ -711,9 +638,22 @@ function MyIp() {
     );
 }
 
-export default function Tools() {
+const HERO: Record<ToolGroup, { title: string; lead: string }> = {
+    network: {
+        title: 'Network tools.',
+        lead: 'Ping or trace a host from our server, test a port, measure your download speed, or work out a subnet. Free, no sign-up.',
+    },
+    email: {
+        title: 'DNS & Email tools.',
+        lead: 'Look up DNS records and check a domain’s email setup: MX, SPF, DMARC, DKIM, its mail server and blacklists. Free, no sign-up.',
+    },
+};
+
+export default function Tools({ group }: { group: ToolGroup }) {
     const { root } = useSite();
-    const fromHash = () => TOOLS.find((t) => `#${t.id}` === window.location.hash) ?? TOOLS[0];
+    const tools = TOOLS.filter((t) => t.group === group);
+    const other: ToolGroup = group === 'network' ? 'email' : 'network';
+    const fromHash = () => tools.find((t) => `#${t.id}` === window.location.hash) ?? tools[0];
     const [tool, setTool] = useState<Tool>(fromHash);
 
     useEffect(() => {
@@ -733,45 +673,49 @@ export default function Tools() {
                 <div className="container tools-hero-row">
                     <div>
                         <h1 id="hero-title" className="display">
-                            Network tools.
+                            {HERO[group].title}
                         </h1>
-                        <p className="lead">Test a host from our server, check a domain’s DNS and email setup, or work out a subnet. Free, no sign-up.</p>
+                        <p className="lead">{HERO[group].lead}</p>
                     </div>
                     <MyIp />
                 </div>
             </section>
             <section className="section section-bg tools-section">
                 <div className="container tools-layout">
-                    <nav className="tools-nav" aria-label="Tools">
-                        {GROUPS.map((g) => (
-                            <div className="tools-group" key={g.id}>
-                                <h2 className="tools-group-title">{g.title}</h2>
-                                <ul>
-                                    {TOOLS.filter((t) => t.group === g.id).map((t) => (
-                                        <li key={t.id}>
-                                            <a
-                                                href={`#${t.id}`}
-                                                aria-current={t.id === tool.id ? 'true' : undefined}
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    pick(t);
-                                                }}
-                                            >
-                                                <Icon name={t.icon} />
-                                                <span>{t.name}</span>
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
+                    <nav className="tools-nav" aria-label={TOOL_PAGES[group].title}>
+                        <ul className="tools-list">
+                            {tools.map((t) => (
+                                <li key={t.id}>
+                                    <a
+                                        href={`#${t.id}`}
+                                        aria-current={t.id === tool.id ? 'true' : undefined}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            pick(t);
+                                        }}
+                                    >
+                                        <Icon name={t.icon} />
+                                        <span>{t.name}</span>
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                        <a className="tools-other" href={`${root}${TOOL_PAGES[other].path}`}>
+                            <Icon name={TOOL_PAGES[other].icon} />
+                            <span>
+                                <strong>{TOOL_PAGES[other].title}</strong>
+                                <span>{TOOL_PAGES[other].blurb}</span>
+                            </span>
+                            <Icon name="arrow" />
+                        </a>
                     </nav>
                     <ToolPanel tool={tool} />
                 </div>
                 <p className="container tools-fineprint small faint">
-                    Ping, traceroute, port and SMTP checks run from our server and only reach public addresses. Each visitor has a limit of a few
-                    tests a minute. The calculators run in your browser. Built by PingOmni, makers of{' '}
-                    <a href={`${root}radiusone/`}>RadiusOne</a>.
+                    {group === 'network'
+                        ? 'Ping, traceroute and port checks run from our server and only reach public addresses. Each visitor has a limit of a few tests a minute. The calculators run in your browser.'
+                        : 'Lookups run from our server. SMTP checks only connect to public addresses, and each visitor has a limit of a few tests a minute.'}{' '}
+                    Built by PingOmni, makers of <a href={`${root}radiusone/`}>RadiusOne</a>.
                 </p>
             </section>
         </>

@@ -547,6 +547,106 @@ a:hover {
   transform: rotate(180deg);
 }
 
+/* Tools menu: the two tools pages side by side, each listing its tools */
+.mega-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px clamp(24px, 4vw, 48px);
+}
+
+.mega-toolgroup {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.site-nav .mega-toolgroup-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--stage-line);
+  border-radius: var(--radius-lg);
+  background: var(--stage-raised);
+  color: var(--on-stage-muted);
+  font-weight: 400;
+}
+
+.site-nav .mega-toolgroup-head:hover,
+.site-nav .mega-toolgroup-head[aria-current="page"] {
+  border-color: rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, .07);
+}
+
+.mega-toolgroup-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--radius);
+  background: var(--accent-solid);
+  color: #fff;
+}
+
+.mega-toolgroup-icon .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.mega-toolgroup-head > span:nth-child(2) {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mega-toolgroup-head strong {
+  color: var(--on-stage);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.mega-toolgroup-head span span {
+  color: var(--on-stage-faint);
+  font-size: 13px;
+}
+
+.mega-toolgroup-head > .icon:last-child {
+  width: 16px;
+  height: 16px;
+  color: var(--on-stage-faint);
+}
+
+.mega-toolgroup ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 12px;
+  padding: 0 4px;
+}
+
+.site-nav .mega-toolgroup ul a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--on-stage-muted);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.site-nav .mega-toolgroup ul a:hover {
+  color: var(--on-stage);
+  background: rgba(255, 255, 255, .06);
+}
+
+.mega-toolgroup ul .icon {
+  width: 16px;
+  height: 16px;
+  color: var(--on-stage-faint);
+}
+
 /* Mega menu: a full-width band under the navbar, in the stage colour, so it reads as the navbar opening up. */
 .site-header .nav-menu {
   position: static;
@@ -1615,20 +1715,12 @@ a:hover {
   gap: 20px;
 }
 
-.tools-group-title {
-  margin: 0 0 6px;
-  padding: 0 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-faint);
-}
-
-.tools-group ul {
+.tools-list {
   display: grid;
   gap: 2px;
 }
 
-.tools-group a {
+.tools-list a {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1640,24 +1732,71 @@ a:hover {
   transition: background-color 120ms, color 120ms;
 }
 
-.tools-group a .icon {
+.tools-list a .icon {
   color: var(--text-faint);
 }
 
-.tools-group a:hover {
+.tools-list a:hover {
   background: var(--surface-hover);
   text-decoration: none;
 }
 
-.tools-group a[aria-current] {
+.tools-list a[aria-current] {
   background: var(--surface);
   color: var(--accent);
   font-weight: 600;
   box-shadow: 0 0 0 1px var(--line), var(--shadow-sm);
 }
 
-.tools-group a[aria-current] .icon {
+.tools-list a[aria-current] .icon {
   color: var(--accent);
+}
+
+/* A way across to the other tools page, under the list. */
+.tools-other {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 400;
+  transition: border-color 120ms;
+}
+
+.tools-other:hover {
+  border-color: var(--line-strong);
+  text-decoration: none;
+}
+
+.tools-other > .icon:first-child {
+  color: var(--accent);
+}
+
+.tools-other > span {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tools-other strong {
+  font-weight: 600;
+  color: var(--text-strong);
+  font-size: 15px;
+}
+
+.tools-other span span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.tools-other > .icon:last-child {
+  width: 16px;
+  height: 16px;
+  color: var(--text-faint);
 }
 
 .tool-panel {
@@ -1724,6 +1863,8 @@ a:hover {
 
 .field input,
 .field select {
+  width: 100%;
+  min-width: 0;
   height: 44px;
   padding: 0 12px;
   border: 1px solid var(--line-strong);
@@ -1967,19 +2108,16 @@ a:hover {
     min-width: 0;
   }
 
-  .tools-group {
-    min-width: 0;
-  }
-
-  .tools-group ul {
+  .tools-list {
     display: flex;
     gap: 6px;
+    min-width: 0;
     overflow-x: auto;
     padding: 2px 2px 6px;
     scrollbar-width: thin;
   }
 
-  .tools-group a {
+  .tools-list a {
     white-space: nowrap;
     padding: 7px 12px;
     border: 1px solid var(--line);
@@ -1987,8 +2125,8 @@ a:hover {
     font-size: 14px;
   }
 
-  .tools-group-title {
-    padding: 0 2px;
+  .tools-other {
+    display: none;
   }
 
   .out-rows > div {
@@ -2243,6 +2381,11 @@ a:hover {
 
   .site-nav .mega-shot {
     display: none;
+  }
+
+  .mega-tools {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
 
   .mega-feature-body {

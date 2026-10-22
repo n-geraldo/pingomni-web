@@ -21,6 +21,8 @@ export default defineConfig({
                 ticketone: page('ticketone/index.html'),
                 dnsone: page('dnsone/index.html'),
                 tools: page('tools/index.html'),
+                toolsNetwork: page('tools/network/index.html'),
+                toolsEmail: page('tools/email/index.html'),
             },
         },
     },

@@ -3,20 +3,18 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Network tools by PingOmni: ping, traceroute, DNS, MX, SPF, DMARC and WHOIS</title>
-        <meta name="description" content="Free network and email tools: ping, traceroute, port check, reverse lookup, bandwidth meter, subnet calculators, DNS lookup, MX, NS, SPF, DMARC, DKIM, SMTP, WHOIS and blacklist checks." />
-        <meta name="theme-color" content="#151b24" />
+        <title>Tools by PingOmni</title>
+        <meta name="robots" content="noindex" />
         <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
         <script>
-            // Apply the saved theme before first paint, so the page never flashes the wrong one.
-            try {
-                var t = localStorage.getItem('pingomni-theme');
-                if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
-            } catch (e) {}
+            // The tools moved to two pages; send old links to the page that has the tool.
+            var email = ['dns', 'mx', 'ns', 'spf', 'dmarc', 'dkim', 'smtp', 'whois', 'blacklist'];
+            var tool = location.hash.slice(1);
+            location.replace((email.indexOf(tool) >= 0 ? 'email/' : 'network/') + location.hash);
         </script>
+        <noscript><meta http-equiv="refresh" content="0; url=network/" /></noscript>
     </head>
     <body>
-        <div id="root" data-page="tools"></div>
-        <script type="module" src="/src/main.tsx"></script>
+        <p><a href="network/">Network tools</a> · <a href="email/">DNS &amp; Email tools</a></p>
     </body>
 </html>

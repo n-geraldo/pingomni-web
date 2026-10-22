@@ -3,9 +3,10 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { Mark, Wordmark, type Brand } from '../brand';
 import { CONTACT_EMAIL, DEMO_URL, mailto } from '../config';
 import Icon from '../Icon';
+import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 
 export type Theme = 'light' | 'dark';
-export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone' | 'tools';
+export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone' | 'tools-network' | 'tools-email';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
 type Site = { page: PageId; root: string; theme: Theme };
@@ -25,22 +26,10 @@ const PRODUCTS: { page: Brand & PageId; href: string; job: string; soon?: boolea
     { page: 'dnsone', href: 'dnsone/', job: 'DNS for ISPs and network operators', soon: true },
 ];
 
-const NAV: { href: string; label: string; page?: PageId }[] = [
-    { href: 'tools/', label: 'Network tools', page: 'tools' },
-    { href: '#use-cases', label: 'Use cases' },
-    { href: '#about', label: 'About' },
-];
-
-function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
-    const { page, root, theme } = useSite();
+// Shared open/close behaviour for the navbar menus: Escape or a click outside closes them.
+function useMenu() {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
-    const close = () => {
-        setOpen(false);
-        onNavigate();
-    };
-    const current = PRODUCTS.some((p) => p.page === page);
-
     useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
@@ -52,6 +41,80 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
             document.removeEventListener('mousedown', onClick);
         };
     }, [open]);
+    return { open, setOpen, ref };
+}
+
+// The Tools menu: the two tools pages side by side, each with its tools as direct links.
+function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
+    const { page, root } = useSite();
+    const { open, setOpen, ref } = useMenu();
+    const close = () => {
+        setOpen(false);
+        onNavigate();
+    };
+    const groups: ToolGroup[] = ['network', 'email'];
+    return (
+        <div className={open ? 'nav-menu open' : 'nav-menu'} ref={ref}>
+            <button
+                type="button"
+                className="nav-menu-btn"
+                aria-expanded={open}
+                aria-controls="tools-menu"
+                data-current={page.startsWith('tools') || undefined}
+                onClick={() => setOpen(!open)}
+            >
+                Tools
+                <Icon name="chevron" />
+            </button>
+            <div className="mega" id="tools-menu">
+                <div className="container mega-tools">
+                    {groups.map((g) => {
+                        const info = TOOL_PAGES[g];
+                        const href = `${root}${info.path}`;
+                        return (
+                            <div className="mega-toolgroup" key={g}>
+                                <a className="mega-toolgroup-head" href={href} aria-current={page === `tools-${g}` ? 'page' : undefined} onClick={close}>
+                                    <span className="mega-toolgroup-icon">
+                                        <Icon name={info.icon} />
+                                    </span>
+                                    <span>
+                                        <strong>{info.title}</strong>
+                                        <span>{info.blurb}</span>
+                                    </span>
+                                    <Icon name="arrow" />
+                                </a>
+                                <ul>
+                                    {TOOL_LIST.filter((t) => t.group === g).map((t) => (
+                                        <li key={t.id}>
+                                            <a href={`${href}#${t.id}`} onClick={close}>
+                                                <Icon name={t.icon} />
+                                                {t.name}
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+const NAV: { href: string; label: string; page?: PageId }[] = [
+    { href: '#use-cases', label: 'Use cases' },
+    { href: '#about', label: 'About' },
+];
+
+function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
+    const { page, root, theme } = useSite();
+    const { open, setOpen, ref } = useMenu();
+    const close = () => {
+        setOpen(false);
+        onNavigate();
+    };
+    const current = PRODUCTS.some((p) => p.page === page);
 
     return (
         <div className={open ? 'nav-menu open' : 'nav-menu'} ref={ref}>
@@ -147,6 +210,7 @@ function Header({ onTheme }: { onTheme: () => void }) {
                 </a>
                 <nav className={open ? 'site-nav open' : 'site-nav'} aria-label="Main">
                     <ProductsMenu onNavigate={() => setOpen(false)} />
+                    <ToolsMenu onNavigate={() => setOpen(false)} />
                     {NAV.map((item) => (
                         <a
                             key={item.href}
@@ -236,7 +300,8 @@ function Footer() {
                     </nav>
                     <nav className="footer-col" aria-labelledby="footer-company">
                         <h2 id="footer-company">Company</h2>
-                        <a href={`${root}tools/`}>Network tools</a>
+                        <a href={`${root}tools/network/`}>Network tools</a>
+                        <a href={`${root}tools/email/`}>DNS & Email tools</a>
                         <a href={`${root}#use-cases`}>Use cases</a>
                         <a href={`${root}#about`}>About</a>
                         <a href="#contact">Contact</a>
