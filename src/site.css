@@ -2120,6 +2120,74 @@ a:hover {
   border-top: 1px solid var(--line);
 }
 
+/* Result toolbar: Table / Text switch and Copy */
+.out-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.out-view {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.out-view button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 13px var(--font);
+  cursor: pointer;
+  transition: background-color 120ms, color 120ms;
+}
+
+.out-view button .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.out-view button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px var(--line), var(--shadow-sm);
+}
+
+.out-copy {
+  height: 34px;
+}
+
+/* Command-line view: the console colours of the portal's dark sidebar, in both themes. */
+.out-console {
+  margin: 0;
+  max-height: 560px;
+  overflow: auto;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background: #0c1015;
+  border: 1px solid #1f2630;
+  color: #d5dbe3;
+  font: 13px/1.6 var(--font-mono);
+  white-space: pre;
+  tab-size: 4;
+  scrollbar-color: #3a4350 transparent;
+}
+
+.out-console::selection {
+  background: #2f6bd8;
+  color: #fff;
+}
+
 .out-empty {
   color: var(--text-faint);
   font-size: 15px;

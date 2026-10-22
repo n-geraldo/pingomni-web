@@ -267,6 +267,7 @@ function toolPing(): array
         'avg' => isset($t[2]) ? (float) $t[2] : null,
         'max' => isset($t[3]) ? (float) $t[3] : null,
         'replies' => $replies,
+        'raw' => trim($out),
     ];
 }
 

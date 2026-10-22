@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Mark, Wordmark } from '../brand';
 import { DEMO_URL, mailto } from '../config';
 import Icon from '../Icon';
+import { copyText } from '../lib/copy';
 import { Contact, Shot } from '../shared/Layout';
 
 const SPEC: { area: string; icon: string; items: string[] }[] = [
@@ -51,12 +52,9 @@ const INSTALL = 'sudo bash install.sh --domain radius.example.com';
 function CopyCommand() {
     const [copied, setCopied] = useState(false);
     const copy = async () => {
-        try {
-            await navigator.clipboard.writeText(INSTALL);
+        if (await copyText(INSTALL)) {
             setCopied(true);
             window.setTimeout(() => setCopied(false), 1600);
-        } catch {
-            setCopied(false);
         }
     };
     return (

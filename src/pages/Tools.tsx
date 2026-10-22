@@ -13,6 +13,8 @@ import {
     type TraceProbe,
 } from '../lib/globalping';
 import { rangeToMasks, subnet } from '../lib/ipcalc';
+import { copyText } from '../lib/copy';
+import { toText } from '../lib/textOutput';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { useSite } from '../shared/Layout';
 
@@ -963,6 +965,64 @@ function CommonPorts({
     );
 }
 
+type View = 'table' | 'text';
+
+function savedView(): View {
+    try {
+        return localStorage.getItem('pingomni-tools-view') === 'text' ? 'text' : 'table';
+    } catch {
+        return 'table';
+    }
+}
+
+// Every result can be read as tables or as command-line text with a Copy button; the choice is remembered.
+function ResultView({ tool, result }: { tool: Tool; result: Result }) {
+    const [view, setView] = useState<View>(savedView);
+    const [copied, setCopied] = useState(false);
+    const text = view === 'text' ? toText(tool.id, result) : '';
+
+    const choose = (v: View) => {
+        setView(v);
+        try {
+            localStorage.setItem('pingomni-tools-view', v);
+        } catch {
+            // Private mode: the choice lasts for this page only.
+        }
+    };
+
+    const copy = async () => {
+        if (await copyText(toText(tool.id, result))) {
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 1600);
+        }
+    };
+
+    return (
+        <>
+            <div className="out-bar">
+                <div className="out-view" role="group" aria-label="Show results as">
+                    <button type="button" aria-pressed={view === 'table'} onClick={() => choose('table')}>
+                        <Icon name="grid" />
+                        Table
+                    </button>
+                    <button type="button" aria-pressed={view === 'text'} onClick={() => choose('text')}>
+                        <Icon name="code" />
+                        Text
+                    </button>
+                </div>
+                <button type="button" className="btn btn-sm out-copy" onClick={copy}>
+                    <Icon name={copied ? 'check' : 'copy'} />
+                    {copied ? 'Copied' : 'Copy'}
+                </button>
+                <span className="sr-only" role="status">
+                    {copied ? 'Copied to clipboard' : ''}
+                </span>
+            </div>
+            {view === 'text' ? <pre className="out-console">{text}</pre> : tool.render(result)}
+        </>
+    );
+}
+
 function ToolPanel({ tool }: { tool: Tool }) {
     const [values, setValues] = useState<Record<string, string>>({});
     const [state, setState] = useState<{ status: 'idle' | 'running' | 'done' | 'error'; result?: Result; error?: string }>({ status: 'idle' });
@@ -1083,7 +1143,7 @@ function ToolPanel({ tool }: { tool: Tool }) {
                         {state.error}
                     </p>
                 )}
-                {state.status === 'done' && state.result && tool.render(state.result)}
+                {state.status === 'done' && state.result && <ResultView tool={tool} result={state.result} />}
                 {state.status === 'idle' && (
                     <p className="out-empty">
                         {tool.fields.length ? 'Results appear here.' : tool.id === 'bandwidth' ? 'Downloads test data from our server and measures how fast it arrives.' : 'Shows the address and headers our server sees from you.'}

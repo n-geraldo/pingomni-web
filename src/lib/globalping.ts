@@ -5,7 +5,7 @@ const API = 'https://api.globalping.io/v1/measurements';
 
 type Location = { magic: string; limit: number };
 
-export type ProbeInfo = { country: string; city: string; network: string; asn: number; status: string };
+export type ProbeInfo = { country: string; city: string; network: string; asn: number; status: string; raw: string };
 
 export type PingProbe = ProbeInfo & { resolved: string | null; min: number | null; avg: number | null; max: number | null; loss: number | null };
 
@@ -92,6 +92,7 @@ const probeInfo = (x: any): ProbeInfo => ({
     network: x.probe.network,
     asn: x.probe.asn,
     status: x.result.status,
+    raw: String(x.result.rawOutput ?? '').trim(),
 });
 
 export async function pingFrom(target: string, locations: Location[]) {
