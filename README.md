@@ -19,7 +19,7 @@ Set these at build time in `.env` (or `.env.production`):
 | Variable | Default | Used for |
 |---|---|---|
 | `VITE_SITE_URL` | `https://pingomni.com` | Canonical links, Open Graph tags, structured data, sitemap.xml and robots.txt |
-| `VITE_DEMO_URL` | `/radiusone/demo/` | "Try the demo" buttons. nginx serves the static RadiusOne demo (`/opt/radiusone-demo/dist`) at this path |
+| `VITE_DEMO_URL` | `https://demo-radiusone.pingomni.com/?r=/login` | "Try the demo" buttons. The RadiusOne demo is its own site (`/opt/radiusone-demo`); `?r=/login` opens it at the sign-in page |
 | `VITE_CONTACT_EMAIL` | `hello@pingomni.com` | Contact and "Tell me when it's ready" links |
 
 ## Network tools

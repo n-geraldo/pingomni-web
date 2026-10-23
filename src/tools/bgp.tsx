@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { api, type Result } from '../lib/api';
 import { RPKI_STATE, routeVerdict } from '../lib/interpret';
 import type { Field, ToolSpec } from './types';
-import { AsLink, AsPath, date, Explain, Mono, PrefixLink, Rows, Status, Summary, Table, type Next } from './ui';
+import { AsLink, AsPath, Checks, date, Explain, Mono, PrefixLink, Rows, Status, Summary, Table, type Check, type Next } from './ui';
 
 // BGP and AS tools. Everything comes from public routing data (RIPEstat, PeeringDB, Team Cymru) through our API,
 // so results show how the internet sees a network, not a measurement from our server.
@@ -114,6 +114,73 @@ function Prefixes({ r }: { r: Result }) {
     );
 }
 
+const HYGIENE_LEVEL: Record<string, ['pass' | 'issue' | 'failed' | 'neutral', string]> = {
+    success: ['pass', 'Good'],
+    info: ['neutral', 'Note'],
+    warning: ['issue', 'Warning'],
+    danger: ['failed', 'Problem'],
+};
+
+/** RPKI and IRR against BGP for every prefix the AS announces: a bar of the totals, then each prefix with a problem. */
+function Hygiene({ r }: { r: Result }) {
+    const h = r.hygiene;
+    if (!h) {
+        return r.hygieneFailed ? <p className="tool-note">IRR Explorer did not answer in time, so the RPKI and IRR summary is missing. Very large networks can take too long; try again in a minute.</p> : null;
+    }
+    if (!h.announced) return null;
+    const order = ['success', 'info', 'warning', 'danger'] as const;
+    const bad = h.counts.danger + h.counts.warning;
+    return (
+        <div className="out-group">
+            <h3 className="out-group-title">
+                RPKI and IRR against BGP <span className="faint">({h.announced.toLocaleString('en')} {h.announced === 1 ? 'prefix' : 'prefixes'} in IRR Explorer’s routing data)</span>
+            </h3>
+            <div className="out-stackbar" role="img" aria-label={order.map((k) => `${h.counts[k]} ${HYGIENE_LEVEL[k][1].toLowerCase()}`).join(', ')}>
+                {order.map((k) => h.counts[k] > 0 && <span key={k} data-level={k} style={{ flexGrow: h.counts[k] }} />)}
+            </div>
+            <p className="out-stackbar-legend">
+                {order.map((k) => (
+                    <span key={k} data-level={k}>
+                        {h.counts[k].toLocaleString('en')} {HYGIENE_LEVEL[k][1].toLowerCase()}
+                    </span>
+                ))}
+            </p>
+            <p className="tool-note">
+                {bad
+                    ? `${bad.toLocaleString('en')} ${bad === 1 ? 'prefix has' : 'prefixes have'} RPKI or IRR data that disagrees with BGP. Networks that filter on RPKI or the IRR may drop ${bad === 1 ? 'it' : 'them'}.`
+                    : 'RPKI and the IRR agree with BGP for every announced prefix.'}
+                {h.registeredOnly > 0 && ` ${h.registeredOnly.toLocaleString('en')} more ${h.registeredOnly === 1 ? 'prefix is' : 'prefixes are'} registered for this AS but not announced.`}
+            </p>
+            {h.problems.length > 0 && (
+                <Table
+                    head={['Prefix', 'Status', 'What is wrong']}
+                    rows={h.problems.map((p: Result) => [
+                        <PrefixLink prefix={p.prefix} />,
+                        <Status level={HYGIENE_LEVEL[p.level][0]}>{HYGIENE_LEVEL[p.level][1]}</Status>,
+                        <span className="out-stack">{p.messages.map((m: string) => <span key={m}>{m}</span>)}</span>,
+                    ])}
+                    empty=""
+                    compact
+                    caption="Prefixes with RPKI or IRR problems"
+                />
+            )}
+            {h.problemTotal > h.problems.length && <p className="tool-note">Showing the first {h.problems.length} of {h.problemTotal}.</p>}
+            {h.notes.length > 0 && (
+                <ul className="out-notes">
+                    {h.notes.map((n: Result) => (
+                        <li key={n.text}>
+                            <Status level="neutral">Note</Status>
+                            <span>
+                                {n.text}: {n.prefixes} {n.prefixes === 1 ? 'prefix' : 'prefixes'}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+}
+
 function AsnView({ r }: { r: Result }) {
     if (r.special) {
         return <Summary verdict={{ level: 'neutral', label: 'Special-purpose', title: `AS${r.asn} is not a public network.`, detail: r.special }} />;
@@ -145,6 +212,7 @@ function AsnView({ r }: { r: Result }) {
                     ['Registry', r.block?.desc],
                 ]}
             />
+            <Hygiene r={r} />
             <PeeringDb r={r} />
             {r.neighbours && (
                 <>
@@ -161,7 +229,7 @@ function AsnView({ r }: { r: Result }) {
 const asn: ToolSpec = {
     id: 'asn',
     action: 'Look up AS',
-    bestFor: 'Finding who runs an autonomous system, what it announces, and who it connects to.',
+    bestFor: 'Finding who runs an autonomous system, what it announces, who it connects to, and which of its prefixes have RPKI or IRR problems.',
     fields: [{ name: 'asn', label: 'AS number', placeholder: 'AS15169', hint: 'With or without “AS”: AS15169 or 15169.' }],
     runsOn: () => `${RUNS_ON} Network details come from PeeringDB.`,
     duration: 'usually 1–5 seconds',
@@ -176,12 +244,19 @@ const asn: ToolSpec = {
                     customer. Paths only show what reaches the collectors, so private peering and some customers can be missing.
                 </p>
                 <p>PeeringDB is filled in by networks themselves. Missing or old details there are common and not errors.</p>
+                <p>
+                    The RPKI and IRR summary comes from NLNOG IRR Explorer. It compares each announced prefix with its ROAs and with route objects in
+                    every major IRR. A problem there means some networks may filter the prefix; run the Announcement check on it for the details.
+                </p>
             </Explain>
         </>
     ),
     next: (r) =>
         r.prefixes?.list?.length
             ? [
+                  ...(r.hygiene?.problems?.length
+                      ? [{ tool: 'announce', label: `Find out what is wrong with ${r.hygiene.problems[0].prefix}`, values: { resource: r.hygiene.problems[0].prefix, asn: `AS${r.asn}` } }]
+                      : []),
                   { tool: 'prefix', label: `Look up the route for ${r.prefixes.list[0]}`, values: { resource: r.prefixes.list[0] } },
                   { tool: 'lg', label: `See how networks reach ${r.prefixes.list[0]}`, values: { resource: r.prefixes.list[0] } },
               ]
@@ -421,4 +496,221 @@ const lg: ToolSpec = {
     target: (v) => hostTarget(v.resource),
 };
 
-export const BGP_SPECS: ToolSpec[] = [asn, prefix, lg];
+
+// ---------------------------------------------------------------------------
+// Announcement check
+// ---------------------------------------------------------------------------
+
+type Segment = { start: string; end: string; peers: number };
+type History = { start: string; end: string; maxPeers: number | null; origins: { asn: number; name: string | null; segments: Segment[] }[] };
+
+/** Each origin's announcements over the window as a strip: a filled span while it was announced, darker when more peers saw it. */
+function HistoryStrip({ h }: { h: History }) {
+    const t0 = Date.parse(h.start);
+    const span = Date.parse(h.end) - t0 || 1;
+    const max = h.maxPeers || Math.max(1, ...h.origins.flatMap((o) => o.segments.map((s) => s.peers)));
+    const pct = (t: string) => Math.min(100, Math.max(0, ((Date.parse(t) - t0) / span) * 100));
+    return (
+        <div className="out-group">
+            <h3 className="out-group-title">Announced over the last 30 days</h3>
+            <div className="out-timeline">
+                {h.origins.map((o) => (
+                    <div className="out-timeline-row" key={o.asn}>
+                        <span className="out-timeline-label">
+                            <AsLink asn={o.asn} name={o.name} /> <span className="faint">{o.name}</span>
+                        </span>
+                        <span className="out-timeline-track" role="img" aria-label={`AS${o.asn}: announced in ${o.segments.length} ${o.segments.length === 1 ? 'period' : 'periods'}`}>
+                            {o.segments.map((s) => (
+                                <span
+                                    key={s.start}
+                                    className="out-timeline-span"
+                                    style={{ left: `${pct(s.start)}%`, width: `${Math.max(0.4, pct(s.end) - pct(s.start))}%`, opacity: 0.35 + 0.65 * Math.min(1, s.peers / max) }}
+                                    title={`${date(s.start)} to ${date(s.end)}: seen by ${s.peers} full-table peers`}
+                                />
+                            ))}
+                        </span>
+                    </div>
+                ))}
+                <div className="out-timeline-row">
+                    <span />
+                    <span className="out-timeline-axis faint">
+                        <span>{date(h.start)}</span>
+                        <span>{date(h.end)}</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+type Collector = { rrc: string; city: string | null; country: string | null; ixp: string | null; total: number; notSeeing: { asn: number; ip: string; name: string | null }[] };
+
+function VisibilityTable({ v }: { v: { seeing: number; total: number; collectors: Collector[] } }) {
+    const rows = [...v.collectors].sort((a, b) => b.notSeeing.length / b.total - a.notSeeing.length / a.total || a.rrc.localeCompare(b.rrc));
+    return (
+        <div className="out-group">
+            <h3 className="out-group-title">
+                Visibility by route collector <span className="faint">({v.seeing} of {v.total} full-table peers)</span>
+            </h3>
+            <Table
+                head={['Collector', 'Peers seeing it', 'Peers without a route']}
+                rows={rows.map((c) => {
+                    const seeing = c.total - c.notSeeing.length;
+                    return [
+                        <span>
+                            <strong>{c.city ?? c.rrc}</strong> <span className="faint">{[c.country, c.rrc].filter(Boolean).join(', ')}</span>
+                        </span>,
+                        <span className="out-meter">
+                            <span className="out-meter-bar">
+                                <span style={{ width: `${(seeing / c.total) * 100}%` }} data-low={seeing / c.total < 0.9 || undefined} />
+                            </span>
+                            {seeing} of {c.total}
+                        </span>,
+                        c.notSeeing.length ? (
+                            <span className="out-aslist">
+                                {c.notSeeing
+                                    .filter((p, i, all) => all.findIndex((q) => q.asn === p.asn) === i)
+                                    .map((p) => (
+                                        <AsLink key={p.asn} asn={p.asn} name={p.name} />
+                                    ))}
+                            </span>
+                        ) : (
+                            <span className="faint">None</span>
+                        ),
+                    ];
+                })}
+                empty="No collector data."
+                compact
+                caption="Visibility by route collector"
+            />
+        </div>
+    );
+}
+
+function AnnounceView({ r }: { r: Result }) {
+    const checks = r.checks as Check[];
+    const issues = checks.filter((c) => c.level === 'issue');
+    const failed = checks.filter((c) => c.level === 'failed');
+    const who = r.expected ? `AS${r.expected}` : r.origins.map((o: Result) => `AS${o.asn}`).join(', ');
+    const verdict = issues.length
+        ? {
+              level: 'issue' as const,
+              label: `${issues.length} ${issues.length === 1 ? 'problem' : 'problems'}`,
+              title: r.announced ? `${r.prefix} from ${who} has ${issues.length === 1 ? 'a problem' : 'problems'} that can stop networks reaching it.` : `${r.prefix} is not ready to announce from ${who}.`,
+              detail: issues[0].text,
+          }
+        : r.announced
+          ? { level: 'pass' as const, label: 'Healthy', title: `${r.prefix} from ${who} is announced, valid and reachable.`, detail: failed.length ? 'Some checks could not run; see below.' : undefined }
+          : r.expected
+            ? { level: 'pass' as const, label: 'Ready', title: `Networks should accept ${r.prefix} from AS${r.expected}.`, detail: 'RPKI and the IRR both allow it. Once it is announced, run this check again to confirm the internet sees it.' }
+            : { level: 'neutral' as const, label: 'Not announced', title: `${r.prefix} is not in the global routing table.`, detail: 'Enter the AS that will announce it to check RPKI and IRR.' };
+    const roas = (r.rpki as Result[]).flatMap((x) => x.roas);
+    const irr = r.irr as { exact: { source: string; asn: number }[]; covering: { prefix: string; source: string; asn: number }[] } | null;
+    return (
+        <>
+            <Summary verdict={verdict} />
+            <Rows
+                rows={[
+                    ['Prefix', <Mono>{r.prefix}</Mono>],
+                    ...(r.prefix !== r.query ? [['Looked up', <>{r.host && `${r.host} `}<Mono>{r.query}</Mono></>] as [string, ReactNode]] : []),
+                    ['Expected origin', r.expected ? <><AsLink asn={r.expected} name={r.expectedName} /> <span className="faint">{r.expectedName}</span></> : 'Not given'],
+                    [
+                        'Announced by',
+                        r.origins.length ? (
+                            <span className="out-stack">
+                                {r.origins.map((o: Result) => (
+                                    <span key={o.asn}>
+                                        <AsLink asn={o.asn} name={o.name} /> <span className="faint">{o.name}</span>
+                                    </span>
+                                ))}
+                            </span>
+                        ) : (
+                            'Nobody right now'
+                        ),
+                    ],
+                    ['Visibility', r.visibility ? `${r.visibility.seeing} of ${r.visibility.total} full-table RIS peers (${Math.round((r.visibility.seeing / r.visibility.total) * 100)}%)` : '—'],
+                ]}
+            />
+            <Checks checks={checks} />
+            {r.history?.origins?.length > 0 && <HistoryStrip h={r.history} />}
+            {r.visibility && <VisibilityTable v={r.visibility} />}
+            {roas.length > 0 && (
+                <div className="out-group">
+                    <h3 className="out-group-title">ROAs that cover it</h3>
+                    <Table
+                        head={['Prefix', 'Max length', 'Allowed origin', 'Allows the route']}
+                        rows={roas.map((roa: Result) => [<Mono>{roa.prefix}</Mono>, `/${roa.maxLength}`, <AsLink asn={roa.asn} />, roa.validity === 'valid' ? <Status level="pass">Yes</Status> : <Status level="issue">No</Status>])}
+                        empty=""
+                        compact
+                        caption="ROAs"
+                    />
+                </div>
+            )}
+            {irr && (irr.exact.length > 0 || irr.covering.length > 0) && (
+                <div className="out-group">
+                    <h3 className="out-group-title">IRR route objects</h3>
+                    <Table
+                        head={['Prefix', 'Origin', 'Registry']}
+                        rows={[
+                            ...irr.exact.map((o) => [<Mono>{r.prefix}</Mono>, <AsLink asn={o.asn} />, o.source]),
+                            ...irr.covering.map((o) => [<span><Mono>{o.prefix}</Mono> <span className="faint">covering</span></span>, <AsLink asn={o.asn} />, o.source]),
+                        ]}
+                        empty=""
+                        compact
+                        caption="IRR route objects"
+                    />
+                </div>
+            )}
+            {r.moreSpecificsTotal > 0 && (
+                <details className="out-raw" open={r.moreSpecificsTotal <= 12}>
+                    <summary>More specific prefixes inside it ({r.moreSpecificsTotal})</summary>
+                    <ul className="out-prefixes">
+                        {r.moreSpecifics.map((m: Result) => (
+                            <li key={m.prefix + m.origin}>
+                                <PrefixLink prefix={m.prefix} /> <span className="faint">AS{m.origin}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </details>
+            )}
+        </>
+    );
+}
+
+const announce: ToolSpec = {
+    id: 'announce',
+    action: 'Check announcement',
+    bestFor: 'Finding out why a prefix is not reachable everywhere, or checking a new one before you announce it.',
+    fields: [
+        { ...RESOURCE_FIELD, label: 'Prefix or IP address', placeholder: '193.0.0.0/21', hint: 'A prefix like 193.0.0.0/21 (also one that is not announced yet), or an address to check the route that covers it.' },
+        { name: 'asn', label: 'Expected origin AS', placeholder: 'AS3333', optional: true, width: 'medium', hint: 'Optional: the AS that should announce it.' },
+    ],
+    runsOn: () => 'Our server asks RIPEstat (BGP state, visibility and history from RIPE NCC’s route collectors), NLNOG IRR Explorer (route objects in every major IRR) and RIPEstat’s RPKI validator.',
+    duration: 'usually 2–10 seconds',
+    run: (v) => api('announce', { resource: v.resource, asn: v.asn }),
+    render: (r) => (
+        <>
+            <AnnounceView r={r} />
+            <Explain>
+                <p>
+                    A route reaches the whole internet only when every network on the way accepts it. Most transit providers and internet exchange route
+                    servers drop routes that are RPKI invalid, and many only accept prefixes that have an IRR route object with the right origin AS. Both
+                    are things the holder of the address space fixes: ROAs in the RIR’s RPKI portal, route objects in the RIR’s database (or RADB).
+                </p>
+                <p>
+                    Visibility counts the RIS peers that send RIPE NCC a full routing table and have a route to the prefix. A peer without a route usually
+                    filters it: look for a pattern, like every peer behind one transit provider missing it.
+                </p>
+            </Explain>
+        </>
+    ),
+    next: (r) =>
+        [
+            ...(r.announced ? [{ tool: 'lg', label: `See each network’s path to ${r.prefix}`, values: { resource: r.prefix } }] : []),
+            ...(r.announced ? [{ tool: 'prefix', label: `Upstreams and AS paths of ${r.prefix}`, values: { resource: r.prefix } }] : []),
+            ...(r.expected || r.origins?.[0] ? [{ tool: 'asn', label: `Look up AS${r.expected ?? r.origins[0].asn}`, values: { asn: `AS${r.expected ?? r.origins[0].asn}` } }] : []),
+        ] as Next[],
+    target: (v) => hostTarget(v.resource),
+};
+
+export const BGP_SPECS: ToolSpec[] = [announce, asn, prefix, lg];

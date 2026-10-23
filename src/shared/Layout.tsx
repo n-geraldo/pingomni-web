@@ -229,9 +229,6 @@ function Header({ onTheme }: { onTheme: () => void }) {
                     >
                         <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
                     </button>
-                    <a className="btn btn-primary btn-sm header-cta" href={DEMO_URL} target="_blank" rel="noopener">
-                        Try the demo
-                    </a>
                     <button
                         type="button"
                         className="icon-btn menu-btn"
@@ -247,7 +244,8 @@ function Header({ onTheme }: { onTheme: () => void }) {
     );
 }
 
-export function Contact({ title, text }: { title: string; text: string }) {
+// The demo button shows only where the page is about RadiusOne.
+export function Contact({ title, text, demo = false }: { title: string; text: string; demo?: boolean }) {
     return (
         <section className="stage contact" id="contact" aria-labelledby="contact-title">
             <div className="container contact-row">
@@ -258,10 +256,12 @@ export function Contact({ title, text }: { title: string; text: string }) {
                     <p className="lead">{text}</p>
                 </div>
                 <div className="contact-actions">
-                    <a className="btn btn-primary btn-lg" href={DEMO_URL} target="_blank" rel="noopener">
-                        Try the RadiusOne demo
-                        <Icon name="external" />
-                    </a>
+                    {demo && (
+                        <a className="btn btn-primary btn-lg" href={DEMO_URL} target="_blank" rel="noopener">
+                            Try the RadiusOne demo
+                            <Icon name="external" />
+                        </a>
+                    )}
                     <a className="contact-mail" href={mailto('Question for PingOmni')}>
                         <Icon name="mail" />
                         {CONTACT_EMAIL}
@@ -307,9 +307,6 @@ function Footer() {
                     <div className="footer-col">
                         <h2>Get in touch</h2>
                         <a href={mailto('Question for PingOmni')}>{CONTACT_EMAIL}</a>
-                        <a href={DEMO_URL} target="_blank" rel="noopener">
-                            Try the RadiusOne demo
-                        </a>
                     </div>
                 </div>
                 <p className="footer-bottom small faint">© {new Date().getFullYear()} PingOmni</p>

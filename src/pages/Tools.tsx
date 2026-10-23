@@ -4,6 +4,7 @@ import { api, ToolError, type Result } from '../lib/api';
 import { toText } from '../lib/textOutput';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { useSite } from '../shared/Layout';
+import { TOOL_PREVIEW } from '../shared/ToolPreviews';
 import { BGP_SPECS } from '../tools/bgp';
 import { EMAIL_SPECS } from '../tools/email';
 import { NETWORK_SPECS } from '../tools/network';
@@ -306,7 +307,15 @@ function ToolPanel({ tool, initial, hrefFor, onTarget }: { tool: Tool; initial: 
                             </div>
                         )}
                         {state.status === 'done' && <ResultView tool={tool} result={state.result} at={state.at} values={state.values} hrefFor={hrefFor} />}
-                        {state.status === 'idle' && (tool.idle ?? <p className="out-empty">Results appear here after you press {tool.action}.</p>)}
+                        {state.status === 'idle' &&
+                            (tool.idle ?? (
+                                <div className="out-idle">
+                                    <span className="out-idle-icon">
+                                        <Icon name={tool.icon} />
+                                    </span>
+                                    <p className="out-empty">Results appear here after you press {tool.action}.</p>
+                                </div>
+                            ))}
                     </div>
                 </>
             )}
@@ -315,10 +324,11 @@ function ToolPanel({ tool, initial, hrefFor, onTarget }: { tool: Tool; initial: 
 }
 
 // Four common investigations, each a short path through the tools. Links fill in the last target; nothing runs by itself.
-const WORKFLOWS: { title: string; when: string; steps: { tool: string; field: string; extra?: Values; why: string }[] }[] = [
+const WORKFLOWS: { title: string; when: string; icon: string; steps: { tool: string; field: string; extra?: Values; why: string }[] }[] = [
     {
         title: 'A website or service is unreachable',
         when: 'Connectivity',
+        icon: 'signal',
         steps: [
             { tool: 'ping', field: 'host', why: 'Does the host answer at all, and how fast?' },
             { tool: 'traceroute', field: 'host', why: 'Where along the path do responses stop?' },
@@ -329,9 +339,11 @@ const WORKFLOWS: { title: string; when: string; steps: { tool: string; field: st
     {
         title: 'A domain does not resolve correctly',
         when: 'Domain and DNS',
+        icon: 'globe',
         steps: [
             { tool: 'dns', field: 'name', why: 'What do resolvers answer, and with which status?' },
             { tool: 'ns', field: 'domain', why: 'Do all name servers answer and agree?' },
+            { tool: 'dnssec', field: 'domain', why: 'Is DNSSEC broken, so validating resolvers refuse it?' },
             { tool: 'whois', field: 'query', why: 'Is it registered, active, and delegated to those servers?' },
             { tool: 'port', field: 'host', extra: { port: '443' }, why: 'Does the address it resolves to accept connections?' },
         ],
@@ -339,20 +351,22 @@ const WORKFLOWS: { title: string; when: string; steps: { tool: string; field: st
     {
         title: 'Email is not arriving or lands in spam',
         when: 'Email',
+        icon: 'mail',
         steps: [
             { tool: 'mx', field: 'domain', why: 'Which servers receive the domain’s mail?' },
             { tool: 'spf', field: 'domain', why: 'Which servers may send as the domain?' },
             { tool: 'dmarc', field: 'domain', why: 'What happens to mail that fails?' },
-            { tool: 'dkim', field: 'domain', why: 'Is the signing key published? (needs a selector)' },
-            { tool: 'smtp', field: 'host', why: 'Does the mail server answer on port 25?' },
+            { tool: 'dkim', field: 'domain', why: 'Is a signing key published, and is it strong enough?' },
+            { tool: 'smtp', field: 'host', why: 'Does the mail server answer, encrypt and have reverse DNS?' },
             { tool: 'blacklist', field: 'host', why: 'Is the sending server on spam lists?' },
         ],
     },
     {
         title: 'A network is unreachable from some places',
         when: 'Routing',
+        icon: 'route',
         steps: [
-            { tool: 'prefix', field: 'resource', why: 'Is it announced, by which AS, and does RPKI allow it?' },
+            { tool: 'announce', field: 'resource', why: 'Do RPKI, the IRR and visibility all look right?' },
             { tool: 'lg', field: 'resource', why: 'Which paths do networks around the world take to it?' },
             { tool: 'traceroute', field: 'host', why: 'Which networks does traffic cross from here?' },
             { tool: 'whois', field: 'query', why: 'Who is the address space registered to?' },
@@ -381,7 +395,12 @@ function Workflows({ target, hrefFor }: { target: string; hrefFor: (n: Next) => 
             <div className="workflows-grid">
                 {WORKFLOWS.map((w) => (
                     <div className="workflow" key={w.title}>
-                        <span className="workflow-kind">{w.when}</span>
+                        <span className="workflow-kind">
+                            <span className="workflow-icon">
+                                <Icon name={w.icon} />
+                            </span>
+                            {w.when}
+                        </span>
                         <h3 className="workflow-title">{w.title}</h3>
                         <ol className="workflow-steps">
                             {w.steps.map((s) => {
@@ -419,16 +438,35 @@ function MyIp() {
 const HERO: Record<ToolGroup, { title: string; lead: string }> = {
     network: {
         title: 'Network tools.',
-        lead: 'Ping, trace or run MTR to a host from our server or from other countries, test a TCP port, measure your download speed, or plan a subnet. Free, no sign-up.',
+        lead: 'Ping, trace or run MTR to a host from our server or from other countries, test a TCP port, check a TLS certificate, measure your download speed, or plan a subnet. Free, no sign-up.',
     },
     email: {
         title: 'DNS & Email tools.',
-        lead: 'Look up DNS records and compare them across locations, and check a domain’s email setup: MX, SPF, DMARC, DKIM, its mail server, registration and spam lists. Free, no sign-up.',
+        lead: 'Look up DNS records across locations and check DNSSEC, then a domain’s whole email setup: MX, SPF, DMARC, DKIM, MTA-STS, its mail server’s TLS, registration and spam lists. Free, no sign-up.',
     },
     bgp: {
         title: 'BGP & ASN tools.',
-        lead: 'Look up an autonomous system, find which network announces an address and whether RPKI validates it, and see the BGP paths networks around the world use to reach it. Free, no sign-up.',
+        lead: 'Find out why a prefix is not reachable everywhere: RPKI, IRR route objects, visibility and 30 days of history in one check. Look up any AS, route or BGP path. Free, no sign-up.',
     },
+};
+
+// Where each page's checks run, or where its data comes from.
+const SOURCES: Record<ToolGroup, { icon: string; name: string; text: string }[]> = {
+    network: [
+        { icon: 'server', name: 'Our server', text: 'Tests only reach public addresses, and each visitor can run a few a minute.' },
+        { icon: 'signal', name: 'Globalping probes', text: 'Tests from other countries run on a free network of probes and count against your connection’s hourly allowance.' },
+        { icon: 'phone', name: 'Your browser', text: 'The subnet calculator runs here; nothing is sent anywhere.' },
+    ],
+    email: [
+        { icon: 'server', name: 'Our server', text: 'Lookups and connections (SMTP, name servers) go only to public addresses, a few tests a minute per visitor.' },
+        { icon: 'signal', name: 'Globalping probes', text: 'DNS comparisons from other countries run on a free network of probes.' },
+    ],
+    bgp: [
+        { icon: 'route', name: 'RIPEstat', text: 'Routing data from RIPE NCC’s Routing Information Service.' },
+        { icon: 'nodes', name: 'PeeringDB', text: 'Network details for each AS.' },
+        { icon: 'shield', name: 'NLNOG IRR Explorer', text: 'Route objects from every major IRR.' },
+        { icon: 'id', name: 'Team Cymru', text: 'AS names.' },
+    ],
 };
 
 export default function Tools({ group }: { group: ToolGroup }) {
@@ -455,16 +493,22 @@ export default function Tools({ group }: { group: ToolGroup }) {
         setCurrent((c) => ({ tool: t, initial: {}, n: c.n + 1 }));
     };
     const hrefFor = (n: Next) => toolHref(n, group, root);
+    const Preview = TOOL_PREVIEW[group];
 
     return (
         <>
             <section className="stage tools-hero" aria-labelledby="hero-title">
                 <div className="container tools-hero-inner">
-                    <MyIp />
-                    <h1 id="hero-title" className="display">
-                        {HERO[group].title}
-                    </h1>
-                    <p className="lead">{HERO[group].lead}</p>
+                    <div className="tools-hero-copy">
+                        <MyIp />
+                        <h1 id="hero-title" className="display">
+                            {HERO[group].title}
+                        </h1>
+                        <p className="lead">{HERO[group].lead}</p>
+                    </div>
+                    <div className="tools-hero-preview">
+                        <Preview />
+                    </div>
                 </div>
             </section>
 
@@ -495,14 +539,26 @@ export default function Tools({ group }: { group: ToolGroup }) {
 
                     <Workflows target={target} hrefFor={hrefFor} />
 
-                    <p className="tools-fineprint small faint">
-                        {group === 'network'
-                            ? 'Tests from our server only reach public addresses, and each visitor can run a few a minute. Tests from other countries run on Globalping, a free network of probes, and count against your connection’s hourly Globalping allowance. The subnet calculator runs in your browser.'
-                            : group === 'email'
-                              ? 'Lookups run from our server. Connections (SMTP, name server checks) only go to public addresses, and each visitor can run a few tests a minute. DNS comparisons from other countries run on Globalping.'
-                              : 'Routing data comes from RIPEstat (RIPE NCC’s Routing Information Service), network details from PeeringDB and AS names from Team Cymru. Answers are kept for up to 5 minutes, so a route that just changed can take that long to show.'}{' '}
-                        Built by PingOmni, makers of <a href={`${root}radiusone/`}>RadiusOne</a>.
-                    </p>
+                    <section className="sources" aria-labelledby="sources-title">
+                        <h2 id="sources-title" className="h3">
+                            {group === 'bgp' ? 'Where the data comes from' : 'Where the tests run'}
+                        </h2>
+                        <ul className="sources-grid">
+                            {SOURCES[group].map((src) => (
+                                <li className="source" key={src.name}>
+                                    <span className="source-icon">
+                                        <Icon name={src.icon} />
+                                    </span>
+                                    <strong>{src.name}</strong>
+                                    <span>{src.text}</span>
+                                </li>
+                            ))}
+                        </ul>
+                        <p className="small faint">
+                            {group === 'bgp' && 'Answers are kept for up to 5 minutes, so a route that just changed can take that long to show. '}
+                            Built by PingOmni, makers of <a href={`${root}radiusone/`}>RadiusOne</a>.
+                        </p>
+                    </section>
                 </div>
             </section>
         </>

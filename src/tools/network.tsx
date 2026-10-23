@@ -1,10 +1,10 @@
-import { SERVER_LOCATION } from '../config';
+import type { ReactNode } from 'react';
 import { api, ToolError, type Result } from '../lib/api';
 import { locationsFor, mtrFrom, pingFrom, TEST_FROM, traceFrom, type MtrRun, type PingProbe, type TraceOptions, type TraceProbe } from '../lib/globalping';
 import { hopsAsPath, mtrVerdict, pingVerdict, PORT_STATE, traceVerdict, type PortState, type Verdict } from '../lib/interpret';
 import { CommonPortsNote, PORT_NAMES } from './ports';
 import type { Field, Progress, ToolSpec } from './types';
-import { Abbr, AsLink, AsPath, Explain, Mono, ms, Place, Rows, Status, Summary, Table, Target, type Next, type Values } from './ui';
+import { Abbr, AsLink, AsPath, Certificate, Checks, Explain, Mono, ms, Place, Rows, Status, Summary, Table, Target, type Next, type Values } from './ui';
 
 // ---------------------------------------------------------------------------
 // Shared pieces: where a test runs, and the trace options.
@@ -20,7 +20,7 @@ export const fromField = (label: string): Field => ({
 export const runsOnFrom = (v: Values) =>
     locationsFor(v.from)
         ? `Runs on Globalping probes (${v.from}), started from your browser. Each test counts against your connection’s free hourly Globalping allowance.`
-        : `Runs from our server in ${SERVER_LOCATION}, over IPv4.`;
+        : `Runs from our server, over IPv4.`;
 
 async function viaGlobalping<T>(run: () => Promise<T>): Promise<T> {
     try {
@@ -465,7 +465,7 @@ const port: ToolSpec = {
     action: 'Check port',
     bestFor: 'Checking whether a TCP service is reachable from our server.',
     fields: [HOST_FIELD, { name: 'port', label: 'TCP port', placeholder: '443', width: 'narrow', numeric: true, hint: '1 to 65535' }],
-    runsOn: () => `Runs from our server in ${SERVER_LOCATION}: one TCP connection attempt, 4 second timeout. It cannot test UDP services.`,
+    runsOn: () => `Runs from our server: one TCP connection attempt, 4 second timeout. It cannot test UDP services.`,
     duration: 'up to 5 seconds',
     run: (v) => {
         if (!/^\d{1,5}$/.test(v.port) || Number(v.port) < 1 || Number(v.port) > 65535) throw new ToolError('Enter a port from 1 to 65535.', 'invalid');
@@ -486,6 +486,82 @@ const port: ToolSpec = {
     ),
     next: (r) => [
         ...(r.port === 25 ? [{ tool: 'smtp', label: `Test the mail server on ${r.host}`, values: { host: r.host } }] : []),
+        ...(r.state === 'open' && [443, 465, 587, 993, 995, 8443].includes(r.port) ? [{ tool: 'tls', label: `Check the TLS certificate on port ${r.port}`, values: { host: r.host, port: String(r.port) } }] : []),
+        ...connectivityNext(r.host, 'port'),
+    ],
+    target: (v) => v.host,
+};
+
+// ---------------------------------------------------------------------------
+// TLS certificate check
+// ---------------------------------------------------------------------------
+
+function TlsView({ r }: { r: Result }) {
+    const issues = (r.checks as Result[]).filter((c) => c.level === 'issue');
+    const where = `${r.host}${r.port === 443 ? '' : `:${r.port}`}`;
+    const verdict: Verdict = !r.handshake
+        ? { level: 'failed', label: r.connected ? 'No TLS' : 'No connection', title: r.checks[0].text }
+        : issues.length
+          ? { level: 'issue', label: `${issues.length} ${issues.length === 1 ? 'problem' : 'problems'}`, title: `${where} has ${issues.length === 1 ? 'a TLS problem' : 'TLS problems'}.`, detail: issues[0].text }
+          : { level: 'pass', label: 'Healthy', title: `${where} has a trusted certificate for ${r.tls.chain[0].daysLeft} more days and modern TLS.` };
+    return (
+        <>
+            <Summary verdict={verdict} />
+            <Rows
+                rows={[
+                    ['Server', <Target host={r.host} ip={r.ip} />],
+                    ['Port', r.starttls ? `${r.port} (SMTP with STARTTLS)` : String(r.port)],
+                    ...(r.versions.length
+                        ? [[
+                              'TLS versions',
+                              <span className="out-versions">
+                                  {r.versions.map((v: Result) => (
+                                      <Status key={v.version} level={v.supported ? (['TLS 1.0', 'TLS 1.1'].includes(v.version) ? 'issue' : 'pass') : 'neutral'}>
+                                          {v.version} {v.supported ? 'on' : 'off'}
+                                      </Status>
+                                  ))}
+                              </span>,
+                          ] as [string, ReactNode]]
+                        : []),
+                    ...(r.http ? [['HTTPS answer', r.http.status ? `${r.http.status}${r.http.server ? ` from ${r.http.server}` : ''}` : 'No answer'] as [string, ReactNode]] : []),
+                ]}
+            />
+            {r.handshake && <Checks checks={r.checks} />}
+            {r.tls && <Certificate tls={r.tls} />}
+        </>
+    );
+}
+
+const tls: ToolSpec = {
+    id: 'tls',
+    action: 'Check TLS',
+    bestFor: 'Checking a certificate (trust, names, expiry, chain), the TLS versions a server accepts, and HSTS.',
+    fields: [HOST_FIELD, { name: 'port', label: 'Port', placeholder: '443', width: 'narrow', numeric: true, optional: true, hint: '443 if empty. 25 and 587 use STARTTLS.' }],
+    runsOn: () => 'Runs from our server: a TLS handshake with the name you enter (SNI), one more for each TLS version, and for HTTPS a request for its headers.',
+    duration: 'usually 2–10 seconds',
+    run: (v) => {
+        if (v.port && (!/^\d{1,5}$/.test(v.port) || Number(v.port) < 1 || Number(v.port) > 65535)) throw new ToolError('Enter a port from 1 to 65535, or leave it empty for 443.', 'invalid');
+        return api('tls', { host: v.host, port: v.port ?? '' });
+    },
+    render: (r) => (
+        <>
+            <TlsView r={r} />
+            <Explain>
+                <p>
+                    A client trusts a certificate when it chains up to a certificate authority it knows, covers the name it connected to, and is within
+                    its dates. The server has to send its intermediate certificates too; a missing intermediate works in some browsers and fails in
+                    other clients.
+                </p>
+                <p>
+                    We check trust against the standard set of public certificate authorities. TLS versions are tested one at a time, so “on” means the
+                    server completed a handshake using only that version.
+                </p>
+            </Explain>
+        </>
+    ),
+    next: (r) => [
+        ...(r.port === 25 || r.port === 587 ? [{ tool: 'smtp', label: `Test the mail server on ${r.host}`, values: { host: r.host } }] : []),
+        { tool: 'port', label: `Check other ports on ${r.host}`, values: { host: r.host, port: '80' } },
         ...connectivityNext(r.host, 'port'),
     ],
     target: (v) => v.host,
@@ -551,7 +627,7 @@ const reverse: ToolSpec = {
     action: 'Look up PTR',
     bestFor: 'Finding the hostname an IP address points to, and whether it points back.',
     fields: [{ name: 'ip', label: 'IP address', placeholder: '8.8.8.8', hint: 'IPv4 or IPv6, public addresses only.' }],
-    runsOn: () => `Runs from our server in ${SERVER_LOCATION}, through its DNS resolver.`,
+    runsOn: () => `Runs from our server, through its DNS resolver.`,
     run: (v) => api('reverse', { ip: v.ip }),
     render: (r) => <Reverse r={r} />,
     raw: (r) => r.lookup?.raw ?? '',
@@ -678,7 +754,7 @@ const bandwidth: ToolSpec = {
             hint: 'Uses up to 30 MB of data (standard) or 5 MB (light). Mind metered or mobile plans.',
         },
     ],
-    runsOn: () => `Runs in your browser: it downloads random data from our server in ${SERVER_LOCATION}, through Cloudflare, and times it.`,
+    runsOn: () => `Runs in your browser: it downloads random data from our server, through Cloudflare, and times it.`,
     duration: 'usually 5–20 seconds',
     run: (v, progress) => measureBandwidth(v.size === 'light', progress),
     render: (r) => (
@@ -702,5 +778,5 @@ const bandwidth: ToolSpec = {
     ),
 };
 
-export const NETWORK_SPECS: ToolSpec[] = [ping, traceroute, mtr, port, reverse, proxy, bandwidth];
+export const NETWORK_SPECS: ToolSpec[] = [ping, traceroute, mtr, port, tls, reverse, proxy, bandwidth];
 
