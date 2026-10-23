@@ -250,8 +250,8 @@ function Header({ onTheme }: { onTheme: () => void }) {
     );
 }
 
-// The demo button shows only where the page is about RadiusOne.
-export function Contact({ title, text, demo = false }: { title: string; text: string; demo?: boolean }) {
+// The demo button shows only on a product page; it opens that product's demo.
+export function Contact({ title, text, demo = false, demoUrl = DEMO_URL, demoLabel = 'Try the RadiusOne demo' }: { title: string; text: string; demo?: boolean; demoUrl?: string; demoLabel?: string }) {
     return (
         <section className="stage contact" id="contact" aria-labelledby="contact-title">
             <div className="container contact-row">
@@ -263,8 +263,8 @@ export function Contact({ title, text, demo = false }: { title: string; text: st
                 </div>
                 <div className="contact-actions">
                     {demo && (
-                        <a className="btn btn-primary btn-lg" href={DEMO_URL} target="_blank" rel="noopener">
-                            Try the RadiusOne demo
+                        <a className="btn btn-primary btn-lg" href={demoUrl} target="_blank" rel="noopener">
+                            {demoLabel}
                             <Icon name="external" />
                         </a>
                     )}
@@ -373,7 +373,7 @@ export function Layout({ page, root, children }: { page: PageId; root: string; c
 
 export function Shot({ name, alt, eager = false }: { name: string; alt: string; eager?: boolean }) {
     const { root, theme } = useSite();
-    const size = name === 'clients' ? { width: 1200, height: 750 } : { width: 1800, height: 1500 };
+    const size = name === 'clients' || name === 'dnsone-queries' ? { width: 1200, height: 750 } : { width: 1800, height: 1500 };
     return (
         <img
             className="shot"
