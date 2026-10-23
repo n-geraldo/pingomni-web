@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Mark, Wordmark } from '../brand';
-import { mailto } from '../config';
+import { DNSONE_DEMO_URL, mailto } from '../config';
 import Icon from '../Icon';
 import { api } from '../lib/api';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
@@ -59,20 +59,53 @@ function Launcher() {
                 </figure>
             </article>
 
-            <article className="tile tile-closed" aria-labelledby="tile-dnsone">
-                <Mark brand="dnsone" size={40} />
-                <div className="tile-closed-text">
-                    <h2 id="tile-dnsone" className="tile-name">
-                        <a href={`${root}dnsone/`}>
-                            <Wordmark brand="dnsone" />
+            <article className="tile tile-open tile-flip" aria-labelledby="tile-dnsone">
+                <div className="tile-body">
+                    <div className="tile-head">
+                        <Mark brand="dnsone" size={44} className="ping-on-load" />
+                        <h2 id="tile-dnsone" className="tile-name">
+                            <a href={`${root}dnsone/`}>
+                                <Wordmark brand="dnsone" />
+                            </a>
+                        </h2>
+                    </div>
+                    <p className="tile-pitch">DNS for ISPs, on your own server.</p>
+                    <p className="tile-text">
+                        Hosted zones, the customer resolver, ad-blocking and a query log in one console, on BIND, PowerDNS Recursor and
+                        dnsdist.
+                    </p>
+                    <ul className="tile-points">
+                        <li>
+                            <Icon name="globe" />
+                            Authoritative zones and records, with DNSSEC
+                        </li>
+                        <li>
+                            <Icon name="ban" />
+                            Ad-blocking and client groups for every customer
+                        </li>
+                        <li>
+                            <Icon name="search" />
+                            A searchable log of every query
+                        </li>
+                        <li>
+                            <Icon name="gauge" />
+                            Rate limits, and DNS over TLS and HTTPS
+                        </li>
+                    </ul>
+                    <div className="actions">
+                        <a className="btn btn-primary" href={DNSONE_DEMO_URL} target="_blank" rel="noopener">
+                            Try the demo
+                            <Icon name="external" />
                         </a>
-                    </h2>
-                    <p>DNS for ISPs: hosted zones, the customer resolver and ad-blocking.</p>
+                        <a className="text-link" href={`${root}dnsone/`}>
+                            About DNSOne
+                            <Icon name="arrow" />
+                        </a>
+                    </div>
                 </div>
-                <a className="tile-link text-link" href={`${root}dnsone/`}>
-                    About DNSOne
-                    <Icon name="arrow" />
-                </a>
+                <figure className="tile-shot">
+                    <Shot name="dnsone-dashboard" alt="The DNSOne dashboard: queries, blocked queries, cache hit rate and service health" eager />
+                </figure>
             </article>
 
             <article className="tile tile-closed" aria-labelledby="tile-ticketone">
