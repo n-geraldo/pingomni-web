@@ -152,6 +152,66 @@ $prefixes = ['2a01:2000::/20', '8.8.8.0/24', '2.112.0.0/15', '8.8.0.0/16', '2001
 usort($prefixes, fn ($a, $b) => strcmp(prefixKey($a), prefixKey($b)));
 same('prefixes sorted IPv4 first, by address, then length', $prefixes, ['2.112.0.0/15', '8.8.0.0/16', '8.8.8.0/24', '2001:db8::/32', '2a01:2000::/20']);
 
+// --- Announcement check ----------------------------------------------------
+same('host bits cleared', networkPrefix('203.0.113.77', 24), '203.0.113.0/24');
+same('host bits cleared in IPv6', networkPrefix('2001:db8:1:2::1', 32), '2001:db8::/32');
+same('prefix inside its cover', prefixWithin('193.0.0.0/24', '193.0.0.0/21'), true);
+same('prefix within itself', prefixWithin('193.0.0.0/21', '193.0.0.0/21'), true);
+same('cover is not within the more specific', prefixWithin('193.0.0.0/21', '193.0.0.0/24'), false);
+same('families never overlap', prefixWithin('2001:db8::/32', '0.0.0.0/0'), false);
+same('/24 accepted', prefixSizeCheck('8.8.8.0/24')['level'], 'pass');
+same('/25 filtered', prefixSizeCheck('8.8.8.0/25')['level'], 'issue');
+same('/48 accepted', prefixSizeCheck('2001:4860:1::/48')['level'], 'pass');
+same('/49 filtered', prefixSizeCheck('2001:4860:1::/49')['level'], 'issue');
+$irrAnswer = [
+    ['prefix' => '193.0.0.0/21', 'irrRoutes' => ['RIPE' => [['asn' => 3333]]]],
+    ['prefix' => '193.0.0.0/24', 'irrRoutes' => ['RADB' => [['asn' => 64500]], 'RIPE' => [['asn' => 64500]]]],
+    ['prefix' => '193.0.4.0/24', 'irrRoutes' => ['RIPE' => [['asn' => 3333]]]],
+];
+$irr = irrObjects($irrAnswer, '193.0.0.0/24');
+same('exact route objects', $irr['exact'], [['source' => 'RADB', 'asn' => 64500], ['source' => 'RIPE', 'asn' => 64500]]);
+same('covering route objects, not siblings', $irr['covering'], [['prefix' => '193.0.0.0/21', 'source' => 'RIPE', 'asn' => 3333]]);
+same('route object for the AS passes', irrCheck(64500, $irr, '193.0.0.0/24')['level'], 'pass');
+same('route objects only for another AS', str_contains(irrCheck(3333, $irr, '193.0.0.0/24')['text'], 'exist only for AS64500'), true);
+same('only a covering route object', str_contains(irrCheck(3333, irrObjects([$irrAnswer[0]], '193.0.0.0/24'), '193.0.0.0/24')['text'], 'covering 193.0.0.0/21'), true);
+same('IPv6 asks for a route6 object', str_contains(irrCheck(1, ['exact' => [], 'covering' => []], '2001:db8::/32')['text'], 'route6'), true);
+same('IRR unavailable', irrCheck(1, null, '8.8.8.0/24')['level'], 'failed');
+same('RPKI valid', rpkiCheck(3333, ['status' => 'valid', 'validating_roas' => [['origin' => '3333', 'max_length' => 24]]])['level'], 'pass');
+same('RPKI too specific', str_contains(rpkiCheck(3333, ['status' => 'invalid_length', 'validating_roas' => [['origin' => '3333', 'max_length' => 21]]])['text'], 'only up to /21'), true);
+same('RPKI unavailable', rpkiCheck(3333, null)['level'], 'failed');
+$history = ['start' => '2026-09-01T00:00:00Z', 'end' => '2026-10-01T00:00:00Z', 'maxPeers' => 100, 'origins' => [
+    ['asn' => 3333, 'segments' => [['start' => '2026-09-01T00:00:00Z', 'end' => '2026-09-10T00:00:00Z', 'peers' => 99], ['start' => '2026-09-12T00:00:00Z', 'end' => '2026-10-01T00:00:00Z', 'peers' => 99]]],
+    ['asn' => 64500, 'segments' => [['start' => '2026-09-20T00:00:00Z', 'end' => '2026-09-21T00:00:00Z', 'peers' => 30]]],
+]];
+$hc = historyChecks($history, [3333]);
+same('another origin in the window', str_contains($hc[0]['text'], 'AS64500 also originated'), true);
+same('a two-day gap counted', str_contains($hc[1]['text'], 'dropped out of the routing table 1 time') && str_contains($hc[1]['text'], '48 hours'), true);
+$history['origins'][0]['segments'] = [['start' => '2026-09-01T00:00:00Z', 'end' => '2026-10-01T00:00:00Z', 'peers' => 99]];
+same('no gaps', historyChecks(['origins' => [$history['origins'][0]]] + $history, [3333])[0]['level'], 'pass');
+
+// --- TLS, DNSSEC and mail policies -------------------------------------------
+same('certificate name exact', certNameMatches(['mail.example.com'], 'mail.example.com'), true);
+same('wildcard covers one label', certNameMatches(['*.example.com'], 'mail.example.com'), true);
+same('wildcard does not cover two labels', certNameMatches(['*.example.com'], 'a.b.example.com'), false);
+same('wildcard does not cover the apex', certNameMatches(['*.example.com'], 'example.com'), false);
+same('names compared case-insensitively', certNameMatches(['Mail.Example.com'], 'mail.example.COM.'), true);
+same('MTA-STS mx pattern exact', stsMxMatches('mx1.example.com', 'mx1.example.com.'), true);
+same('MTA-STS mx wildcard', stsMxMatches('*.example.com', 'mx1.example.com'), true);
+same('MTA-STS mx wildcard is one label', stsMxMatches('*.example.com', 'a.mx.example.com'), false);
+$keysRaw = <<<'DIG'
+example.com.		3600 IN	DNSKEY 256 3 13 (
+				oJMRESz5E4gYzS/q6XDrvU1qMPYIjCWzJaOau8XNEZeqCYKD5ar0IRd8
+				) ; ZSK; alg = ECDSAP256SHA256 ; key id = 34505
+example.com.		3600 IN	DNSKEY 257 3 13 (
+				mdsswUyr3DPW132mOi8V9xESWE8jTo0dxCjjnopKl+GqJxpVXckHAeF+
+				) ; KSK; alg = ECDSAP256SHA256 ; key id = 2371
+DIG;
+same('DNSKEY flags, algorithm, tag and role', dnskeys($keysRaw), [
+    ['flags' => 256, 'algorithm' => 13, 'tag' => 34505, 'role' => 'ZSK'],
+    ['flags' => 257, 'algorithm' => 13, 'tag' => 2371, 'role' => 'KSK'],
+]);
+same('RRSIG time', dnssecTime('20261105183347'), gmmktime(18, 33, 47, 11, 5, 2026));
+
 // --- Client keys for rate limits --------------------------------------------
 $_SERVER['REMOTE_ADDR'] = '2001:db8:1:2:aaaa::1';
 $a = clientKey();

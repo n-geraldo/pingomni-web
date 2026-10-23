@@ -313,6 +313,12 @@ function digQueries(array $queries, int $timeout = 2): array
             if (!empty($q['norec'])) {
                 $cmd[] = '+norec';
             }
+            if (!empty($q['dnssec'])) {
+                $cmd[] = '+dnssec';
+            }
+            if (!empty($q['cd'])) {
+                $cmd[] = '+cd';
+            }
             if (!empty($q['server'])) {
                 $cmd[] = '@' . $q['server'];
             }
@@ -1395,13 +1401,46 @@ function toolDmarc(): array
     return $res;
 }
 
+// Selectors that mail providers and common setups use, tried when no selector is given. Keep the list short enough
+// to look up in one parallel batch.
+const DKIM_SELECTORS = ['google', 'selector1', 'selector2', 'default', 'dkim', 'mail', 'k1', 'k2', 'k3', 's1', 's2', 's1024', 's2048',
+    'key1', 'key2', 'sig1', 'smtp', 'mx', 'email', 'dk', 'fm1', 'fm2', 'fm3', 'protonmail', 'protonmail2', 'protonmail3', 'zoho', 'zmail',
+    'mandrill', 'mailjet', 'mxvault', 'everlytickey1', 'everlytickey2', 'hs1', 'hs2', 'cm', 'mailo', 'scph1', 'turbo-smtp', 'pic', 'x',
+    '20230601', '20221208', '20210112', '20161025'];
+
 function toolDkim(): array
 {
     rateLimit('light', LIGHT_PER_MINUTE);
     $domain = domainParam();
     $selector = strtolower(param('selector', 63));
+    $discovered = null;
     if ($selector === '') {
-        fail('Enter the DKIM selector. It is the s= value in the DKIM-Signature header of a message from this domain.');
+        // No selector: look up the common ones at once and check the first that holds a key.
+        // A made-up selector goes along: if it has a key too, the domain answers every selector (a wildcard).
+        $probe = 'pingomni-' . bin2hex(random_bytes(4));
+        $answers = digQueries(array_map(fn ($sel) => ["{$sel}._domainkey.{$domain}", 'TXT'], [...DKIM_SELECTORS, $probe]));
+        if (array_filter(array_column(answersOf(array_pop($answers), 'TXT'), 'value'), fn ($t) => (bool) preg_match('/(^|;)\s*(v\s*=\s*DKIM1|p\s*=)/i', $t))) {
+            $selector = $probe;
+            $discovered = ['wildcard' => true];
+        }
+        $discovered ??= [];
+        foreach (isset($discovered['wildcard']) ? [] : DKIM_SELECTORS as $i => $sel) {
+            $txt = array_column(answersOf($answers[$i], 'TXT'), 'value');
+            $key = array_values(array_filter($txt, fn ($t) => (bool) preg_match('/(^|;)\s*(v\s*=\s*DKIM1|p\s*=)/i', $t)))[0] ?? null;
+            if ($key !== null) {
+                $discovered[] = ['selector' => $sel, 'keyType' => strtolower(tagList($key)['k'] ?? 'rsa'), 'revoked' => (bool) preg_match('/(^|;)\s*p\s*=\s*(;|$)/i', $key)];
+            }
+        }
+        if (!$discovered) {
+            $tried = count(DKIM_SELECTORS);
+            return ['domain' => $domain, 'selector' => null, 'name' => null, 'lookup' => null, 'record' => null, 'cname' => null, 'tags' => (object) [],
+                'keyType' => null, 'bits' => null, 'discovered' => [], 'tried' => DKIM_SELECTORS, 'checks' => [['area' => 'presence', 'level' => 'inconclusive',
+                    'text' => "None of {$tried} common selectors has a DKIM key at {$domain}. That does not mean DKIM is missing: selectors can be any name. Find the s= value in the DKIM-Signature header of a message from this domain and enter it."]]];
+        }
+        if (!isset($discovered['wildcard'])) {
+            $usable = array_values(array_filter($discovered, fn ($d) => !$d['revoked']));
+            $selector = ($usable[0] ?? $discovered[0])['selector'];
+        }
     }
     if (!preg_match('/^[a-z0-9_]([a-z0-9._-]{0,61}[a-z0-9])?$/', $selector)) {
         fail('Enter a valid selector, like "google" or "selector1".');
@@ -1409,7 +1448,7 @@ function toolDkim(): array
     $name = "{$selector}._domainkey.{$domain}";
     $r = dig($name, 'TXT');
     $out = outcome($r, 'TXT');
-    $res = ['domain' => $domain, 'selector' => $selector, 'name' => $name, 'lookup' => lookupResult($r, 'TXT'), 'record' => null,
+    $res = ['domain' => $domain, 'selector' => $selector, 'discovered' => $discovered, 'tried' => $discovered === null ? null : DKIM_SELECTORS, 'name' => $name, 'lookup' => lookupResult($r, 'TXT'), 'record' => null,
         'cname' => answersOf($r, 'CNAME')[0]['value'] ?? null, 'tags' => (object) [], 'keyType' => null, 'bits' => null, 'checks' => []];
     if (!in_array($out, ['found', 'nodata', 'nxdomain'], true)) {
         $res['checks'][] = ['area' => 'presence', 'level' => 'failed', 'text' => "The lookup of {$name} failed ({$r['status']}), so we cannot tell whether the key is published."];
@@ -1479,10 +1518,471 @@ function toolDkim(): array
     if (str_contains(strtolower($tags['t'] ?? ''), 'y')) {
         $res['checks'][] = ['area' => 'key', 'level' => 'info', 'text' => 't=y: the domain says it is testing DKIM, and receivers may treat failures more leniently.'];
     }
+    if (isset($discovered['wildcard'])) {
+        $res['discovered'] = [];
+        $res['wildcard'] = true;
+        array_unshift($res['checks'], ['area' => 'presence', 'level' => 'info', 'text' => "{$domain} publishes the same DKIM record for every selector (a wildcard), so the real selectors cannot be found this way. The record below is that wildcard" . (($res['tags']->p ?? $res['tags']['p'] ?? null) === '' ? '; its key is empty, which is how a domain says it signs no mail.' : '.')]);
+    }
     return $res;
 }
 
 /** Reads an SMTP reply (all lines of a multi-line reply), or null on timeout or a closed connection. */
+// ---------------------------------------------------------------------------
+// DNSSEC: the chain of trust from the parent zone (DS) to the zone's keys (DNSKEY) to its signatures (RRSIG),
+// and what a validating resolver makes of it.
+// ---------------------------------------------------------------------------
+
+const DNSSEC_ALGORITHMS = [
+    1 => ['RSA/MD5', 'deprecated'], 3 => ['DSA/SHA-1', 'deprecated'], 5 => ['RSA/SHA-1', 'deprecated'], 6 => ['DSA-NSEC3-SHA1', 'deprecated'],
+    7 => ['RSASHA1-NSEC3-SHA1', 'deprecated'], 8 => ['RSA/SHA-256', 'ok'], 10 => ['RSA/SHA-512', 'ok'], 12 => ['GOST R 34.10-2001', 'deprecated'],
+    13 => ['ECDSA P-256/SHA-256', 'ok'], 14 => ['ECDSA P-384/SHA-384', 'ok'], 15 => ['Ed25519', 'ok'], 16 => ['Ed448', 'ok'],
+];
+const DS_DIGESTS = [1 => 'SHA-1', 2 => 'SHA-256', 3 => 'GOST', 4 => 'SHA-384'];
+const VALIDATING_RESOLVER = '1.1.1.1';
+
+/** The zone's keys from `dig +multi DNSKEY`, with the key tag dig computes. */
+function dnskeys(string $raw): array
+{
+    preg_match_all('/\sDNSKEY\s+(\d+)\s+3\s+(\d+)\s*\((?:(?!\sDNSKEY\s).)*?key id = (\d+)/s', $raw, $m, PREG_SET_ORDER);
+    return array_map(fn ($k) => ['flags' => (int) $k[1], 'algorithm' => (int) $k[2], 'tag' => (int) $k[3], 'role' => ((int) $k[1] & 1) ? 'KSK' : 'ZSK'], $m);
+}
+
+/** "20261105183347" as a Unix time. */
+function dnssecTime(string $t): ?int
+{
+    $d = DateTime::createFromFormat('YmdHis', $t, new DateTimeZone('UTC'));
+    return $d ? $d->getTimestamp() : null;
+}
+
+function toolDnssec(): array
+{
+    rateLimit('light', LIGHT_PER_MINUTE);
+    $domain = domainParam();
+    $q = digQueries([
+        [$domain, 'DS', 'server' => VALIDATING_RESOLVER],
+        [$domain, 'SOA', 'server' => VALIDATING_RESOLVER, 'dnssec' => true],
+        [$domain, 'SOA', 'server' => VALIDATING_RESOLVER, 'cd' => true, 'dnssec' => true],
+    ]);
+    [, $keysRaw] = run(['dig', '+multi', '+time=2', '+tries=1', '+nocookie', '+cd', '@' . VALIDATING_RESOLVER, 'DNSKEY', $domain], 8);
+    [$dsQ, $soaQ, $cdQ] = $q;
+    if (in_array(outcome($cdQ, 'SOA'), ['timeout', 'error', 'refused'], true)) {
+        fail("The DNS lookup for {$domain} failed ({$cdQ['status']}). Try again in a moment.", 502);
+    }
+    if (outcome($cdQ, 'SOA') === 'nxdomain') {
+        fail("{$domain} does not exist in DNS (NXDOMAIN).", 422);
+    }
+    $ds = array_map(function ($a) {
+        $f = preg_split('/\s+/', trim($a['value']));
+        return ['tag' => (int) $f[0], 'algorithm' => (int) $f[1], 'digestType' => (int) $f[2], 'digest' => strtoupper(implode('', array_slice($f, 3)))];
+    }, answersOf($dsQ, 'DS'));
+    $keys = dnskeys($keysRaw);
+    $sigs = [];
+    // Signatures come from the query with checking disabled, so they can be read even when validation fails.
+    foreach (answersOf($cdQ, 'RRSIG') as $a) {
+        $f = preg_split('/\s+/', trim($a['value']));
+        if (count($f) >= 8) {
+            $sigs[] = ['covers' => $f[0], 'algorithm' => (int) $f[1], 'expires' => dnssecTime($f[4]), 'inception' => dnssecTime($f[5]), 'tag' => (int) $f[6], 'signer' => rtrim($f[7], '.')];
+        }
+    }
+    $validated = in_array('ad', $soaQ['flags'] ?? [], true);
+    $bogus = $soaQ['status'] === 'SERVFAIL' && $cdQ['status'] === 'NOERROR';
+    $hasSoa = (bool) answersOf($cdQ, 'SOA');
+
+    $checks = [];
+    $signed = $ds || $keys;
+    if (!$signed) {
+        $checks[] = ['area' => 'chain', 'level' => 'info', 'text' => $hasSoa
+            ? "{$domain} is not signed with DNSSEC: there is no DS record at the parent and no DNSKEY. Its answers work everywhere but can be forged on the way to a resolver."
+            : "{$domain} has no DS record and no DNSKEY. It is probably a name inside a larger zone, not a zone itself; check its parent domain."];
+    } else {
+        $checks[] = match (true) {
+            $ds && !$keys => ['area' => 'chain', 'level' => 'issue', 'text' => "The parent zone publishes a DS record for {$domain}, but the zone has no DNSKEY. Validating resolvers fail to resolve it (SERVFAIL). Remove the DS at the registrar or re-sign the zone."],
+            !$ds && $keys => ['area' => 'chain', 'level' => 'issue', 'text' => "{$domain} is signed (it has DNSKEY records), but there is no DS record at the parent, so no resolver can validate it. Add the DS record at your registrar to complete the chain of trust."],
+            default => ['area' => 'chain', 'level' => 'pass', 'text' => 'The parent zone publishes a DS record and the zone publishes DNSKEY records.'],
+        };
+        if ($ds && $keys) {
+            $ksks = array_column(array_filter($keys, fn ($k) => $k['role'] === 'KSK'), 'tag');
+            $matching = array_values(array_filter($ds, fn ($d) => in_array($d['tag'], array_column($keys, 'tag'), true)));
+            $checks[] = $matching
+                ? ['area' => 'chain', 'level' => 'pass', 'text' => 'The DS record points to a key the zone publishes (key tag ' . implode(', ', array_unique(array_column($matching, 'tag'))) . ').']
+                : ['area' => 'chain', 'level' => 'issue', 'text' => 'No DS record matches a published key: the DS points to key tag ' . implode(', ', array_unique(array_column($ds, 'tag'))) . ', the zone publishes ' . (implode(', ', array_column($keys, 'tag')) ?: 'none') . '. This usually follows a key rollover where the DS was not updated at the registrar.'];
+            $stale = array_values(array_filter($ds, fn ($d) => !in_array($d['tag'], array_column($keys, 'tag'), true)));
+            if ($matching && $stale) {
+                $checks[] = ['area' => 'chain', 'level' => 'info', 'text' => 'The parent also has DS records for keys the zone no longer publishes (key tag ' . implode(', ', array_unique(array_column($stale, 'tag'))) . '); remove them at the registrar when a rollover is done.'];
+            }
+            if (!$ksks) {
+                $checks[] = ['area' => 'chain', 'level' => 'info', 'text' => 'No key is flagged as a key-signing key (flags 257). That works, but the DS normally points to one.'];
+            }
+        }
+        $checks[] = match (true) {
+            $validated => ['area' => 'validation', 'level' => 'pass', 'text' => 'A validating resolver (' . VALIDATING_RESOLVER . ') validates the answers: the chain of trust is complete.'],
+            $bogus => ['area' => 'validation', 'level' => 'issue', 'text' => 'Validation fails: a validating resolver (' . VALIDATING_RESOLVER . ') answers SERVFAIL, but answers come back without validation. Users of validating resolvers (most ISPs, 1.1.1.1, 8.8.8.8) cannot reach this domain.'],
+            default => ['area' => 'validation', 'level' => 'info', 'text' => 'The answers are not validated (no AD flag), so resolvers treat the zone as unsigned.'],
+        };
+        foreach (array_unique(array_merge(array_column($keys, 'algorithm'), array_column($ds, 'algorithm'))) as $alg) {
+            [$name, $state] = DNSSEC_ALGORITHMS[$alg] ?? ["algorithm {$alg}", 'unknown'];
+            $checks[] = $state === 'ok'
+                ? ['area' => 'crypto', 'level' => 'pass', 'text' => "Signing algorithm {$alg} ({$name}) is current."]
+                : ['area' => 'crypto', 'level' => 'issue', 'text' => "Signing algorithm {$alg} ({$name}) is " . ($state === 'deprecated' ? 'deprecated (RFC 8624); many resolvers treat it as unsigned. Roll over to algorithm 13 (ECDSA P-256) or 8 (RSA/SHA-256).' : 'not one resolvers are known to support.')];
+        }
+        foreach (array_unique(array_column($ds, 'digestType')) as $dt) {
+            if ($dt === 1) {
+                $checks[] = ['area' => 'crypto', 'level' => 'info', 'text' => 'A DS record uses a SHA-1 digest (type 1), which is deprecated. Publish a SHA-256 (type 2) DS instead.'];
+            }
+        }
+        if ($sigs) {
+            usort($sigs, fn ($a, $b) => $a['expires'] <=> $b['expires']);
+            $sig = $sigs[0];
+            $left = $sig['expires'] - time();
+            $lifetime = max(1, $sig['expires'] - $sig['inception']);
+            $until = gmdate('Y-m-d H:i', $sig['expires']) . ' UTC';
+            // Signers renew well before expiry; a signature in the last fifth of its life and under 3 days left is late.
+            $checks[] = match (true) {
+                $left < 0 => ['area' => 'signatures', 'level' => 'issue', 'text' => "The SOA signature expired on {$until}. Resolvers reject expired signatures; the zone needs re-signing."],
+                $left < 3 * 86400 && $left < $lifetime * 0.2 => ['area' => 'signatures', 'level' => 'issue', 'text' => "The SOA signature expires soon ({$until}) and has not been renewed. Check that automatic re-signing is running."],
+                default => ['area' => 'signatures', 'level' => 'pass', 'text' => "The SOA signature is valid until {$until}" . ($lifetime < 4 * 86400 ? ', and is renewed every few days (signed on the fly).' : '.')],
+            };
+        } elseif ($keys) {
+            $checks[] = ['area' => 'signatures', 'level' => 'issue', 'text' => 'The zone has keys but its SOA record came back without a signature (RRSIG).'];
+        }
+    }
+    return [
+        'domain' => $domain,
+        'signed' => $signed,
+        'validated' => $validated,
+        'bogus' => $bogus,
+        'ds' => array_map(fn ($d) => $d + ['algorithmName' => DNSSEC_ALGORITHMS[$d['algorithm']][0] ?? null, 'digestName' => DS_DIGESTS[$d['digestType']] ?? null], $ds),
+        'keys' => array_map(fn ($k) => $k + ['algorithmName' => DNSSEC_ALGORITHMS[$k['algorithm']][0] ?? null], $keys),
+        'signatures' => array_map(fn ($s) => ['covers' => $s['covers'], 'algorithm' => $s['algorithm'], 'tag' => $s['tag'], 'signer' => $s['signer'],
+            'inception' => $s['inception'] ? gmdate('Y-m-d\TH:i:s\Z', $s['inception']) : null, 'expires' => $s['expires'] ? gmdate('Y-m-d\TH:i:s\Z', $s['expires']) : null], $sigs),
+        'checks' => $checks,
+        'settings' => 'Validated by ' . VALIDATING_RESOLVER . '; DS from the parent, DNSKEY and SOA signatures from the zone',
+    ];
+}
+
+// ---------------------------------------------------------------------------
+// Mail transport and brand policies: MTA-STS (RFC 8461) tells senders to insist on TLS with a valid certificate,
+// TLS-RPT (RFC 8460) asks them to report TLS failures, BIMI shows the brand's logo in supporting inboxes.
+// ---------------------------------------------------------------------------
+
+/** "mx: *.example.com" patterns of an MTA-STS policy against an MX host name. */
+function stsMxMatches(string $pattern, string $mx): bool
+{
+    $pattern = strtolower(rtrim($pattern, '.'));
+    $mx = strtolower(rtrim($mx, '.'));
+    return $pattern === $mx || (str_starts_with($pattern, '*.') && substr_count($mx, '.') === substr_count($pattern, '.') && str_ends_with($mx, substr($pattern, 1)));
+}
+
+/** The MTA-STS policy file, fetched the way senders must: HTTPS with a valid certificate, no redirects. */
+function stsPolicy(string $domain): array
+{
+    $host = "mta-sts.{$domain}";
+    $ips = addresses($host)['ips'];
+    if (!$ips) {
+        return ['error' => "{$host} does not resolve, so senders cannot fetch the policy."];
+    }
+    if (array_filter($ips, fn ($ip) => !isPublicIp($ip))) {
+        return ['error' => "{$host} points to an address that is not public, so we did not fetch it."];
+    }
+    $c = curl_init("https://{$host}/.well-known/mta-sts.txt");
+    curl_setopt_array($c, [
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => false, CURLOPT_TIMEOUT => 8, CURLOPT_USERAGENT => USER_AGENT,
+        CURLOPT_PROTOCOLS => CURLPROTO_HTTPS, CURLOPT_MAXFILESIZE => 64 * 1024, CURLOPT_RESOLVE => ["{$host}:443:" . (array_values(array_filter($ips, 'isIpv4'))[0] ?? $ips[0])],
+    ]);
+    $body = curl_exec($c);
+    $code = (int) curl_getinfo($c, CURLINFO_HTTP_CODE);
+    $err = curl_error($c);
+    $type = (string) curl_getinfo($c, CURLINFO_CONTENT_TYPE);
+    curl_close($c);
+    if ($body === false) {
+        return ['error' => "Could not fetch https://{$host}/.well-known/mta-sts.txt: " . ($err ?: 'no answer') . '. Senders need a valid, trusted certificate for this name.'];
+    }
+    if ($code !== 200) {
+        return ['error' => "https://{$host}/.well-known/mta-sts.txt answered HTTP {$code}" . ($code >= 300 && $code < 400 ? ' (a redirect; senders must not follow it)' : '') . '.'];
+    }
+    $policy = ['raw' => trim((string) $body), 'contentType' => $type, 'version' => null, 'mode' => null, 'maxAge' => null, 'mx' => []];
+    foreach (preg_split('/\r?\n/', (string) $body) as $line) {
+        if (!str_contains($line, ':')) {
+            continue;
+        }
+        [$k, $v] = array_map('trim', explode(':', $line, 2));
+        match (strtolower($k)) {
+            'version' => $policy['version'] = $v,
+            'mode' => $policy['mode'] = strtolower($v),
+            'max_age' => $policy['maxAge'] = ctype_digit($v) ? (int) $v : null,
+            'mx' => $policy['mx'][] = $v,
+            default => null,
+        };
+    }
+    return $policy;
+}
+
+function toolMailPolicy(): array
+{
+    rateLimit('light', LIGHT_PER_MINUTE);
+    $domain = domainParam();
+    $q = digQueries([["_mta-sts.{$domain}", 'TXT'], ["_smtp._tls.{$domain}", 'TXT'], ["default._bimi.{$domain}", 'TXT'], ["_dmarc.{$domain}", 'TXT'], [$domain, 'MX']]);
+    $txt = fn (array $r, string $prefix) => array_values(array_filter(array_column(answersOf($r, 'TXT'), 'value'), fn ($t) => stripos(ltrim($t), $prefix) === 0));
+    $mx = array_map(fn ($a) => mxParts($a['value'])[1], answersOf($q[4], 'MX'));
+    $mx = array_values(array_filter($mx));
+    $checks = [];
+
+    // MTA-STS: the TXT record announces a policy; the policy file says how strict senders must be.
+    $stsTxt = $txt($q[0], 'v=STSv1');
+    $policy = null;
+    if (!$stsTxt) {
+        $checks[] = ['area' => 'mtasts', 'level' => 'info', 'text' => "No MTA-STS record at _mta-sts.{$domain}. Senders encrypt opportunistically, so an attacker on the path can force mail to {$domain} to travel unencrypted."];
+    } else {
+        $tags = tagList($stsTxt[0]);
+        $checks[] = count($stsTxt) > 1
+            ? ['area' => 'mtasts', 'level' => 'issue', 'text' => 'More than one MTA-STS record is published; senders ignore MTA-STS when there are several.']
+            : (isset($tags['id']) && preg_match('/^[A-Za-z0-9]{1,32}$/', $tags['id'])
+                ? ['area' => 'mtasts', 'level' => 'pass', 'text' => "The MTA-STS record is published (policy id {$tags['id']})."]
+                : ['area' => 'mtasts', 'level' => 'issue', 'text' => 'The MTA-STS record has no valid id= (1 to 32 letters and digits). Senders use it to notice policy changes.']);
+        $policy = stsPolicy($domain);
+        if (isset($policy['error'])) {
+            $checks[] = ['area' => 'mtasts', 'level' => 'issue', 'text' => $policy['error']];
+        } else {
+            $problems = [];
+            if ($policy['version'] !== 'STSv1') {
+                $problems[] = 'its version line is not “version: STSv1”';
+            }
+            if (!in_array($policy['mode'], ['enforce', 'testing', 'none'], true)) {
+                $problems[] = 'its mode is not enforce, testing or none';
+            }
+            if ($policy['maxAge'] === null) {
+                $problems[] = 'it has no valid max_age';
+            }
+            if (!$policy['mx'] && $policy['mode'] !== 'none') {
+                $problems[] = 'it lists no mx patterns';
+            }
+            $checks[] = $problems
+                ? ['area' => 'mtasts', 'level' => 'issue', 'text' => 'The policy file is invalid: ' . implode(', ', $problems) . '.']
+                : ['area' => 'mtasts', 'level' => 'pass', 'text' => 'The policy file is valid and served over trusted HTTPS.'];
+            $checks[] = match ($policy['mode']) {
+                'enforce' => ['area' => 'mtasts', 'level' => 'pass', 'text' => 'Mode “enforce”: senders that support MTA-STS refuse to deliver unless the MX offers TLS with a valid certificate.'],
+                'testing' => ['area' => 'mtasts', 'level' => 'info', 'text' => 'Mode “testing”: senders report failures (with TLS-RPT) but still deliver. Switch to enforce once reports are clean.'],
+                default => ['area' => 'mtasts', 'level' => 'info', 'text' => 'Mode “none”: the policy is switched off.'],
+            };
+            if ($policy['maxAge'] !== null && $policy['maxAge'] < 86400) {
+                $checks[] = ['area' => 'mtasts', 'level' => 'info', 'text' => 'max_age is under a day; a week or more (604800) is recommended so senders keep the policy between visits.'];
+            }
+            if ($policy['mx'] && $mx) {
+                $uncovered = array_values(array_filter($mx, fn ($h) => !array_filter($policy['mx'], fn ($p) => stsMxMatches($p, $h))));
+                $checks[] = $uncovered
+                    ? ['area' => 'mtasts', 'level' => 'issue', 'text' => 'These MX hosts are not covered by the policy’s mx patterns: ' . implode(', ', $uncovered) . '. In enforce mode, senders will not deliver to them.']
+                    : ['area' => 'mtasts', 'level' => 'pass', 'text' => 'Every MX host matches an mx pattern in the policy.'];
+            }
+        }
+    }
+
+    // TLS-RPT: where senders send daily reports about TLS failures.
+    $rpt = $txt($q[1], 'v=TLSRPTv1');
+    if (!$rpt) {
+        $checks[] = ['area' => 'tlsrpt', 'level' => 'info', 'text' => "No TLS-RPT record at _smtp._tls.{$domain}, so senders have nowhere to report failed TLS deliveries." . ($stsTxt ? ' With MTA-STS this is how you learn about problems.' : '')];
+    } else {
+        $tags = tagList($rpt[0]);
+        $rua = array_filter(array_map('trim', explode(',', $tags['rua'] ?? '')));
+        $bad = array_filter($rua, fn ($u) => !preg_match('#^(mailto:[^@\s]+@[^@\s]+|https://\S+)$#i', $u));
+        $checks[] = !$rua || $bad
+            ? ['area' => 'tlsrpt', 'level' => 'issue', 'text' => 'The TLS-RPT record needs rua= with mailto: or https: addresses' . ($bad ? ' (not valid: ' . implode(', ', $bad) . ')' : '') . '.']
+            : ['area' => 'tlsrpt', 'level' => 'pass', 'text' => 'TLS failure reports go to ' . implode(', ', $rua) . '.'];
+    }
+
+    // BIMI: a logo for the brand, shown only when DMARC is enforced.
+    $bimi = $txt($q[2], 'v=BIMI1');
+    $dmarc = $txt($q[3], 'v=DMARC1');
+    $dmarcPolicy = $dmarc ? strtolower(tagList($dmarc[0])['p'] ?? '') : null;
+    $bimiTags = $bimi ? tagList($bimi[0]) : null;
+    if (!$bimi) {
+        $checks[] = ['area' => 'bimi', 'level' => 'info', 'text' => "No BIMI record at default._bimi.{$domain}. Optional: BIMI shows the brand’s logo next to its mail in Gmail, Yahoo and Apple Mail."];
+    } else {
+        $logo = $bimiTags['l'] ?? '';
+        $checks[] = preg_match('#^https://\S+\.svg$#i', $logo)
+            ? ['area' => 'bimi', 'level' => 'pass', 'text' => "The BIMI logo is at {$logo}."]
+            : ['area' => 'bimi', 'level' => 'issue', 'text' => 'The BIMI record’s l= must be an https:// link to an SVG logo' . ($logo !== '' ? " (it is “{$logo}”)" : '') . '.'];
+        $checks[] = ($bimiTags['a'] ?? '') !== ''
+            ? ['area' => 'bimi', 'level' => 'pass', 'text' => 'A mark certificate (a=) is published, which Gmail and Apple Mail require to show the logo.']
+            : ['area' => 'bimi', 'level' => 'info', 'text' => 'No mark certificate (a=). Gmail and Apple Mail show BIMI logos only with a VMC or CMC certificate; Yahoo shows them without.'];
+        $checks[] = in_array($dmarcPolicy, ['quarantine', 'reject'], true)
+            ? ['area' => 'bimi', 'level' => 'pass', 'text' => "DMARC is enforced (p={$dmarcPolicy}), as BIMI requires."]
+            : ['area' => 'bimi', 'level' => 'issue', 'text' => 'BIMI needs DMARC at p=quarantine or p=reject; ' . ($dmarcPolicy ? "it is p={$dmarcPolicy}" : 'there is no DMARC record') . ', so no inbox will show the logo.'];
+    }
+
+    return [
+        'domain' => $domain,
+        'mx' => $mx,
+        'mtaSts' => $stsTxt ? ['record' => $stsTxt[0], 'policy' => $policy] : null,
+        'tlsRpt' => $rpt ? ['record' => $rpt[0]] : null,
+        'bimi' => $bimi ? ['record' => $bimi[0], 'logo' => $bimiTags['l'] ?? null, 'certificate' => ($bimiTags['a'] ?? '') ?: null] : null,
+        'dmarcPolicy' => $dmarcPolicy,
+        'checks' => $checks,
+        'settings' => 'TXT records at _mta-sts, _smtp._tls and default._bimi; the MTA-STS policy over HTTPS without redirects',
+    ];
+}
+
+// ---------------------------------------------------------------------------
+// TLS: what a server's certificate says and whether a client would trust it. Shared by the SMTP check (after
+// STARTTLS) and the TLS certificate check.
+// ---------------------------------------------------------------------------
+
+const TLS_CLIENT_METHODS = STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT;
+const CA_BUNDLE = '/etc/ssl/certs/ca-certificates.crt';
+
+/** Whether a certificate name ("example.com", "*.example.com") covers a host name; a wildcard covers one label. */
+function certNameMatches(array $names, string $host): bool
+{
+    $host = strtolower(rtrim($host, '.'));
+    foreach ($names as $name) {
+        $name = strtolower(trim($name));
+        if ($name === $host || (isIp($host) && isIp($name) && sameIp($name, $host))) {
+            return true;
+        }
+        if (str_starts_with($name, '*.') && substr_count($host, '.') === substr_count($name, '.') && str_ends_with($host, substr($name, 1))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** A certificate as the fields people check: names, issuer, validity and key. */
+function certFacts($cert): array
+{
+    $x = openssl_x509_parse($cert) ?: [];
+    $names = [];
+    foreach (explode(',', $x['extensions']['subjectAltName'] ?? '') as $n) {
+        $n = trim($n);
+        if (str_starts_with($n, 'DNS:')) {
+            $names[] = substr($n, 4);
+        } elseif (str_starts_with($n, 'IP Address:')) {
+            $names[] = substr($n, 11);
+        }
+    }
+    $flat = fn ($v) => is_array($v) ? implode(', ', $v) : $v;
+    $key = ($pub = openssl_pkey_get_public($cert)) ? openssl_pkey_get_details($pub) : null;
+    $keyText = match ($key['type'] ?? null) {
+        OPENSSL_KEYTYPE_RSA => "RSA {$key['bits']}-bit",
+        OPENSSL_KEYTYPE_EC => "ECDSA {$key['bits']}-bit" . (isset($key['ec']['curve_name']) ? " ({$key['ec']['curve_name']})" : ''),
+        default => isset($key['bits']) ? "{$key['bits']}-bit key" : null,
+    };
+    $to = (int) ($x['validTo_time_t'] ?? 0);
+    $from = (int) ($x['validFrom_time_t'] ?? 0);
+    return [
+        'subject' => $flat($x['subject']['CN'] ?? null),
+        'names' => $names,
+        'issuer' => $flat($x['issuer']['O'] ?? $x['issuer']['CN'] ?? null),
+        'issuerCn' => $flat($x['issuer']['CN'] ?? null),
+        'notBefore' => $from ? gmdate('Y-m-d\TH:i:s\Z', $from) : null,
+        'notAfter' => $to ? gmdate('Y-m-d\TH:i:s\Z', $to) : null,
+        'daysLeft' => $to ? (int) floor(($to - time()) / 86400) : null,
+        'notYetValid' => $from > time(),
+        'key' => $keyText,
+        'keyBits' => $key['bits'] ?? null,
+        'keyType' => match ($key['type'] ?? null) { OPENSSL_KEYTYPE_RSA => 'rsa', OPENSSL_KEYTYPE_EC => 'ec', default => null },
+        'signature' => $x['signatureTypeLN'] ?? null,
+        'serial' => $x['serialNumberHex'] ?? null,
+        'selfIssued' => ($x['subject'] ?? null) === ($x['issuer'] ?? null),
+    ];
+}
+
+/** Whether the system's CA bundle trusts the chain a server sent: null when it does, else OpenSSL's reason. */
+function verifyChain(array $chain): ?string
+{
+    if (!$chain) {
+        return 'The server sent no certificate.';
+    }
+    $dir = sys_get_temp_dir();
+    $leaf = tempnam($dir, 'po-leaf');
+    $rest = tempnam($dir, 'po-chain');
+    openssl_x509_export($chain[0], $pem);
+    file_put_contents($leaf, $pem);
+    $inter = '';
+    foreach (array_slice($chain, 1) as $c) {
+        openssl_x509_export($c, $p);
+        $inter .= $p;
+    }
+    file_put_contents($rest, $inter);
+    $cmd = ['openssl', 'verify', '-CAfile', CA_BUNDLE];
+    if ($inter !== '') {
+        array_push($cmd, '-untrusted', $rest);
+    }
+    [$code, $out, $err] = run([...$cmd, $leaf], 5);
+    @unlink($leaf);
+    @unlink($rest);
+    if ($code === 0 && str_contains($out, 'OK')) {
+        return null;
+    }
+    // "error 20 at 0 depth lookup: unable to get local issuer certificate"
+    return preg_match('/error \d+ at \d+ depth lookup: (.+)/', $out . "\n" . $err, $m) ? ucfirst(trim($m[1])) . '.' : 'The chain could not be verified.';
+}
+
+/** After a TLS handshake on $sock: the protocol, cipher and certificate chain, judged for $host. */
+function tlsFacts($sock, string $host): array
+{
+    $crypto = stream_get_meta_data($sock)['crypto'] ?? [];
+    $chain = stream_context_get_params($sock)['options']['ssl']['peer_certificate_chain'] ?? [];
+    $facts = array_map('certFacts', $chain);
+    $leaf = $facts[0] ?? null;
+    return [
+        'protocol' => $crypto['protocol'] ?? null,
+        'cipher' => $crypto['cipher_name'] ?? null,
+        'cipherBits' => $crypto['cipher_bits'] ?? null,
+        'chain' => $facts,
+        'trustError' => verifyChain($chain),
+        'nameMatches' => $leaf ? certNameMatches($leaf['names'] ?: array_filter([$leaf['subject']]), $host) : false,
+    ];
+}
+
+/** Start TLS on an open socket without verifying (so a bad certificate can still be inspected), sending SNI for $host. */
+function startTls($sock, string $host, int $methods = TLS_CLIENT_METHODS): bool
+{
+    stream_context_set_option($sock, ['ssl' => [
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+        'allow_self_signed' => true,
+        'capture_peer_cert_chain' => true,
+        'SNI_enabled' => !isIp($host),
+        'peer_name' => $host,
+        'security_level' => 0,
+    ]]);
+    return (bool) @stream_socket_enable_crypto($sock, true, $methods);
+}
+
+/** Checks on a TLS result, in the area "tls", for the server name a client connects to. */
+function tlsChecks(array $t, string $host): array
+{
+    $checks = [];
+    $leaf = $t['chain'][0] ?? null;
+    if ($leaf === null) {
+        return [['area' => 'tls', 'level' => 'issue', 'text' => 'The server completed the handshake but sent no certificate.']];
+    }
+    $checks[] = $t['trustError'] === null
+        ? ['area' => 'tls', 'level' => 'pass', 'text' => 'The certificate chain is trusted' . ($leaf['issuer'] ? " (issued by {$leaf['issuer']})" : '') . '.']
+        : ['area' => 'tls', 'level' => 'issue', 'text' => "The certificate is not trusted: {$t['trustError']}" . ($leaf['selfIssued'] ? ' It is self-signed.' : (count($t['chain']) === 1 ? ' The server sent no intermediate certificates; it should send the full chain.' : ''))];
+    $checks[] = $t['nameMatches']
+        ? ['area' => 'tls', 'level' => 'pass', 'text' => "The certificate covers {$host}."]
+        : ['area' => 'tls', 'level' => 'issue', 'text' => "The certificate does not cover {$host}. It is for " . (implode(', ', array_slice($leaf['names'] ?: array_filter([$leaf['subject']]), 0, 6)) ?: 'no name') . '.'];
+    $days = $leaf['daysLeft'];
+    $checks[] = match (true) {
+        $leaf['notYetValid'] => ['area' => 'tls', 'level' => 'issue', 'text' => 'The certificate is not valid yet: it starts on ' . substr((string) $leaf['notBefore'], 0, 10) . '.'],
+        $days === null => ['area' => 'tls', 'level' => 'inconclusive', 'text' => 'The certificate’s expiry date could not be read.'],
+        $days < 0 => ['area' => 'tls', 'level' => 'issue', 'text' => 'The certificate expired ' . -$days . ' days ago, on ' . substr((string) $leaf['notAfter'], 0, 10) . '.'],
+        $days < 14 => ['area' => 'tls', 'level' => 'issue', 'text' => "The certificate expires in {$days} days, on " . substr((string) $leaf['notAfter'], 0, 10) . '. Renew it now.'],
+        $days < 30 => ['area' => 'tls', 'level' => 'info', 'text' => "The certificate expires in {$days} days, on " . substr((string) $leaf['notAfter'], 0, 10) . '.'],
+        default => ['area' => 'tls', 'level' => 'pass', 'text' => "The certificate is valid for {$days} more days, until " . substr((string) $leaf['notAfter'], 0, 10) . '.'],
+    };
+    if ($leaf['keyType'] === 'rsa' && ($leaf['keyBits'] ?? 0) < 2048) {
+        $checks[] = ['area' => 'tls', 'level' => 'issue', 'text' => "The key is RSA {$leaf['keyBits']}-bit; anything under 2048 bits is considered weak."];
+    }
+    if ($t['protocol'] !== null) {
+        $old = in_array($t['protocol'], ['TLSv1', 'TLSv1.1', 'SSLv3'], true);
+        $checks[] = $old
+            ? ['area' => 'tls', 'level' => 'issue', 'text' => "The connection used {$t['protocol']}, which is deprecated (RFC 8996). Enable TLS 1.2 and 1.3."]
+            : ['area' => 'tls', 'level' => 'pass', 'text' => "The connection used {$t['protocol']} with {$t['cipher']}."];
+    }
+    return $checks;
+}
+
 function smtpRead($sock): ?string
 {
     $text = '';
@@ -1493,6 +1993,126 @@ function smtpRead($sock): ?string
         }
     }
     return $text === '' ? null : rtrim($text);
+}
+
+/** One TLS handshake with $host at $ip:$port, plain TLS or SMTP STARTTLS: the socket, or null when it failed. */
+function tlsConnect(string $ip, int $port, string $host, int $methods = TLS_CLIENT_METHODS)
+{
+    $target = isIpv4($ip) ? $ip : "[{$ip}]";
+    $sock = @stream_socket_client("tcp://{$target}:{$port}", $errno, $errstr, 6);
+    if (!$sock) {
+        return null;
+    }
+    stream_set_timeout($sock, 6);
+    if (in_array($port, [25, 587], true)) {
+        $banner = smtpRead($sock);
+        fwrite($sock, "EHLO tools.pingomni.com\r\n");
+        $ehlo = smtpRead($sock);
+        if ($banner === null || $ehlo === null || !preg_match('/^250[ -]STARTTLS\s*$/mi', $ehlo)) {
+            fclose($sock);
+            return null;
+        }
+        fwrite($sock, "STARTTLS\r\n");
+        if (!str_starts_with((string) smtpRead($sock), '220')) {
+            fclose($sock);
+            return null;
+        }
+    }
+    if (!startTls($sock, $host, $methods)) {
+        fclose($sock);
+        return null;
+    }
+    return $sock;
+}
+
+const TLS_VERSIONS = [
+    'TLS 1.3' => STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
+    'TLS 1.2' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+    'TLS 1.1' => STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+    'TLS 1.0' => STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
+];
+
+function toolTls(): array
+{
+    heavy();
+    [$host, $ips, $ip] = publicTarget(param('host'));
+    $port = param('port', 5) === '' ? 443 : filter_var(param('port', 5), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
+    if ($port === false) {
+        fail('Enter a port from 1 to 65535, or leave it empty for 443.');
+    }
+    $base = ['host' => $host, 'ip' => $ip, 'addresses' => $ips, 'port' => $port, 'starttls' => in_array($port, [25, 587], true),
+        'settings' => in_array($port, [25, 587], true) ? "SMTP STARTTLS on port {$port}" : "TLS on port {$port}" . (isIp($host) ? '' : ", SNI {$host}")];
+    $sock = tlsConnect($ip, $port, $host);
+    if ($sock === null) {
+        $open = tcpConnectMany($ip, [$port], 4)[$port]['state'] === 'open';
+        return $base + ['connected' => $open, 'handshake' => false, 'tls' => null, 'versions' => [], 'http' => null, 'checks' => [[
+            'area' => 'tls', 'level' => 'issue',
+            'text' => $open ? "Port {$port} is open, but no TLS handshake succeeded" . (in_array($port, [25, 587], true) ? ' (the server may not offer STARTTLS)' : ' (the service may not speak TLS on this port)') . '.' : "Nothing answers on port {$port} at {$ip}.",
+        ]]];
+    }
+    $tls = tlsFacts($sock, $host);
+    fclose($sock);
+
+    // Which protocol versions the server accepts, one handshake each.
+    $versions = [];
+    foreach (TLS_VERSIONS as $name => $method) {
+        $s = tlsConnect($ip, $port, $host, $method);
+        $versions[] = ['version' => $name, 'supported' => $s !== null];
+        if ($s) {
+            fclose($s);
+        }
+    }
+    $checks = tlsChecks($tls, $host);
+    $on = array_column(array_filter($versions, fn ($v) => $v['supported']), 'version');
+    $old = array_values(array_intersect($on, ['TLS 1.0', 'TLS 1.1']));
+    $checks[] = $old
+        ? ['area' => 'protocols', 'level' => 'issue', 'text' => implode(' and ', $old) . ' ' . (count($old) === 1 ? 'is' : 'are') . ' still enabled. ' . (count($old) === 1 ? 'It is' : 'Both are') . ' deprecated (RFC 8996) and no current browser uses them; turn them off unless very old clients still need them.']
+        : ['area' => 'protocols', 'level' => 'pass', 'text' => 'TLS 1.0 and 1.1 are disabled.'];
+    $checks[] = in_array('TLS 1.3', $on, true)
+        ? ['area' => 'protocols', 'level' => 'pass', 'text' => 'TLS 1.3 is supported.']
+        : ['area' => 'protocols', 'level' => 'info', 'text' => 'TLS 1.3 is not supported. It is faster and safer than 1.2; enable it when the server software allows.'];
+
+    // For a web server: HSTS, and whether plain HTTP sends visitors to HTTPS.
+    $http = null;
+    if ($port === 443 && !isIp($host)) {
+        $head = fn (string $url) => (function () use ($url, $host, $ip) {
+            $c = curl_init($url);
+            curl_setopt_array($c, [CURLOPT_NOBODY => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_HEADER => true, CURLOPT_TIMEOUT => 6,
+                CURLOPT_FOLLOWLOCATION => false, CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => 0, CURLOPT_USERAGENT => USER_AGENT,
+                CURLOPT_RESOLVE => ["{$host}:443:{$ip}", "{$host}:80:{$ip}"], CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS]);
+            $raw = curl_exec($c);
+            $code = curl_getinfo($c, CURLINFO_RESPONSE_CODE);
+            curl_close($c);
+            $headers = [];
+            foreach (explode("\n", (string) $raw) as $line) {
+                if (str_contains($line, ':')) {
+                    [$k, $v] = explode(':', $line, 2);
+                    $headers[strtolower(trim($k))] = trim($v);
+                }
+            }
+            return $raw === false ? null : ['code' => $code, 'headers' => $headers];
+        })();
+        $https = $head("https://{$host}/");
+        $plain = $head("http://{$host}/");
+        $hsts = $https['headers']['strict-transport-security'] ?? null;
+        $location = $plain['headers']['location'] ?? null;
+        $http = ['status' => $https['code'] ?? null, 'hsts' => $hsts, 'server' => $https['headers']['server'] ?? null,
+            'plainStatus' => $plain['code'] ?? null, 'plainLocation' => $location];
+        if ($https !== null) {
+            $maxAge = $hsts && preg_match('/max-age=(\d+)/i', $hsts, $m) ? (int) $m[1] : null;
+            $checks[] = match (true) {
+                $hsts === null => ['area' => 'http', 'level' => 'info', 'text' => 'No HSTS header (Strict-Transport-Security), so browsers may still try plain HTTP first.'],
+                $maxAge !== null && $maxAge < 15552000 => ['area' => 'http', 'level' => 'info', 'text' => 'HSTS is set, but for only ' . round($maxAge / 86400) . ' days; 180 days or more is recommended.'],
+                default => ['area' => 'http', 'level' => 'pass', 'text' => 'HSTS is set (' . $hsts . ').'],
+            };
+        }
+        if ($plain !== null) {
+            $checks[] = $plain['code'] >= 300 && $plain['code'] < 400 && $location && str_starts_with(strtolower($location), 'https://')
+                ? ['area' => 'http', 'level' => 'pass', 'text' => "Plain HTTP redirects to HTTPS ({$plain['code']} to {$location})."]
+                : ['area' => 'http', 'level' => 'info', 'text' => 'Plain HTTP on port 80 does not redirect to HTTPS' . ($plain['code'] ? " (it answers {$plain['code']})" : '') . '.'];
+        }
+    }
+    return $base + ['connected' => true, 'handshake' => true, 'tls' => $tls, 'versions' => $versions, 'http' => $http, 'checks' => $checks];
 }
 
 function toolSmtp(): array
@@ -1521,7 +2141,7 @@ function toolSmtp(): array
     [$server, $ips, $ip] = publicTarget($server);
     $target = isIpv4($ip) ? $ip : "[{$ip}]";
     $base = ['input' => $input, 'mode' => $mode, 'nullMx' => false, 'mx' => array_map(fn ($m) => ['priority' => $m[0], 'host' => $m[1]], $mx),
-        'server' => $server, 'ip' => $ip, 'settings' => 'TCP port 25, 8 s timeout; EHLO then QUIT, no mail is sent'];
+        'server' => $server, 'ip' => $ip, 'settings' => 'TCP port 25, 8 s timeout; EHLO, STARTTLS when offered, EHLO again, QUIT; no mail is sent'];
     $start = microtime(true);
     $sock = @stream_socket_client("tcp://{$target}:25", $errno, $errstr, 8);
     if (!$sock) {
@@ -1539,6 +2159,30 @@ function toolSmtp(): array
         $transcript[] = ['dir' => 'out', 'text' => 'EHLO tools.pingomni.com'];
         $ehlo = smtpRead($sock);
         $transcript[] = ['dir' => 'in', 'text' => $ehlo ?? '(no answer within 8 s)'];
+    }
+    // STARTTLS, when offered: the handshake, then EHLO again over the encrypted connection, as a sender would.
+    $tls = null;
+    $tlsError = null;
+    if ($ehlo !== null && preg_match('/^250[ -]STARTTLS\s*$/mi', $ehlo)) {
+        fwrite($sock, "STARTTLS\r\n");
+        $transcript[] = ['dir' => 'out', 'text' => 'STARTTLS'];
+        $ready = smtpRead($sock);
+        $transcript[] = ['dir' => 'in', 'text' => $ready ?? '(no answer within 8 s)'];
+        if ($ready !== null && str_starts_with($ready, '220')) {
+            if (startTls($sock, $server)) {
+                $tls = tlsFacts($sock, $server);
+                $transcript[] = ['dir' => 'note', 'text' => "TLS handshake done: {$tls['protocol']}, {$tls['cipher']}"];
+                fwrite($sock, "EHLO tools.pingomni.com\r\n");
+                $transcript[] = ['dir' => 'out', 'text' => 'EHLO tools.pingomni.com'];
+                $after = smtpRead($sock);
+                $transcript[] = ['dir' => 'in', 'text' => $after ?? '(no answer within 8 s)'];
+            } else {
+                $tlsError = 'The server accepted STARTTLS, but the TLS handshake failed.';
+                $transcript[] = ['dir' => 'note', 'text' => 'TLS handshake failed'];
+            }
+        } else {
+            $tlsError = 'The server offers STARTTLS but refused it when asked.';
+        }
     }
     fwrite($sock, "QUIT\r\n");
     $transcript[] = ['dir' => 'out', 'text' => 'QUIT'];
@@ -1563,7 +2207,55 @@ function toolSmtp(): array
         'starttls' => (bool) preg_grep('/^STARTTLS$/i', $caps),
         'capabilities' => $caps,
         'transcript' => $transcript,
+        'tls' => $tls,
+        'tlsError' => $tlsError,
+        'checks' => smtpChecks($server, $ip, $banner, $caps, $tls, $tlsError),
     ];
+}
+
+/** What receivers and senders check about a mail server: reverse DNS, its greeting, and TLS. */
+function smtpChecks(string $server, string $ip, ?string $banner, array $caps, ?array $tls, ?string $tlsError): array
+{
+    $checks = [];
+    // Reverse DNS: receivers distrust mail from an address without a PTR record that resolves back to it.
+    $names = array_column(answersOf(dig($ip, 'PTR'), 'PTR'), 'value');
+    $names = array_map(fn ($n) => rtrim($n, '.'), $names);
+    $confirmed = null;
+    foreach (array_slice($names, 0, 4) as $name) {
+        $back = array_column(answersOf(dig($name, isIpv4($ip) ? 'A' : 'AAAA'), isIpv4($ip) ? 'A' : 'AAAA'), 'value');
+        if (array_filter($back, fn ($b) => sameIp($b, $ip))) {
+            $confirmed = $name;
+            break;
+        }
+    }
+    $checks[] = match (true) {
+        !$names => ['area' => 'rdns', 'level' => 'info', 'text' => "{$ip} has no reverse DNS (PTR) record. That is fine for a server that only receives mail, but if it also sends, many receivers reject or penalise its mail; ask whoever runs the address block to set one."],
+        $confirmed === null => ['area' => 'rdns', 'level' => 'info', 'text' => "{$ip} points to " . implode(', ', $names) . ', but that name does not resolve back to it. If this server also sends mail, receivers check this match (forward-confirmed reverse DNS).'],
+        default => ['area' => 'rdns', 'level' => 'pass', 'text' => "{$ip} points to {$confirmed}, which resolves back to it (forward-confirmed reverse DNS)."],
+    };
+    if ($banner !== null && preg_match('/^220[ -](\S+)/', $banner, $m)) {
+        $greets = strtolower(rtrim($m[1], '.'));
+        $checks[] = in_array($greets, array_map('strtolower', $names), true) || $greets === strtolower($server)
+            ? ['area' => 'rdns', 'level' => 'pass', 'text' => "The greeting names the server {$greets}, which matches its DNS."]
+            : ['area' => 'rdns', 'level' => 'info', 'text' => "The greeting names the server “{$greets}”, which matches neither its reverse DNS nor the name we connected to. If this server also sends mail, some receivers score that as suspicious."];
+    }
+    if (!preg_grep('/^STARTTLS$/i', $caps)) {
+        $checks[] = ['area' => 'tls', 'level' => 'issue', 'text' => 'The server does not offer STARTTLS, so mail to it travels unencrypted.'];
+    } elseif ($tlsError !== null) {
+        $checks[] = ['area' => 'tls', 'level' => 'issue', 'text' => $tlsError];
+    } elseif ($tls !== null) {
+        $checks[] = ['area' => 'tls', 'level' => 'pass', 'text' => 'STARTTLS works: mail to this server can be encrypted.'];
+        // Senders encrypt opportunistically and do not require a trusted certificate unless MTA-STS or DANE asks for it.
+        foreach (tlsChecks($tls, $server) as $c) {
+            $checks[] = $c['level'] === 'issue' && !str_contains($c['text'], 'deprecated')
+                ? ['area' => 'tls', 'level' => 'info', 'text' => $c['text'] . ' Most senders still deliver over TLS, but domains that use MTA-STS or DANE will not.']
+                : $c;
+        }
+    }
+    if (preg_grep('/^SIZE\s+\d+/i', $caps) && preg_match('/^SIZE\s+(\d+)/mi', implode("\n", $caps), $m) && (int) $m[1] > 0) {
+        $checks[] = ['area' => 'limits', 'level' => 'info', 'text' => 'It accepts messages up to ' . round((int) $m[1] / 1048576, 1) . ' MB.'];
+    }
+    return $checks;
 }
 
 function toolWhois(): array
@@ -1983,6 +2675,45 @@ function cleanPath(array $path): array
     return $clean;
 }
 
+/**
+ * Routing hygiene of every prefix an AS announces, from IRR Explorer: whether RPKI and the IRR agree with what BGP
+ * carries. Prefixes the AS only registered (in the IRR or RPKI) but does not announce are counted, not listed.
+ */
+function asHygiene(?array $answer, int $asn): ?array
+{
+    if (!is_array($answer['directOrigin'] ?? null)) {
+        return null;
+    }
+    $counts = ['success' => 0, 'info' => 0, 'warning' => 0, 'danger' => 0];
+    $problems = [];
+    $notes = [];
+    $registeredOnly = 0;
+    foreach ($answer['directOrigin'] as $p) {
+        if (!in_array($asn, array_map('intval', $p['bgpOrigins'] ?? []), true)) {
+            $registeredOnly++;
+            continue;
+        }
+        $level = in_array($p['categoryOverall'] ?? '', ['success', 'info', 'warning', 'danger'], true) ? $p['categoryOverall'] : 'info';
+        $counts[$level]++;
+        $texts = array_values(array_unique(array_map(fn ($m) => (string) $m['text'], array_filter($p['messages'] ?? [], fn ($m) => ($m['category'] ?? '') !== 'success'))));
+        if ($level === 'danger' || $level === 'warning') {
+            $problems[] = ['prefix' => (string) $p['prefix'], 'level' => $level, 'messages' => $texts];
+        } elseif ($level === 'info' && $texts) {
+            $notes[$texts[0]] = ($notes[$texts[0]] ?? 0) + 1;
+        }
+    }
+    usort($problems, fn ($a, $b) => ($a['level'] === 'danger' ? 0 : 1) <=> ($b['level'] === 'danger' ? 0 : 1) ?: strcmp(prefixKey($a['prefix']), prefixKey($b['prefix'])));
+    arsort($notes);
+    return [
+        'announced' => array_sum($counts),
+        'counts' => $counts,
+        'problems' => array_slice($problems, 0, 200),
+        'problemTotal' => count($problems),
+        'notes' => array_map(fn ($text, $n) => ['text' => $text, 'prefixes' => $n], array_keys($notes), $notes),
+        'registeredOnly' => $registeredOnly,
+    ];
+}
+
 function toolAsn(): array
 {
     rateLimit('light', LIGHT_PER_MINUTE);
@@ -1990,14 +2721,15 @@ function toolAsn(): array
     $special = asnSpecial($asn);
     if ($special !== null) {
         return ['via' => 'ripestat', 'asn' => $asn, 'special' => $special, 'holder' => null, 'announced' => false, 'block' => null,
-            'prefixes' => ['v4' => 0, 'v6' => 0, 'list' => []], 'neighbours' => null, 'peeringdb' => null];
+            'prefixes' => ['v4' => 0, 'v6' => 0, 'list' => []], 'neighbours' => null, 'peeringdb' => null, 'hygiene' => null];
     }
     $d = fetchJson([
         'overview' => ripestat('as-overview', ['resource' => "AS{$asn}"]),
         'prefixes' => ripestat('announced-prefixes', ['resource' => "AS{$asn}"]),
         'neighbours' => ripestat('asn-neighbours', ['resource' => "AS{$asn}"]),
         'peeringdb' => "https://www.peeringdb.com/api/net?asn={$asn}",
-    ], BGP_CACHE_SECONDS);
+        'irr' => "https://irrexplorer.nlnog.net/api/prefixes/asn/AS{$asn}",
+    ], BGP_CACHE_SECONDS, 20);
     $o = needRipestat(ripestatData($d['overview']));
 
     $prefixes = array_column(ripestatData($d['prefixes'])['prefixes'] ?? [], 'prefix');
@@ -2017,6 +2749,7 @@ function toolAsn(): array
 
     $net = $d['peeringdb']['data'][0] ?? null;
     return [
+        'hygiene' => asHygiene($d['irr'], $asn),
         'via' => 'ripestat',
         'asn' => $asn,
         'special' => null,
@@ -2045,7 +2778,8 @@ function toolAsn(): array
             'updated' => $net['updated'] ?? null,
         ] : null,
         'peeringdbFailed' => $d['peeringdb'] === null,
-        'settings' => 'Routing data from RIPEstat (RIPE NCC route collectors), network details from PeeringDB',
+        'hygieneFailed' => $d['irr'] === null,
+        'settings' => 'Routing data from RIPEstat (RIPE NCC route collectors), network details from PeeringDB, RPKI and IRR from NLNOG IRR Explorer',
     ];
 }
 
@@ -2152,13 +2886,332 @@ function toolLookingGlass(): array
 }
 
 // ---------------------------------------------------------------------------
+// Announcement check: everything that decides whether the internet accepts and carries a prefix from an AS, in
+// one run. BGP state and history come from RIPEstat, IRR route objects from NLNOG's IRR Explorer (every major
+// IRR at once), RPKI from RIPEstat's validator. It also works before a prefix is announced, as a pre-flight check.
+// ---------------------------------------------------------------------------
+
+const HISTORY_DAYS = 30;
+
+/** "203.0.113.5/24" as "203.0.113.0/24": the network address of a prefix, with host bits cleared. */
+function networkPrefix(string $ip, int $len): string
+{
+    $bin = (string) inet_pton($ip);
+    $out = '';
+    for ($i = 0; $i < strlen($bin); $i++) {
+        $bits = max(0, min(8, $len - 8 * $i));
+        $out .= chr(ord($bin[$i]) & ((0xff << (8 - $bits)) & 0xff));
+    }
+    return inet_ntop($out) . "/{$len}";
+}
+
+/** Whether $inner is $outer or lies inside it. */
+function prefixWithin(string $inner, string $outer): bool
+{
+    [$ip, $len] = explode('/', $inner) + [1 => '-1'];
+    [$oip, $olen] = explode('/', $outer) + [1 => '-1'];
+    return isIp($ip) && isIp($oip) && isIpv4($ip) === isIpv4($oip) && (int) $len >= (int) $olen && inCidr($ip, $outer);
+}
+
+/** How a prefix's length fares in the filters most networks run: /24 for IPv4 and /48 for IPv6 at the most. */
+function prefixSizeCheck(string $prefix): array
+{
+    [$ip, $len] = explode('/', $prefix);
+    $v4 = isIpv4($ip);
+    $max = $v4 ? 24 : 48;
+    return (int) $len > $max
+        ? ['area' => 'size', 'level' => 'issue', 'text' => "A /{$len} is longer than /{$max}. Most networks filter " . ($v4 ? 'IPv4' : 'IPv6') . " prefixes longer than /{$max}, so it will not reach most of the internet. Announce the covering /{$max} (or a shorter prefix) instead."]
+        : ['area' => 'size', 'level' => 'pass', 'text' => "A /{$len} is within what networks accept (" . ($v4 ? 'IPv4' : 'IPv6') . " prefixes up to /{$max})."];
+}
+
+/** What RPKI says about one origin AS, as a check. */
+function rpkiCheck(int $asn, ?array $v): array
+{
+    $roas = $v['validating_roas'] ?? [];
+    $max = $roas ? max(array_map(fn ($r) => (int) $r['max_length'], array_filter($roas, fn ($r) => (int) $r['origin'] === $asn) ?: $roas)) : null;
+    return match ($v['status'] ?? null) {
+        'valid' => ['area' => 'rpki', 'level' => 'pass', 'text' => "RPKI valid: a ROA allows AS{$asn} to announce it (max length /{$max})."],
+        'invalid_asn' => ['area' => 'rpki', 'level' => 'issue', 'text' => "RPKI invalid for AS{$asn}: ROAs cover this prefix, but none allows AS{$asn}. Networks that validate RPKI, which includes most large transit providers, drop the route. Create a ROA for AS{$asn} in your RIR’s portal."],
+        'invalid_length' => ['area' => 'rpki', 'level' => 'issue', 'text' => "RPKI invalid for AS{$asn}: a ROA allows AS{$asn}, but only up to /{$max}, and this prefix is more specific. Networks that validate RPKI drop it. Raise the ROA’s max length or add a ROA for this exact prefix."],
+        'unknown' => ['area' => 'rpki', 'level' => 'info', 'text' => "No ROA covers this prefix (RPKI “not found”). Networks accept the route, but nothing protects it against hijacks. A ROA for AS{$asn} is recommended."],
+        default => ['area' => 'rpki', 'level' => 'failed', 'text' => "RIPEstat’s RPKI validator did not answer for AS{$asn}, so RPKI was not checked. Try again in a minute."],
+    };
+}
+
+/**
+ * Route objects for the prefix from IRR Explorer's answer: those for exactly this prefix, and those of covering
+ * prefixes. @return array{exact: list<array{source: string, asn: int}>, covering: list<array{prefix: string, source: string, asn: int}>}
+ */
+function irrObjects(array $answer, string $prefix): array
+{
+    $exact = [];
+    $covering = [];
+    foreach ($answer as $entry) {
+        $p = (string) ($entry['prefix'] ?? '');
+        $isExact = $p === $prefix;
+        if (!$isExact && !($p !== '' && prefixWithin($prefix, $p))) {
+            continue;
+        }
+        foreach ($entry['irrRoutes'] ?? [] as $source => $routes) {
+            foreach ($routes as $route) {
+                $row = ['source' => (string) $source, 'asn' => (int) $route['asn']];
+                if ($isExact) {
+                    $exact[] = $row;
+                } else {
+                    $covering[] = ['prefix' => $p] + $row;
+                }
+            }
+        }
+    }
+    $key = fn ($r) => ($r['prefix'] ?? '') . $r['source'] . $r['asn'];
+    $unique = fn (array $rows) => array_values(array_combine(array_map($key, $rows), $rows) ?: []);
+    return ['exact' => $unique($exact), 'covering' => $unique($covering)];
+}
+
+/** What the IRR says about one origin AS, as a check. */
+function irrCheck(int $asn, ?array $irr, string $prefix): array
+{
+    if ($irr === null) {
+        return ['area' => 'irr', 'level' => 'failed', 'text' => 'IRR Explorer did not answer, so route objects were not checked. Try again in a minute.'];
+    }
+    $mine = array_values(array_filter($irr['exact'], fn ($r) => $r['asn'] === $asn));
+    if ($mine) {
+        return ['area' => 'irr', 'level' => 'pass', 'text' => "A route object for {$prefix} with origin AS{$asn} is registered in " . implode(', ', array_unique(array_column($mine, 'source'))) . '.'];
+    }
+    $object = str_contains($prefix, ':') ? 'route6' : 'route';
+    if ($irr['exact']) {
+        $others = implode(', ', array_unique(array_map(fn ($r) => "AS{$r['asn']}", $irr['exact'])));
+        return ['area' => 'irr', 'level' => 'issue', 'text' => "Route objects for {$prefix} exist only for {$others}. Upstreams and route servers that filter on IRR data will reject it from AS{$asn}. Register a {$object} object with origin AS{$asn}."];
+    }
+    $cover = array_values(array_filter($irr['covering'], fn ($r) => $r['asn'] === $asn));
+    return $cover
+        ? ['area' => 'irr', 'level' => 'issue', 'text' => "No route object for exactly {$prefix}; only the covering {$cover[0]['prefix']} has one for AS{$asn}. Filters built from the IRR usually need an exact match, so register a {$object} object for {$prefix} too."]
+        : ['area' => 'irr', 'level' => 'issue', 'text' => "No IRR route object for {$prefix} with origin AS{$asn}. Many upstreams and internet exchange route servers build their filters from IRR data and will drop the route. Register a {$object} object in your RIR’s database."];
+}
+
+/**
+ * Who originated the prefix over the last HISTORY_DAYS days, as segments of time with the number of full-table
+ * RIS peers that saw it. Only the exact prefix counts; RIPEstat also returns covering and more specific ones.
+ */
+function originHistory(?array $data, string $prefix): ?array
+{
+    if ($data === null) {
+        return null;
+    }
+    $origins = [];
+    foreach ($data['by_origin'] ?? [] as $o) {
+        foreach ($o['prefixes'] ?? [] as $p) {
+            if (($p['prefix'] ?? '') !== $prefix) {
+                continue;
+            }
+            $segments = array_map(fn ($t) => ['start' => $t['starttime'] . 'Z', 'end' => $t['endtime'] . 'Z', 'peers' => (int) round($t['full_peers_seeing'])], $p['timelines'] ?? []);
+            $origins[] = ['asn' => (int) $o['origin'], 'segments' => $segments];
+        }
+    }
+    $max = $data['latest_max_ff_peers'][str_contains($prefix, ':') ? 'v6' : 'v4'] ?? null;
+    return ['start' => ($data['query_starttime'] ?? '') . 'Z', 'end' => ($data['query_endtime'] ?? '') . 'Z', 'maxPeers' => $max, 'origins' => $origins];
+}
+
+/** Checks on the history: other origins in the window, and gaps when the prefix was not announced. */
+function historyChecks(array $history, array $current): array
+{
+    $checks = [];
+    $others = array_values(array_filter($history['origins'], fn ($o) => !in_array($o['asn'], $current, true)));
+    foreach ($others as $o) {
+        $from = substr($o['segments'][0]['start'] ?? '', 0, 10);
+        $to = substr(end($o['segments'])['end'] ?? '', 0, 10);
+        $checks[] = ['area' => 'history', 'level' => 'issue', 'text' => "AS{$o['asn']} also originated this prefix between {$from} and {$to}. If that was not a planned move between providers, it may have been a hijack or a leak."];
+    }
+    $start = strtotime($history['start']);
+    $end = strtotime($history['end']);
+    $mine = array_values(array_filter($history['origins'], fn ($o) => in_array($o['asn'], $current, true)));
+    if ($mine && $start && $end) {
+        $spans = [];
+        foreach ($mine as $o) {
+            foreach ($o['segments'] as $s) {
+                $spans[] = [strtotime($s['start']), strtotime($s['end'])];
+            }
+        }
+        usort($spans, fn ($a, $b) => $a[0] <=> $b[0]);
+        // Count gaps longer than one RIPEstat time step (8 hours) between the spans the prefix was seen.
+        $gaps = 0;
+        $missing = 0;
+        $cursor = $start;
+        $firstSeen = $spans[0][0];
+        foreach ($spans as [$a, $b]) {
+            if ($a - $cursor > 8 * 3600 && $cursor > $start) {
+                $gaps++;
+                $missing += $a - $cursor;
+            }
+            $cursor = max($cursor, $b + 1);
+        }
+        $days = HISTORY_DAYS;
+        if ($firstSeen - $start > 8 * 3600) {
+            $checks[] = ['area' => 'history', 'level' => 'info', 'text' => 'First announced on ' . gmdate('Y-m-d', $firstSeen) . ", within the last {$days} days."];
+        }
+        $checks[] = $gaps
+            ? ['area' => 'history', 'level' => 'issue', 'text' => "It dropped out of the routing table {$gaps} " . ($gaps === 1 ? 'time' : 'times') . " in the last {$days} days, for about " . max(1, (int) round($missing / 3600)) . ' hours in total.']
+            : ['area' => 'history', 'level' => 'pass', 'text' => "Announced without interruption " . ($firstSeen - $start > 8 * 3600 ? 'since then' : "for the last {$days} days") . '.'];
+    }
+    return $checks;
+}
+
+function toolAnnounce(): array
+{
+    rateLimit('light', LIGHT_PER_MINUTE);
+    [$resource, $host] = routeResource();
+    $expected = param('asn', 32) !== '' ? asnParam() : null;
+    if ($expected !== null && asnSpecial($expected) !== null) {
+        fail(asnSpecial($expected));
+    }
+
+    // A prefix is checked as given (so a planned one can be checked); an address is checked as the prefix that covers it.
+    if (str_contains($resource, '/')) {
+        [$ip, $len] = explode('/', $resource);
+        $prefix = networkPrefix($ip, (int) $len);
+    } else {
+        $o = needRipestat(ripestatData(fetchJson(['o' => ripestat('prefix-overview', ['resource' => $resource])], BGP_CACHE_SECONDS)['o']));
+        if (!($o['announced'] ?? false)) {
+            fail("No route covers {$resource} right now. To check a prefix before you announce it, enter the prefix itself, like 203.0.113.0/24, and the AS that will announce it.", 422);
+        }
+        $prefix = (string) $o['resource'];
+    }
+
+    $d = fetchJson([
+        'status' => ripestat('routing-status', ['resource' => $prefix]),
+        'visibility' => ripestat('visibility', ['resource' => $prefix]),
+        'history' => ripestat('routing-history', ['resource' => $prefix, 'starttime' => gmdate('Y-m-d\T00:00', time() - HISTORY_DAYS * 86400)]),
+        'irr' => 'https://irrexplorer.nlnog.net/api/prefixes/prefix/' . $prefix,
+    ], BGP_CACHE_SECONDS, 20);
+    $status = needRipestat(ripestatData($d['status']));
+    $origins = array_values(array_unique(array_map(fn ($o) => (int) $o['origin'], $status['origins'] ?? [])));
+    $announced = (bool) $origins;
+    $checkAs = array_slice($expected !== null ? [$expected] : $origins, 0, 4);
+
+    $rpkiAnswers = $checkAs ? fetchJson(array_combine(
+        array_map(fn ($a) => "AS{$a}", $checkAs),
+        array_map(fn ($a) => ripestat('rpki-validation', ['resource' => "AS{$a}", 'prefix' => $prefix]), $checkAs),
+    ), BGP_CACHE_SECONDS, 25) : [];
+    $irr = is_array($d['irr']) && array_is_list($d['irr']) ? irrObjects($d['irr'], $prefix) : null;
+
+    $checks = [prefixSizeCheck($prefix)];
+
+    // Who announces it, against who should.
+    $list = fn (array $asns) => implode(', ', array_map(fn ($a) => "AS{$a}", $asns));
+    $checks[] = match (true) {
+        !$announced && $expected !== null => ['area' => 'origin', 'level' => 'info', 'text' => "{$prefix} is not in the global routing table. The checks below show whether networks will accept it once AS{$expected} announces it."],
+        !$announced => ['area' => 'origin', 'level' => 'inconclusive', 'text' => "{$prefix} is not in the global routing table. Enter the AS that will announce it to check RPKI and IRR before you go live."],
+        $expected !== null && !in_array($expected, $origins, true) => ['area' => 'origin', 'level' => 'issue', 'text' => "Announced by {$list($origins)}, not AS{$expected}. If you did not authorise " . (count($origins) === 1 ? 'that network' : 'those networks') . ', this may be a hijack or an announcement left behind after a move.'],
+        count($origins) > 1 => ['area' => 'origin', 'level' => 'issue', 'text' => "Announced by " . count($origins) . " networks at once: {$list($origins)}. Several origins (MOAS) can be intended, for anycast or during a move between providers, or can be a hijack. Check that every one is expected."],
+        $expected !== null => ['area' => 'origin', 'level' => 'pass', 'text' => "Announced by AS{$expected}, as expected."],
+        default => ['area' => 'origin', 'level' => 'info', 'text' => "Announced by AS{$origins[0]}. Enter the AS you expect to check that it is the right one."],
+    };
+
+    $rpki = [];
+    foreach ($checkAs as $asn) {
+        $v = ripestatData($rpkiAnswers["AS{$asn}"] ?? null);
+        $checks[] = rpkiCheck($asn, $v);
+        $rpki[] = ['asn' => $asn, 'status' => $v['status'] ?? null,
+            'roas' => array_map(fn ($r) => ['asn' => (int) $r['origin'], 'prefix' => $r['prefix'], 'maxLength' => (int) $r['max_length'], 'validity' => $r['validity']], $v['validating_roas'] ?? [])];
+    }
+    foreach ($checkAs as $asn) {
+        $checks[] = irrCheck($asn, $irr, $prefix);
+    }
+
+    // Visibility: the share of RIS full-table peers that carry it, collector by collector.
+    $visibility = null;
+    $af = str_contains($prefix, ':') ? 'ipv6' : 'ipv4';
+    $vis = ripestatData($d['visibility']);
+    if ($announced && $vis !== null) {
+        $collectors = [];
+        $missingAsns = [];
+        foreach ($vis['visibilities'] ?? [] as $c) {
+            $total = (int) ($c["{$af}_full_table_peer_count"] ?? 0);
+            if ($total === 0) {
+                continue;
+            }
+            $notSeeing = array_map(fn ($p) => ['asn' => (int) $p['asn'], 'ip' => $p['ip']], $c["{$af}_full_table_peers_not_seeing"] ?? []);
+            array_push($missingAsns, ...array_column($notSeeing, 'asn'));
+            $collectors[] = ['rrc' => $c['probe']['name'], 'city' => $c['probe']['city'] ?? null, 'country' => $c['probe']['country'] ?? null,
+                'ixp' => $c['probe']['ixp'] ?? null, 'total' => $total, 'notSeeing' => $notSeeing];
+        }
+        $names = asNames($missingAsns);
+        foreach ($collectors as &$c) {
+            foreach ($c['notSeeing'] as &$p) {
+                $p['name'] = $names[$p['asn']]['name'] ?? null;
+            }
+        }
+        unset($c, $p);
+        $total = array_sum(array_column($collectors, 'total'));
+        $missing = array_sum(array_map(fn ($c) => count($c['notSeeing']), $collectors));
+        $visibility = ['seeing' => $total - $missing, 'total' => $total, 'collectors' => $collectors];
+        if ($total > 0) {
+            $share = ($total - $missing) / $total;
+            $pct = (int) round($share * 100);
+            $invalid = (bool) array_filter($rpki, fn ($x) => str_starts_with((string) $x['status'], 'invalid'));
+            $checks[] = match (true) {
+                $share >= 0.95 => ['area' => 'visibility', 'level' => 'pass', 'text' => "Seen by {$pct}% of full-table RIS peers ({$visibility['seeing']} of {$total}): it reaches essentially the whole internet."],
+                default => ['area' => 'visibility', 'level' => 'issue', 'text' => "Seen by only {$pct}% of full-table RIS peers ({$visibility['seeing']} of {$total}), so parts of the internet have no route to it." . ($invalid ? ' That fits the RPKI result: networks that validate RPKI drop invalid routes.' : ' Check the RPKI and IRR results above; a filter at an upstream is the usual cause.')],
+            };
+        }
+    }
+
+    $history = $announced ? originHistory(ripestatData($d['history']), $prefix) : null;
+    if ($history !== null) {
+        // The origin check already judges the current origins, so history only reports others.
+        array_push($checks, ...historyChecks($history, array_values(array_unique(array_merge($origins, $expected !== null ? [$expected] : [])))));
+        $names = asNames(array_column($history['origins'], 'asn'));
+        foreach ($history['origins'] as &$o) {
+            $o['name'] = $names[$o['asn']]['name'] ?? null;
+        }
+        unset($o);
+    } elseif ($announced) {
+        $checks[] = ['area' => 'history', 'level' => 'failed', 'text' => 'RIPEstat did not return the routing history, so recent changes were not checked.'];
+    }
+
+    // Other announcements inside it, and the prefix that would catch its traffic if it were withdrawn.
+    $own = $expected !== null ? [$expected] : $origins;
+    $more = array_map(fn ($m) => ['prefix' => $m['prefix'], 'origin' => (int) $m['origin']], $status['more_specifics'] ?? []);
+    $foreign = array_values(array_filter($more, fn ($m) => !in_array($m['origin'], $own, true)));
+    if ($foreign) {
+        $checks[] = ['area' => 'specifics', 'level' => 'issue', 'text' => count($foreign) . ' more specific ' . (count($foreign) === 1 ? 'prefix is' : 'prefixes are') . " announced inside it by other networks (" . $list(array_slice(array_unique(array_column($foreign, 'origin')), 0, 5)) . '). Traffic for those addresses goes to them, because routers prefer the most specific route. If they are not your customers, this may be a hijack.'];
+    } elseif ($more) {
+        $checks[] = ['area' => 'specifics', 'level' => 'info', 'text' => count($more) . ' more specific ' . (count($more) === 1 ? 'prefix is' : 'prefixes are') . ' announced inside it by the same AS, usually for traffic engineering.'];
+    } elseif ($announced) {
+        $checks[] = ['area' => 'specifics', 'level' => 'pass', 'text' => 'No other network announces a more specific prefix inside it.'];
+    }
+    $less = array_map(fn ($l) => ['prefix' => $l['prefix'], 'origin' => (int) $l['origin']], $status['less_specifics'] ?? []);
+
+    $names = asNames(array_merge($origins, $checkAs));
+    return [
+        'via' => 'ripestat',
+        'query' => $resource,
+        'host' => $host,
+        'prefix' => $prefix,
+        'expected' => $expected,
+        'announced' => $announced,
+        'origins' => array_map(fn ($a) => ['asn' => $a, 'name' => $names[$a]['name'] ?? null], $origins),
+        'expectedName' => $expected !== null ? ($names[$expected]['name'] ?? null) : null,
+        'checks' => $checks,
+        'rpki' => $rpki,
+        'irr' => $irr,
+        'visibility' => $visibility,
+        'history' => $history,
+        'moreSpecifics' => array_slice($more, 0, 100),
+        'moreSpecificsTotal' => count($more),
+        'lessSpecifics' => array_slice($less, 0, 20),
+        'settings' => 'BGP state and history from RIPEstat (RIPE NCC route collectors), IRR from NLNOG IRR Explorer, RPKI from RIPEstat’s validator',
+    ];
+}
+
+// ---------------------------------------------------------------------------
 
 const TOOLS = [
     'myip' => 'toolMyIp', 'ping' => 'toolPing', 'traceroute' => 'toolTraceroute', 'mtr' => 'toolMtr', 'port' => 'toolPort', 'ports' => 'toolPorts',
     'reverse' => 'toolReverse', 'proxy' => 'toolProxy', 'bandwidth' => 'toolBandwidth', 'dns' => 'toolDns',
-    'mx' => 'toolMx', 'ns' => 'toolNs', 'spf' => 'toolSpf', 'dmarc' => 'toolDmarc', 'dkim' => 'toolDkim',
-    'smtp' => 'toolSmtp', 'whois' => 'toolWhois', 'blacklist' => 'toolBlacklist',
-    'asn' => 'toolAsn', 'prefix' => 'toolPrefix', 'lg' => 'toolLookingGlass',
+    'mx' => 'toolMx', 'ns' => 'toolNs', 'dnssec' => 'toolDnssec', 'spf' => 'toolSpf', 'dmarc' => 'toolDmarc', 'dkim' => 'toolDkim',
+    'smtp' => 'toolSmtp', 'mailpolicy' => 'toolMailPolicy', 'tls' => 'toolTls', 'whois' => 'toolWhois', 'blacklist' => 'toolBlacklist',
+    'asn' => 'toolAsn', 'prefix' => 'toolPrefix', 'lg' => 'toolLookingGlass', 'announce' => 'toolAnnounce',
 ];
 
 if (!defined('PINGOMNI_TEST')) {

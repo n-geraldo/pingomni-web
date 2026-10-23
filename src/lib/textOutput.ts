@@ -110,13 +110,23 @@ const TEXT: Record<string, (r: R) => string> = {
 
     dmarc: (r) => [r.record ? `_dmarc.${r.domain}.  IN  TXT  "${r.record}"` : `; no DMARC record at _dmarc.${r.domain}`, '', checksText(r.checks)].join('\n'),
 
-    dkim: (r) => [r.record ? `${r.name}.  IN  TXT  "${r.record}"` : `; no DKIM key at ${r.name}`, '', checksText(r.checks)].join('\n'),
+    dkim: (r) =>
+        [
+            ...(r.discovered?.length ? [`; keys found: ${r.discovered.map((d: R) => `${d.selector}${d.revoked ? ' (revoked)' : ''}`).join(', ')}`] : []),
+            r.record ? `${r.name}.  IN  TXT  "${r.record}"` : r.name ? `; no DKIM key at ${r.name}` : `; no key under ${r.tried?.length ?? 'the'} common selectors`,
+            '',
+            checksText(r.checks),
+        ].join('\n'),
 
     smtp: (r) =>
         r.nullMx
             ? `${r.input} has a null MX: it accepts no mail`
             : r.connected
-              ? [`Connected to ${r.server} (${r.ip}):25 in ${r.ms} ms`, ...r.transcript.map((t: R) => `${t.dir === 'in' ? 'S:' : 'C:'} ${t.text.replace(/\n/g, '\nS: ')}`)].join('\n')
+              ? [
+                    `Connected to ${r.server} (${r.ip}):25 in ${r.ms} ms`,
+                    ...r.transcript.map((t: R) => (t.dir === 'note' ? `-- ${t.text}` : `${t.dir === 'in' ? 'S:' : 'C:'} ${t.text.replace(/\n/g, '\nS: ')}`)),
+                    ...(r.checks?.length ? ['', checksText(r.checks)] : []),
+                ].join('\n')
               : `Could not connect to ${r.server} (${r.ip}):25: ${r.error}`,
 
     whois: (r) =>
@@ -196,6 +206,49 @@ const TEXT: Record<string, (r: R) => string> = {
                         ]
                       : []),
               ].join('\n'),
+
+    dnssec: (r) =>
+        [
+            ...r.ds.map((d: R) => `${r.domain}.  IN  DS  ${d.tag} ${d.algorithm} ${d.digestType} ${d.digest}`),
+            ...r.keys.map((k: R) => `${r.domain}.  IN  DNSKEY  ${k.flags} 3 ${k.algorithm} ( ... ) ; ${k.role} key id = ${k.tag}`),
+            ...r.signatures.map((x: R) => `${r.domain}.  IN  RRSIG  ${x.covers} ${x.algorithm} key id = ${x.tag}, valid ${(x.inception ?? '').slice(0, 10)} to ${(x.expires ?? '').slice(0, 10)}`),
+            ...(r.signed ? [] : [`; ${r.domain} is not signed`]),
+            '',
+            checksText(r.checks),
+        ].join('\n'),
+
+    mailpolicy: (r) =>
+        [
+            r.mtaSts ? `_mta-sts.${r.domain}.  IN  TXT  "${r.mtaSts.record}"` : `; no MTA-STS record`,
+            r.tlsRpt ? `_smtp._tls.${r.domain}.  IN  TXT  "${r.tlsRpt.record}"` : `; no TLS-RPT record`,
+            r.bimi ? `default._bimi.${r.domain}.  IN  TXT  "${r.bimi.record}"` : `; no BIMI record`,
+            ...(r.mtaSts?.policy?.raw ? ['', `; https://mta-sts.${r.domain}/.well-known/mta-sts.txt`, r.mtaSts.policy.raw] : []),
+            '',
+            checksText(r.checks),
+        ].join('\n'),
+
+    tls: (r) =>
+        r.handshake
+            ? [
+                  `; ${r.host}:${r.port} (${r.ip}), ${r.tls.protocol} ${r.tls.cipher}`,
+                  `; TLS versions: ${r.versions.map((v: R) => `${v.version} ${v.supported ? 'on' : 'off'}`).join(', ')}`,
+                  ...r.tls.chain.map((c: R, i: number) => `${i === 0 ? 'cert' : `chain ${i}`}: ${c.subject ?? '?'}  issuer: ${c.issuerCn ?? c.issuer ?? '?'}  until ${(c.notAfter ?? '').slice(0, 10)}`),
+                  '',
+                  checksText(r.checks),
+              ].join('\n')
+            : `; ${r.host}:${r.port}: ${r.checks[0].text}`,
+
+    announce: (r) =>
+        [
+            `; ${r.prefix}${r.expected ? `, expected origin AS${r.expected}` : ''}`,
+            `; announced by: ${r.origins.length ? r.origins.map((o: R) => `AS${o.asn}${o.name ? ` (${o.name})` : ''}`).join(', ') : 'nobody'}`,
+            ...(r.visibility ? [`; visibility: ${r.visibility.seeing}/${r.visibility.total} full-table RIS peers`] : []),
+            '',
+            checksText(r.checks),
+            ...(r.visibility?.collectors.some((c: R) => c.notSeeing.length)
+                ? ['', '; peers without a route', columns(r.visibility.collectors.flatMap((c: R) => c.notSeeing.map((p: R) => [c.rrc, p.ip, `AS${p.asn}`, p.name ?? ''])))]
+                : []),
+        ].join('\n'),
 
     lg: (r) =>
         r.collectors.length

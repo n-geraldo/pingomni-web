@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Mark, Wordmark } from '../brand';
-import { DEMO_URL, mailto } from '../config';
+import { mailto } from '../config';
 import Icon from '../Icon';
 import { api } from '../lib/api';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { Contact, Shot, useSite } from '../shared/Layout';
+import { TOOL_PREVIEW } from '../shared/ToolPreviews';
 
 function Launcher() {
     const { root } = useSite();
@@ -45,11 +46,7 @@ function Launcher() {
                         </li>
                     </ul>
                     <div className="actions">
-                        <a className="btn btn-primary" href={DEMO_URL} target="_blank" rel="noopener">
-                            Try the demo
-                            <Icon name="external" />
-                        </a>
-                        <a className="btn" href={mailto('RadiusOne')}>
+                        <a className="btn btn-primary" href={mailto('RadiusOne')}>
                             Email us
                         </a>
                         <a className="text-link" href={`${root}radiusone/`}>
@@ -192,30 +189,33 @@ function FreeTools() {
                     {groups.map((g) => {
                         const info = TOOL_PAGES[g];
                         const href = `${root}${info.path}`;
+                        const Preview = TOOL_PREVIEW[g];
                         return (
                             <div className="toolgroup" key={g}>
-                                <h3 className="toolgroup-head">
-                                    <a href={href}>
-                                        <span className="mega-toolgroup-icon">
-                                            <Icon name={info.icon} />
-                                        </span>
-                                        {info.title}
-                                        <Icon name="arrow" />
-                                    </a>
-                                </h3>
-                                <ul className="toolgroup-list">
-                                    {TOOL_LIST.filter((t) => t.group === g).map((t) => (
-                                        <li key={t.id}>
-                                            <a href={`${href}#${t.id}`}>
-                                                <Icon name={t.icon} />
-                                                <span>
-                                                    <strong>{t.name}</strong>
-                                                    <span>{t.blurb}</span>
-                                                </span>
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <a className="toolgroup-preview" href={href} tabIndex={-1} aria-hidden="true">
+                                    <Preview />
+                                </a>
+                                <div className="toolgroup-body">
+                                    <h3 className="toolgroup-head">
+                                        <a href={href}>
+                                            <span className="mega-toolgroup-icon">
+                                                <Icon name={info.icon} />
+                                            </span>
+                                            {info.title}
+                                            <Icon name="arrow" />
+                                        </a>
+                                    </h3>
+                                    <ul className="toolgroup-list">
+                                        {TOOL_LIST.filter((t) => t.group === g).map((t) => (
+                                            <li key={t.id}>
+                                                <a href={`${href}#${t.id}`} title={t.blurb}>
+                                                    <Icon name={t.icon} />
+                                                    {t.name}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </div>
                         );
                     })}
@@ -225,30 +225,43 @@ function FreeTools() {
     );
 }
 
-const COMMITMENTS: { term: string; text: string }[] = [
+const COMMITMENTS: { term: string; icon: string; text: string }[] = [
     {
         term: 'Self-hosted',
-        text: 'Our products install on your own server, and your data stays there. RadiusOne runs on Ubuntu, and every product after it will work the same way.',
+        icon: 'server',
+        text: 'Our products install on your own server, and your data stays there.',
     },
     {
         term: 'Safe by default',
-        text: 'Operators get only the access their role needs, privileged roles must use two-factor sign-in, and backups are encrypted.',
+        icon: 'shield',
+        text: 'Access by role, two-factor sign-in for privileged roles, and encrypted backups.',
     },
     {
         term: 'Built for real ISP scale',
+        icon: 'clients',
         text: 'Lists, search and exports are designed for thousands of subscribers, not a ten-row demo.',
     },
     {
         term: 'Desk and field',
+        icon: 'phone',
         text: 'Every task the office handles at a desk also works on a technician’s phone.',
     },
     {
         term: 'One family',
-        text: 'Every product shares one look, one set of roles and the same workflows, so each new one feels familiar from day one.',
+        icon: 'grid',
+        text: 'Every product shares one look, one set of roles and the same workflows.',
     },
 ];
 
+// The product family in release order: what is out, then what comes next.
+const FAMILY: { brand: 'radiusone' | 'ticketone' | 'dnsone'; job: string; available?: boolean }[] = [
+    { brand: 'radiusone', job: 'ISP back office', available: true },
+    { brand: 'ticketone', job: 'Support tickets' },
+    { brand: 'dnsone', job: 'DNS' },
+];
+
 function About() {
+    const { root } = useSite();
     return (
         <section className="section section-bg" id="about" aria-labelledby="about-title">
             <div className="container about">
@@ -261,19 +274,35 @@ function About() {
                         technicians.
                     </p>
                     <p className="muted">
-                        We start from what an ISP actually runs (FreeRADIUS, PPPoE, NAS devices, billing) and make one product for each job.
-                        RadiusOne is the first. TicketOne for support tickets and DNSOne for DNS come next. The free tools on this site are the
-                        checks we reach for ourselves every day.
+                        We start from what an ISP actually runs (FreeRADIUS, PPPoE, NAS devices, billing) and make one product for each job. The
+                        free tools on this site are the checks we reach for ourselves every day.
                     </p>
+                    <ol className="family" aria-label="The product family, in release order">
+                        {FAMILY.map((f) => (
+                            <li key={f.brand} data-available={f.available || undefined}>
+                                <a href={`${root}${f.brand}/`}>
+                                    <Mark brand={f.brand} size={40} />
+                                    <Wordmark brand={f.brand} />
+                                    <span className="family-job">{f.job}</span>
+                                    <span className={f.available ? 'badge badge-success' : 'badge badge-warning'}>
+                                        {f.available ? 'Available' : 'Coming soon'}
+                                    </span>
+                                </a>
+                            </li>
+                        ))}
+                    </ol>
                 </div>
-                <dl className="rows">
+                <ul className="commitments">
                     {COMMITMENTS.map((c) => (
-                        <div className="row" key={c.term}>
-                            <dt>{c.term}</dt>
-                            <dd>{c.text}</dd>
-                        </div>
+                        <li className="commitment" key={c.term}>
+                            <span className="commitment-icon">
+                                <Icon name={c.icon} />
+                            </span>
+                            <strong>{c.term}</strong>
+                            <span>{c.text}</span>
+                        </li>
                     ))}
-                </dl>
+                </ul>
             </div>
         </section>
     );
@@ -303,7 +332,7 @@ export default function Home() {
             <About />
             <Contact
                 title="Talk to us."
-                text="Email us with questions about RadiusOne, the products coming next or the free tools. Or explore the RadiusOne demo first; nothing you change there is saved."
+                text="Email us with questions about RadiusOne, the products coming next or the free tools."
             />
         </>
     );

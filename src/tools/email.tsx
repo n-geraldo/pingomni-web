@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { SERVER_LOCATION } from '../config';
 import { api, ToolError, type Result } from '../lib/api';
 import { dnsFrom, locationsFor, type DnsProbe } from '../lib/globalping';
 import {
@@ -21,7 +20,7 @@ import {
 } from '../lib/interpret';
 import { fromField } from './network';
 import type { Field, ToolSpec } from './types';
-import { Abbr, Checks, date, Explain, Mono, Place, RecordText, Rows, Status, Summary, Table, Target, type Next } from './ui';
+import { Abbr, Certificate, Checks, date, Explain, Mono, Place, RecordText, Rows, Status, Summary, Table, Target, type Next } from './ui';
 
 // ---------------------------------------------------------------------------
 // Shared pieces
@@ -29,7 +28,7 @@ import { Abbr, Checks, date, Explain, Mono, Place, RecordText, Rows, Status, Sum
 
 const DOMAIN_FIELD: Field = { name: 'domain', label: 'Domain', placeholder: 'example.com', hint: 'Just the domain: no https:// or email address.' };
 
-const runsOnServerDns = () => `Runs from our server in ${SERVER_LOCATION}, through its DNS resolver (which forwards to Cloudflare 1.1.1.1).`;
+const runsOnServerDns = () => `Runs from our server, through its DNS resolver (which forwards to Cloudflare 1.1.1.1).`;
 
 const RESOLVER_LABEL: Record<string, string> = {
     system: 'Our server’s resolver',
@@ -45,8 +44,9 @@ const emailNext = (domain: string, skip: string): Next[] =>
         { tool: 'mx', label: 'See which servers receive its mail (MX)', values: { domain } },
         { tool: 'spf', label: 'Check its SPF record', values: { domain } },
         { tool: 'dmarc', label: 'Check its DMARC policy', values: { domain } },
-        { tool: 'dkim', label: 'Check a DKIM key (needs a selector)', values: { domain } },
-        { tool: 'smtp', label: 'Test its mail server on port 25', values: { host: domain } },
+        { tool: 'dkim', label: 'Find and check its DKIM keys', values: { domain } },
+        { tool: 'smtp', label: 'Test its mail server and its TLS', values: { host: domain } },
+        { tool: 'mailpolicy', label: 'Check MTA-STS, TLS-RPT and BIMI', values: { domain } },
     ].filter((n) => n.tool !== skip);
 
 /** A record row: name, TTL, type, value. */
@@ -196,7 +196,7 @@ const dns: ToolSpec = {
     runsOn: (v) =>
         locationsFor(v.from)
             ? `Runs on Globalping probes (${v.from}), started from your browser. Each probe asks ${v.resolver && RESOLVER_IP[v.resolver] ? RESOLVER_LABEL[v.resolver] : 'its own resolver'}.`
-            : `Runs from our server in ${SERVER_LOCATION}, asking ${RESOLVER_LABEL[v.resolver || 'system'].replace(/^(The|Our) /, (m) => m.toLowerCase())}.`,
+            : `Runs from our server, asking ${RESOLVER_LABEL[v.resolver || 'system'].replace(/^(The|Our) /, (m) => m.toLowerCase())}.`,
     duration: 'usually 1–10 seconds',
     run: async (v) => {
         const locations = locationsFor(v.from);
@@ -334,7 +334,7 @@ const ns: ToolSpec = {
     action: 'Check name servers',
     bestFor: 'Checking which servers are authoritative for a domain and whether they agree.',
     fields: [DOMAIN_FIELD],
-    runsOn: () => `Runs from our server in ${SERVER_LOCATION}: looks up the NS records, then asks each name server for the zone’s SOA directly.`,
+    runsOn: () => `Runs from our server: looks up the NS records, then asks each name server for the zone’s SOA directly.`,
     duration: 'usually 2–6 seconds',
     run: (v) => api('ns', { domain: v.domain }),
     render: (r) => {
@@ -420,6 +420,116 @@ const ns: ToolSpec = {
 };
 
 // ---------------------------------------------------------------------------
+// DNSSEC check
+// ---------------------------------------------------------------------------
+
+function Dnssec({ r }: { r: Result }) {
+    const issues = (r.checks as Result[]).filter((c) => c.level === 'issue');
+    const verdict: Verdict = !r.signed
+        ? { level: 'neutral', label: 'Not signed', title: `${r.domain} does not use DNSSEC.`, detail: r.checks[0]?.text }
+        : issues.length
+          ? { level: 'issue', label: r.bogus ? 'Broken' : `${issues.length} ${issues.length === 1 ? 'problem' : 'problems'}`, title: r.bogus ? `DNSSEC for ${r.domain} is broken: validating resolvers cannot resolve it.` : `DNSSEC for ${r.domain} has ${issues.length === 1 ? 'a problem' : 'problems'}.`, detail: issues[0].text }
+          : { level: 'pass', label: 'Secure', title: `${r.domain} is signed and validates: its answers cannot be forged.` };
+    // The chain as three links: parent DS, zone keys, signatures.
+    const links: [string, ReactNode, boolean][] = [
+        ['DS at the parent', r.ds.length ? r.ds.map((d: Result) => `tag ${d.tag}`).join(', ') : 'None', r.ds.some((d: Result) => r.keys.some((k: Result) => k.tag === d.tag))],
+        ['DNSKEY in the zone', r.keys.length ? r.keys.map((k: Result) => `${k.role} ${k.tag}`).join(', ') : 'None', r.keys.length > 0],
+        ['Signed answers', r.signatures.length ? `by key ${[...new Set(r.signatures.map((x: Result) => x.tag))].join(', ')}` : 'None', r.signatures.length > 0],
+        ['Validates', r.validated ? 'Yes' : r.bogus ? 'No: SERVFAIL' : 'No', r.validated],
+    ];
+    return (
+        <>
+            <Summary verdict={verdict} />
+            {r.signed && (
+                <ol className="out-trust" aria-label="Chain of trust">
+                    {links.map(([label, value, ok]) => (
+                        <li key={label} data-ok={ok || undefined}>
+                            <span className="out-trust-label">{label}</span>
+                            <strong>{value}</strong>
+                        </li>
+                    ))}
+                </ol>
+            )}
+            <Checks checks={r.checks} />
+            {r.ds.length > 0 && (
+                <div className="out-group">
+                    <h3 className="out-group-title">DS records at the parent</h3>
+                    <Table
+                        head={['Key tag', 'Algorithm', 'Digest', 'Matches a key']}
+                        rows={r.ds.map((d: Result) => [
+                            <Mono>{d.tag}</Mono>,
+                            `${d.algorithm} ${d.algorithmName ? `(${d.algorithmName})` : ''}`,
+                            <span>
+                                {d.digestName ?? d.digestType} <Mono>{d.digest.slice(0, 16)}…</Mono>
+                            </span>,
+                            r.keys.some((k: Result) => k.tag === d.tag) ? <Status level="pass">Yes</Status> : <Status level="issue">No</Status>,
+                        ])}
+                        empty=""
+                        compact
+                        caption="DS records"
+                    />
+                </div>
+            )}
+            {r.keys.length > 0 && (
+                <div className="out-group">
+                    <h3 className="out-group-title">Keys in the zone (DNSKEY)</h3>
+                    <Table
+                        head={['Key tag', 'Role', 'Algorithm', 'Flags']}
+                        rows={r.keys.map((k: Result) => [<Mono>{k.tag}</Mono>, k.role === 'KSK' ? 'Key-signing key (KSK)' : 'Zone-signing key (ZSK)', `${k.algorithm} ${k.algorithmName ? `(${k.algorithmName})` : ''}`, <Mono>{k.flags}</Mono>])}
+                        empty=""
+                        compact
+                        caption="DNSKEY records"
+                    />
+                </div>
+            )}
+            {r.signatures.length > 0 && (
+                <div className="out-group">
+                    <h3 className="out-group-title">Signatures on the SOA record (RRSIG)</h3>
+                    <Table
+                        head={['Signed by key', 'Algorithm', 'Valid from', 'Valid until']}
+                        rows={r.signatures.map((x: Result) => [<Mono>{x.tag}</Mono>, x.algorithm, date(x.inception), date(x.expires)])}
+                        empty=""
+                        compact
+                        caption="RRSIG records"
+                    />
+                </div>
+            )}
+        </>
+    );
+}
+
+const dnssec: ToolSpec = {
+    id: 'dnssec',
+    action: 'Check DNSSEC',
+    bestFor: 'Checking that a domain’s DNSSEC chain of trust is complete and validates, or finding out why it breaks.',
+    fields: [DOMAIN_FIELD],
+    runsOn: () => 'Runs from our server: reads the DS record at the parent, the zone’s DNSKEY and signatures, and asks a validating resolver (1.1.1.1) whether the answers validate.',
+    duration: 'usually 1–3 seconds',
+    run: (v) => api('dnssec', { domain: v.domain }),
+    render: (r) => (
+        <>
+            <Dnssec r={r} />
+            <Explain>
+                <p>
+                    DNSSEC is a chain: the parent zone (like .com) publishes a DS record that fingerprints the zone’s key-signing key; that key signs the
+                    zone’s other keys; those sign every answer. A validating resolver follows the chain and refuses answers it cannot verify.
+                </p>
+                <p>
+                    A broken chain is worse than none: resolvers that validate (most ISPs, 1.1.1.1, 8.8.8.8, 9.9.9.9) answer SERVFAIL and the domain
+                    disappears for their users. The usual cause is a key rollover where the DS at the registrar was not updated.
+                </p>
+            </Explain>
+        </>
+    ),
+    next: (r) => [
+        { tool: 'ns', label: `Check that the name servers of ${r.domain} agree`, values: { domain: r.domain } },
+        { tool: 'dns', label: `Look up records of ${r.domain}`, values: { name: r.domain } },
+        { tool: 'whois', label: `See the registrar of ${r.domain}`, values: { query: r.domain } },
+    ],
+    target: (v) => v.domain,
+};
+
+// ---------------------------------------------------------------------------
 // SPF
 // ---------------------------------------------------------------------------
 
@@ -453,7 +563,7 @@ const spf: ToolSpec = {
     action: 'Check SPF',
     bestFor: 'Inspecting which servers a domain authorises to send its mail.',
     fields: [DOMAIN_FIELD],
-    runsOn: () => `Runs from our server in ${SERVER_LOCATION}: reads the TXT records, then follows each include the way a receiver would.`,
+    runsOn: () => `Runs from our server: reads the TXT records, then follows each include the way a receiver would.`,
     run: (v) => api('spf', { domain: v.domain }),
     render: (r) => (
         <>
@@ -499,7 +609,7 @@ const dmarc: ToolSpec = {
     action: 'Check DMARC',
     bestFor: 'Inspecting what a domain asks receivers to do with mail that fails authentication.',
     fields: [DOMAIN_FIELD],
-    runsOn: () => `Runs from our server in ${SERVER_LOCATION}: reads the TXT record at _dmarc.<domain>.`,
+    runsOn: () => `Runs from our server: reads the TXT record at _dmarc.<domain>.`,
     run: (v) => api('dmarc', { domain: v.domain }),
     render: (r) => (
         <>
@@ -532,12 +642,15 @@ const dmarc: ToolSpec = {
 // DKIM
 // ---------------------------------------------------------------------------
 
+// Keep in step with DKIM_SELECTORS in api/index.php.
+const DKIM_DISCOVERY_COUNT = 45;
+
 const COMMON_SELECTORS = ['google', 'selector1', 'selector2', 'k1', 's1', 'default', 'dkim', 'mail'];
 
 const dkim: ToolSpec = {
     id: 'dkim',
     action: 'Check DKIM key',
-    bestFor: 'Checking the public key a domain publishes for one DKIM selector.',
+    bestFor: 'Finding a domain’s DKIM keys and checking them, with or without knowing the selector.',
     fields: [
         DOMAIN_FIELD,
         {
@@ -545,9 +658,10 @@ const dkim: ToolSpec = {
             label: 'Selector',
             placeholder: 'selector1',
             width: 'medium',
+            optional: true,
             hint: (
                 <>
-                    Required. Find it as <code>s=</code> in the DKIM-Signature header of a message from this domain. Common ones:{' '}
+                    Optional: leave it empty to try {DKIM_DISCOVERY_COUNT} common selectors. It is <code>s=</code> in a message’s DKIM-Signature header. Common ones:{' '}
                     {COMMON_SELECTORS.map((s, i) => (
                         <span key={s}>
                             {i > 0 && ', '}
@@ -559,15 +673,36 @@ const dkim: ToolSpec = {
             ),
         },
     ],
-    runsOn: () => `Runs from our server in ${SERVER_LOCATION}: reads the TXT record at <selector>._domainkey.<domain>.`,
-    run: (v) => api('dkim', { domain: v.domain, selector: v.selector }),
+    runsOn: (v) =>
+        v.selector?.trim()
+            ? `Runs from our server: reads the TXT record at ${v.selector.trim()}._domainkey.<domain>.`
+            : `Runs from our server: looks up ${DKIM_DISCOVERY_COUNT} common selectors at once and checks the first that holds a key.`,
+    run: (v) => api('dkim', { domain: v.domain, selector: v.selector ?? '' }),
     render: (r) => (
         <>
+            {r.discovered?.length > 0 && (
+                <div className="out-group">
+                    <h3 className="out-group-title">
+                        Keys found <span className="faint">(tried {r.tried.length} common selectors)</span>
+                    </h3>
+                    <ul className="out-notes">
+                        {r.discovered.map((d: Result) => (
+                            <li key={d.selector}>
+                                <Status level={d.revoked ? 'neutral' : 'pass'}>{d.revoked ? 'Revoked' : d.keyType.toUpperCase()}</Status>
+                                <span>
+                                    <Mono>{d.selector}</Mono>
+                                    {d.selector === r.selector && <span className="faint"> (checked below)</span>}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             {r.record && <RecordText text={r.record} />}
             <Checks checks={r.checks} />
             <Rows
                 rows={[
-                    ['Record name', <Mono>{r.name}</Mono>],
+                    ['Record name', r.name ? <Mono>{r.name}</Mono> : '—'],
                     ...(r.cname ? [['Alias of', <Mono>{r.cname}</Mono>] as [string, ReactNode]] : []),
                     ...(r.record ? [['Key', r.tags.p === '' ? 'Revoked (empty)' : `${r.keyType?.toUpperCase()}${r.bits ? `, ${r.bits} bits` : ''}`] as [string, string]] : []),
                 ]}
@@ -608,7 +743,7 @@ function Smtp({ r }: { r: Result }) {
     }
     const tested =
         r.mode === 'mx'
-            ? `the lowest-priority MX of ${r.input}`
+            ? `the preferred MX of ${r.input} (lowest preference number)`
             : r.mode === 'implicit'
               ? `${r.input} itself (it has no MX records, so senders fall back to its address)`
               : r.server;
@@ -624,7 +759,10 @@ function Smtp({ r }: { r: Result }) {
                     : 'No answer within 8 seconds. A firewall on either side can cause this, including outbound filtering on the network our server uses, so it is not proof that the mail server is down.',
         };
     } else if (r.bannerCode === 220) {
-        verdict = { level: 'pass', label: 'Greeting received', title: `${r.server} answered on port 25 and greeted us in ${r.ms} ms.` };
+        const issues = (r.checks ?? []).filter((c: Result) => c.level === 'issue');
+        verdict = issues.length
+            ? { level: 'issue', label: `${issues.length} ${issues.length === 1 ? 'problem' : 'problems'}`, title: `${r.server} answered on port 25 in ${r.ms} ms, but ${issues.length === 1 ? 'one check failed' : `${issues.length} checks failed`}.`, detail: issues[0].text }
+            : { level: 'pass', label: 'Healthy', title: `${r.server} answered on port 25 in ${r.ms} ms${r.tls ? ` and encrypts with ${r.tls.protocol}` : ''}.` };
     } else {
         verdict = {
             level: 'issue',
@@ -643,12 +781,14 @@ function Smtp({ r }: { r: Result }) {
                     ...(r.connected
                         ? ([
                               ['Greeting (banner)', <Mono>{r.banner ?? '—'}</Mono>],
-                              [<Abbr short="STARTTLS" long="Whether the server offers to encrypt the session" />, r.starttls ? 'Offered' : 'Not offered'],
+                              [<Abbr short="STARTTLS" long="Whether the server offers to encrypt the session" />, r.tls ? `Works (${r.tls.protocol})` : r.starttls ? 'Offered, but failed' : 'Not offered'],
                               ['Extensions (EHLO)', r.capabilities.length ? r.capabilities.join(', ') : '—'],
                           ] as [ReactNode, ReactNode][])
                         : ([['Error', r.error]] as [ReactNode, ReactNode][])),
                 ]}
             />
+            {r.checks?.length > 0 && <Checks checks={r.checks} />}
+            {r.tls && <Certificate tls={r.tls} />}
             {r.mx?.length > 1 && (
                 <p className="tool-note">
                     Not tested: {r.mx.slice(1).map((m: Result) => `${m.host} (priority ${m.priority})`).join(', ')}. Enter one of them to test it.
@@ -656,8 +796,13 @@ function Smtp({ r }: { r: Result }) {
             )}
             <Explain>
                 <p>
-                    We open a connection to port 25, read the greeting, send EHLO to see the extensions offered, then QUIT. No mail is sent, so this
-                    shows that the server is reachable from our server, not that a mailbox exists or that mail would be accepted or reach the inbox.
+                    We open a connection to port 25, read the greeting and send EHLO to see the extensions offered. When the server offers STARTTLS
+                    we start encryption, inspect its certificate and send EHLO again, then QUIT. No mail is sent, so this shows that the server is
+                    reachable and how it encrypts, not that a mailbox exists or that mail would reach the inbox.
+                </p>
+                <p>
+                    Senders encrypt opportunistically: most deliver over TLS even when the certificate is not trusted. A trusted certificate that
+                    matches the server name matters when the receiving domain publishes MTA-STS or DANE, which tell senders to insist on it.
                 </p>
             </Explain>
         </>
@@ -667,13 +812,13 @@ function Smtp({ r }: { r: Result }) {
 const smtp: ToolSpec = {
     id: 'smtp',
     action: 'Test SMTP',
-    bestFor: 'Checking that a domain’s mail server answers on port 25.',
+    bestFor: 'Checking that a domain’s mail server answers on port 25, encrypts with STARTTLS and has a valid certificate.',
     fields: [{ name: 'host', label: 'Domain or mail server', placeholder: 'example.com', hint: 'A domain tests its first MX; a hostname or IP is tested directly.' }],
-    runsOn: () => `Runs from our server in ${SERVER_LOCATION}: connects to port 25, reads the greeting, sends EHLO and QUIT. No email is sent.`,
+    runsOn: () => `Runs from our server: connects to port 25, reads the greeting, sends EHLO, starts TLS when offered and checks the certificate. No email is sent.`,
     duration: 'up to 20 seconds',
     run: (v) => api('smtp', { host: v.host }),
     render: (r) => <Smtp r={r} />,
-    raw: (r) => (r.transcript ?? []).map((t: Result) => `${t.dir === 'in' ? 'S:' : 'C:'} ${t.text.replace(/\n/g, '\nS: ')}`).join('\n'),
+    raw: (r) => (r.transcript ?? []).map((t: Result) => (t.dir === 'note' ? `-- ${t.text}` : `${t.dir === 'in' ? 'S:' : 'C:'} ${t.text.replace(/\n/g, '\nS: ')}`)).join('\n'),
     next: (r) =>
         r.server
             ? [
@@ -795,7 +940,7 @@ const whois: ToolSpec = {
     action: 'Look up registration',
     bestFor: 'Seeing the public registration record of a domain or IP network.',
     fields: [{ name: 'query', label: 'Domain or IP address', placeholder: 'example.com' }],
-    runsOn: () => `Runs from our server in ${SERVER_LOCATION}: asks the registry’s RDAP service (found through rdap.org and IANA).`,
+    runsOn: () => `Runs from our server: asks the registry’s RDAP service (found through rdap.org and IANA).`,
     run: (v) => api('whois', { query: v.query }),
     render: (r) => (
         <>
@@ -819,6 +964,62 @@ const whois: ToolSpec = {
                   { tool: 'dns', label: `Look up ${r.query}’s DNS records`, values: { name: r.query, type: 'ALL' } },
               ],
     target: (v) => v.query,
+};
+
+// ---------------------------------------------------------------------------
+// MTA-STS, TLS-RPT and BIMI
+// ---------------------------------------------------------------------------
+
+const mailpolicy: ToolSpec = {
+    id: 'mailpolicy',
+    action: 'Check policies',
+    bestFor: 'Checking whether a domain makes senders use TLS (MTA-STS), collects TLS failure reports (TLS-RPT), and shows a brand logo (BIMI).',
+    fields: [DOMAIN_FIELD],
+    runsOn: () => 'Runs from our server: reads the TXT records at _mta-sts, _smtp._tls and default._bimi, and fetches the MTA-STS policy over HTTPS the way senders do.',
+    duration: 'usually 1–5 seconds',
+    run: (v) => api('mailpolicy', { domain: v.domain }),
+    render: (r) => {
+        const issues = (r.checks as Result[]).filter((c) => c.level === 'issue');
+        const mode = r.mtaSts?.policy?.mode;
+        const verdict: Verdict = issues.length
+            ? { level: 'issue', label: `${issues.length} ${issues.length === 1 ? 'problem' : 'problems'}`, title: `${r.domain} has ${issues.length === 1 ? 'a problem' : 'problems'} in its mail policies.`, detail: issues[0].text }
+            : mode === 'enforce'
+              ? { level: 'pass', label: 'Enforced', title: `Mail to ${r.domain} must travel over TLS with a valid certificate.` }
+              : { level: 'neutral', label: r.mtaSts ? `MTA-STS ${mode ?? 'set'}` : 'No MTA-STS', title: r.mtaSts ? `${r.domain} publishes MTA-STS in ${mode} mode.` : `${r.domain} does not require senders to use TLS.` };
+        return (
+            <>
+                <Summary verdict={verdict} />
+                <Rows
+                    rows={[
+                        ['MTA-STS', r.mtaSts ? <Mono>{r.mtaSts.record}</Mono> : 'Not published'],
+                        ['TLS-RPT', r.tlsRpt ? <Mono>{r.tlsRpt.record}</Mono> : 'Not published'],
+                        ['BIMI', r.bimi ? <Mono>{r.bimi.record}</Mono> : 'Not published'],
+                        ['MX hosts', r.mx.length ? r.mx.join(', ') : '—'],
+                    ]}
+                />
+                <Checks checks={r.checks} />
+                {r.mtaSts?.policy?.raw && (
+                    <details className="out-raw" open>
+                        <summary>Policy file at https://mta-sts.{r.domain}/.well-known/mta-sts.txt</summary>
+                        <pre className="out-console">{r.mtaSts.policy.raw}</pre>
+                    </details>
+                )}
+                <Explain>
+                    <p>
+                        Without MTA-STS, senders try TLS but fall back to plain text when it fails, and an attacker on the path can make it fail. With
+                        MTA-STS in enforce mode, senders that support it (Gmail, Microsoft and others) deliver only over TLS to an MX listed in the
+                        policy with a valid certificate. Run the SMTP check on each MX to confirm their certificates.
+                    </p>
+                    <p>BIMI is optional branding. It only works when DMARC is enforced, because inboxes show the logo only on authenticated mail.</p>
+                </Explain>
+            </>
+        );
+    },
+    next: (r) => [
+        ...(r.mx[0] ? [{ tool: 'smtp', label: `Check the certificate on ${r.mx[0]}`, values: { host: r.mx[0] } }] : []),
+        { tool: 'dmarc', label: `Check the DMARC policy of ${r.domain}`, values: { domain: r.domain } },
+    ],
+    target: (v) => v.domain,
 };
 
 // ---------------------------------------------------------------------------
@@ -927,7 +1128,7 @@ const blacklist: ToolSpec = {
     action: 'Check reputation lists',
     bestFor: 'Checking whether a mail server’s IP or a domain is on public spam lists (DNSBLs).',
     fields: [{ name: 'host', label: 'IPv4 address, mail server or domain', placeholder: 'mail.example.com', hint: 'A name is checked by its IPv4 address; a domain is also checked against domain lists.' }],
-    runsOn: () => `Runs from our server in ${SERVER_LOCATION}: one DNS query per list, after checking each list answers its own test entries correctly.`,
+    runsOn: () => `Runs from our server: one DNS query per list, after checking each list answers its own test entries correctly.`,
     duration: 'usually 3–8 seconds',
     run: (v) => api('blacklist', { host: v.host }),
     render: (r) => <Blacklists r={r} />,
@@ -940,5 +1141,5 @@ const blacklist: ToolSpec = {
     target: (v) => v.host,
 };
 
-export const EMAIL_SPECS: ToolSpec[] = [dns, mx, ns, spf, dmarc, dkim, smtp, whois, blacklist];
+export const EMAIL_SPECS: ToolSpec[] = [dns, mx, ns, dnssec, spf, dmarc, dkim, smtp, mailpolicy, whois, blacklist];
 

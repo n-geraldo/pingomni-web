@@ -129,6 +129,25 @@ const AREA_TITLE: Record<string, string> = {
     policy: 'What it asks receivers to do',
     evaluation: 'Can receivers evaluate it?',
     key: 'The key',
+    size: 'Will networks accept a prefix this size?',
+    origin: 'Who announces it?',
+    rpki: 'RPKI',
+    irr: 'IRR route objects',
+    visibility: 'Who can reach it?',
+    history: 'The last 30 days',
+    specifics: 'Other routes inside it',
+    rdns: 'Reverse DNS and greeting',
+    tls: 'Encryption (TLS)',
+    limits: 'Limits',
+    protocols: 'Protocol versions',
+    http: 'HTTPS',
+    chain: 'Chain of trust',
+    validation: 'Validation',
+    crypto: 'Algorithms',
+    signatures: 'Signatures',
+    mtasts: 'MTA-STS: enforced TLS for incoming mail',
+    tlsrpt: 'TLS-RPT: reports about TLS failures',
+    bimi: 'BIMI: the brand logo in inboxes',
 };
 
 /** Checks grouped by what they test, so "published", "valid" and "fully evaluated" never blur together. */
@@ -308,5 +327,40 @@ export function AsPath({ path, names = {} }: { path: number[]; names?: Record<st
                 </span>
             ))}
         </span>
+    );
+}
+
+/** A server's certificate chain: the leaf in full, then each certificate it was issued under. */
+export function Certificate({ tls }: { tls: Result }) {
+    const leaf = tls.chain?.[0];
+    if (!leaf) return null;
+    return (
+        <div className="out-group">
+            <h3 className="out-group-title">Certificate</h3>
+            <Rows
+                rows={[
+                    ['Issued to', leaf.subject ?? '—'],
+                    ['Names it covers', leaf.names.length ? <span className="out-mono out-wrap">{leaf.names.slice(0, 40).join(', ')}{leaf.names.length > 40 && ` and ${leaf.names.length - 40} more`}</span> : '—'],
+                    ['Issued by', [leaf.issuer, leaf.issuerCn && leaf.issuerCn !== leaf.issuer ? `(${leaf.issuerCn})` : ''].filter(Boolean).join(' ') || '—'],
+                    ['Valid', `${date(leaf.notBefore)} to ${date(leaf.notAfter)}${leaf.daysLeft != null ? ` (${leaf.daysLeft < 0 ? `expired ${-leaf.daysLeft} days ago` : `${leaf.daysLeft} days left`})` : ''}`],
+                    ['Key', leaf.key ?? '—'],
+                    ['Signature', leaf.signature ?? '—'],
+                    ['Connection', tls.protocol ? `${tls.protocol}, ${tls.cipher}${tls.cipherBits ? ` (${tls.cipherBits}-bit)` : ''}` : '—'],
+                    ['Trusted', tls.trustError ? <Status level="issue">No</Status> : <Status level="pass">Yes</Status>],
+                ]}
+            />
+            {tls.chain.length > 1 && (
+                <ol className="out-chain">
+                    {tls.chain.map((c: Result, i: number) => (
+                        <li key={i}>
+                            <strong>{c.subject ?? 'Unnamed certificate'}</strong>
+                            <span className="faint">
+                                {i === 0 ? 'Server certificate' : 'Intermediate'}, issued by {c.issuerCn ?? c.issuer ?? 'unknown'}, until {date(c.notAfter)}
+                            </span>
+                        </li>
+                    ))}
+                </ol>
+            )}
+        </div>
     );
 }
