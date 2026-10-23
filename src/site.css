@@ -1144,6 +1144,21 @@ a:hover {
   min-width: 0;
 }
 
+/* The second open tile mirrors the first: its screenshot on the left, running off the left and bottom edges. */
+.tile-flip {
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+}
+
+.tile-flip .tile-shot {
+  order: -1;
+}
+
+.tile-flip .tile-shot .shot {
+  left: auto;
+  right: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
 .tile-shot .shot {
   position: absolute;
   top: clamp(24px, 3vw, 36px);
@@ -5153,6 +5168,15 @@ abbr[title] {
 
   .tile-shot .shot-label {
     top: 0;
+  }
+
+  .tile-flip .tile-shot {
+    order: 0;
+  }
+
+  .tile-flip .tile-shot .shot {
+    left: clamp(24px, 3vw, 36px);
+    right: auto;
   }
 }
 
