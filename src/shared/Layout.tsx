@@ -132,7 +132,6 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
                         <div className="mega-feature-head">
                             <Mark brand="radiusone" size={36} />
                             <Wordmark brand="radiusone" />
-                            <span className="badge badge-success">Available</span>
                         </div>
                         <p className="mega-feature-job">The ISP back office on FreeRADIUS: subscribers, plans, billing and NAS monitoring.</p>
                         <div className="mega-feature-body">

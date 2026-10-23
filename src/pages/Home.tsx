@@ -20,7 +20,6 @@ function Launcher() {
                                 <Wordmark brand="radiusone" />
                             </a>
                         </h2>
-                        <span className="badge badge-success">Available</span>
                     </div>
                     <p className="tile-pitch">The ISP back office on FreeRADIUS.</p>
                     <p className="tile-text">
@@ -284,9 +283,7 @@ function About() {
                                     <Mark brand={f.brand} size={40} />
                                     <Wordmark brand={f.brand} />
                                     <span className="family-job">{f.job}</span>
-                                    <span className={f.available ? 'badge badge-success' : 'badge badge-warning'}>
-                                        {f.available ? 'Available' : 'Coming soon'}
-                                    </span>
+                                    {!f.available && <span className="badge badge-warning">Coming soon</span>}
                                 </a>
                             </li>
                         ))}
