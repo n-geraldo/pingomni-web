@@ -3,28 +3,41 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>DNSOne by PingOmni: DNS for ISPs and network operators</title>
-        <meta name="description" content="DNSOne, DNS for ISPs and network operators, is coming to the PingOmni family. Get an email when it is ready." />
+        <title>DNSOne: DNS management for ISPs on BIND, PowerDNS and dnsdist</title>
+        <meta name="description" content="DNSOne is self-hosted DNS for ISPs: authoritative zones on BIND, a PowerDNS Recursor resolver with RPZ ad-blocking, and dnsdist rate limiting, run from one web console." />
         <link rel="canonical" href="%VITE_SITE_URL%/dnsone/" />
         <meta name="theme-color" content="#ffffff" />
         <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="PingOmni" />
-        <meta property="og:title" content="DNSOne by PingOmni: DNS for ISPs and network operators" />
-        <meta property="og:description" content="DNSOne, DNS for ISPs and network operators, is coming to the PingOmni family. Get an email when it is ready." />
+        <meta property="og:title" content="DNSOne: DNS management for ISPs on BIND, PowerDNS and dnsdist" />
+        <meta property="og:description" content="DNSOne is self-hosted DNS for ISPs: authoritative zones on BIND, a PowerDNS Recursor resolver with RPZ ad-blocking, and dnsdist rate limiting, run from one web console." />
         <meta property="og:url" content="%VITE_SITE_URL%/dnsone/" />
-        <meta property="og:image" content="%VITE_SITE_URL%/og/default.png" />
+        <meta property="og:image" content="%VITE_SITE_URL%/og/dnsone.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="DNSOne by PingOmni: DNS for ISPs and network operators" />
-        <meta name="twitter:description" content="DNSOne, DNS for ISPs and network operators, is coming to the PingOmni family. Get an email when it is ready." />
-        <meta name="twitter:image" content="%VITE_SITE_URL%/og/default.png" />
+        <meta name="twitter:title" content="DNSOne: DNS management for ISPs on BIND, PowerDNS and dnsdist" />
+        <meta name="twitter:description" content="DNSOne is self-hosted DNS for ISPs: authoritative zones on BIND, a PowerDNS Recursor resolver with RPZ ad-blocking, and dnsdist rate limiting, run from one web console." />
+        <meta name="twitter:image" content="%VITE_SITE_URL%/og/dnsone.png" />
         <script type="application/ld+json">
             {
                 "@context": "https://schema.org",
                 "@graph": [
+                    {
+                        "@type": "SoftwareApplication",
+                        "name": "DNSOne",
+                        "url": "%VITE_SITE_URL%/dnsone/",
+                        "applicationCategory": "BusinessApplication",
+                        "operatingSystem": "Ubuntu 24.04 LTS",
+                        "softwareRequirements": "BIND 9, PowerDNS Recursor, dnsdist, MySQL 8",
+                        "description": "Self-hosted DNS management for ISPs: authoritative zones on BIND, a caching resolver with RPZ ad-blocking, dnsdist access control and rate limiting, health checks, roles and an audit log.",
+                        "codeRepository": "https://github.com/n-geraldo/dnsone",
+                        "publisher": {
+                            "@id": "%VITE_SITE_URL%/#organization"
+                        }
+                    },
                     {
                         "@type": "BreadcrumbList",
                         "itemListElement": [

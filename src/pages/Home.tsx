@@ -59,23 +59,37 @@ function Launcher() {
                 </figure>
             </article>
 
-            {(['ticketone', 'dnsone'] as const).map((brand) => (
-                <article className="tile tile-closed" aria-labelledby={`tile-${brand}`} key={brand}>
-                    <Mark brand={brand} size={40} />
-                    <div className="tile-closed-text">
-                        <h2 id={`tile-${brand}`} className="tile-name">
-                            <a href={`${root}${brand}/`}>
-                                <Wordmark brand={brand} />
-                            </a>
-                        </h2>
-                        <p>{brand === 'ticketone' ? 'Support tickets for ISP help desks.' : 'DNS for ISPs and network operators.'}</p>
-                    </div>
-                    <span className="badge badge-warning">Coming soon</span>
-                    <a className="tile-link" href={mailto(`Tell me when ${brand === 'ticketone' ? 'TicketOne' : 'DNSOne'} is ready`)}>
-                        Tell me when it’s ready
-                    </a>
-                </article>
-            ))}
+            <article className="tile tile-closed" aria-labelledby="tile-dnsone">
+                <Mark brand="dnsone" size={40} />
+                <div className="tile-closed-text">
+                    <h2 id="tile-dnsone" className="tile-name">
+                        <a href={`${root}dnsone/`}>
+                            <Wordmark brand="dnsone" />
+                        </a>
+                    </h2>
+                    <p>DNS for ISPs: hosted zones, the customer resolver and ad-blocking.</p>
+                </div>
+                <a className="tile-link text-link" href={`${root}dnsone/`}>
+                    About DNSOne
+                    <Icon name="arrow" />
+                </a>
+            </article>
+
+            <article className="tile tile-closed" aria-labelledby="tile-ticketone">
+                <Mark brand="ticketone" size={40} />
+                <div className="tile-closed-text">
+                    <h2 id="tile-ticketone" className="tile-name">
+                        <a href={`${root}ticketone/`}>
+                            <Wordmark brand="ticketone" />
+                        </a>
+                    </h2>
+                    <p>Support tickets for ISP help desks.</p>
+                </div>
+                <span className="badge badge-warning">Coming soon</span>
+                <a className="tile-link" href={mailto('Tell me when TicketOne is ready')}>
+                    Tell me when it’s ready
+                </a>
+            </article>
         </div>
     );
 }
@@ -254,8 +268,8 @@ const COMMITMENTS: { term: string; icon: string; text: string }[] = [
 // The product family in release order: what is out, then what comes next.
 const FAMILY: { brand: 'radiusone' | 'ticketone' | 'dnsone'; job: string; available?: boolean }[] = [
     { brand: 'radiusone', job: 'ISP back office', available: true },
+    { brand: 'dnsone', job: 'DNS', available: true },
     { brand: 'ticketone', job: 'Support tickets' },
-    { brand: 'dnsone', job: 'DNS' },
 ];
 
 function About() {

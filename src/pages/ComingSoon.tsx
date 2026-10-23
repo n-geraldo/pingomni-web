@@ -6,7 +6,6 @@ import { useSite } from '../shared/Layout';
 // Products that are not out yet: what they are for, an honest status, and a way to hear when they are ready.
 const PRODUCTS = {
     ticketone: { name: 'TicketOne', job: 'Support tickets for ISP help desks.' },
-    dnsone: { name: 'DNSOne', job: 'DNS for ISPs and network operators.' },
 } as const;
 
 export default function ComingSoon({ brand }: { brand: keyof typeof PRODUCTS }) {
