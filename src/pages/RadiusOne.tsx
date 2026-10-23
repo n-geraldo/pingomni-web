@@ -514,7 +514,6 @@ export default function RadiusOne() {
                             <span className="product-name">
                                 <Wordmark brand="radiusone" />
                             </span>
-                            <span className="badge badge-success">Available</span>
                         </div>
                         <h1 id="hero-title" className="display">
                             The ISP back office on FreeRADIUS.
