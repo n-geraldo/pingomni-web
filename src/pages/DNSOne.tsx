@@ -1,11 +1,8 @@
 import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { Mark, Wordmark } from '../brand';
-import { DNSONE_REPO_URL, mailto } from '../config';
+import { DNSONE_DEMO_URL, mailto } from '../config';
 import Icon from '../Icon';
-import { copyText } from '../lib/copy';
-import { Contact } from '../shared/Layout';
-
-const RUNBOOK_URL = `${DNSONE_REPO_URL}/blob/main/docs/RUNBOOK.md`;
+import { Contact, Shot } from '../shared/Layout';
 
 const REQUIREMENTS: { term: string; text: string }[] = [
     { term: 'Operating system', text: 'Ubuntu 24.04 LTS, server or minimal' },
@@ -14,8 +11,6 @@ const REQUIREMENTS: { term: string; text: string }[] = [
     { term: 'Addresses', text: 'A public address for DNS on port 53, and a management network for SSH and the console' },
     { term: 'Access', text: 'Root, or a user with sudo rights' },
 ];
-
-const CLONE = 'git clone https://github.com/n-geraldo/dnsone.git /opt/dnsone';
 
 // The runbook's chapters (docs/RUNBOOK.md), in order. Every chapter ends with its own checks.
 const RUNBOOK_STEPS = [
@@ -52,7 +47,7 @@ const USE_CASES: { id: string; icon: string; tab: string; title: string; scene: 
         how: [
             'dnsdist answers only your customer networks and drops the rest',
             'Each address gets its own rate limit, with a higher one for NAT and CGNAT addresses',
-            'The Recursor resolves from the root, validates DNSSEC and caches up to two million records',
+            'The Recursor resolves from the root, validates DNSSEC and also answers over DNS over TLS and HTTPS',
         ],
     },
     {
@@ -74,9 +69,9 @@ const USE_CASES: { id: string; icon: string; tab: string; title: string; scene: 
         title: 'Blocking ads and malware for every customer',
         scene: 'The ISP wants to offer cleaner browsing without installing anything on customer devices.',
         how: [
-            'Subscribe to public blocklists (hosts files, domain lists or Adblock rules); they refresh every six hours',
-            'Block or allow single domains by hand; an allow rule works at once',
-            'Look up any domain to see which list or rule blocks it',
+            'Subscribe to public blocklists (hosts files, domain lists or Adblock rules); they refresh on their own',
+            'Client groups give business customers no ad-blocking and homes a family filter',
+            'Look up any domain to see which list or rule blocks it, and the query log shows who asked',
         ],
     },
     {
@@ -143,22 +138,23 @@ function RecordsMock() {
     );
 }
 
-function PublishMock() {
-    const steps = ['Zone file written', 'named-checkzone passed', 'Renamed into place', 'rndc reload'];
+function GroupsMock() {
+    const groups: [string, string, boolean][] = [
+        ['Default', 'everyone else', true],
+        ['Business', '2 networks', false],
+        ['Family filter', '2 networks', true],
+    ];
     return (
         <div className="mock mock-list" aria-hidden="true">
-            {steps.map((s) => (
-                <div className="mock-step" key={s}>
-                    <span className="mock-check">
-                        <Icon name="check" />
+            {groups.map(([name, clients, on]) => (
+                <div className="mock-line" key={name}>
+                    <span className="mock-cut">
+                        <span className="mock-nas-name">{name}</span> <span className="mock-faint">{clients}</span>
                     </span>
-                    {s}
+                    <span />
+                    <Pill tone={on ? 'ok' : 'plain'}>{on ? 'Blocking' : 'Off'}</Pill>
                 </div>
             ))}
-            <div className="mock-note">
-                <Icon name="refresh" />
-                Rolled back if the reload fails
-            </div>
         </div>
     );
 }
@@ -210,20 +206,20 @@ function LimitsMock() {
     );
 }
 
-function HealthMock() {
-    const rows: [string, string][] = [
-        ['BIND', '1 ms'],
-        ['Recursor', '4.9.3'],
-        ['dnsdist', '1.8.3'],
-        ['RPZ', '184,212'],
+function QueryLogMock() {
+    const rows: [string, string, Tone, string][] = [
+        ['10.20.12.247', 'casino-demo.example', 'warn', 'blocked'],
+        ['10.20.7.40', 'login.bank-demo.example', 'ok', 'allowed'],
+        ['10.20.7.163', 'demo-isp.net', 'plain', 'ok'],
+        ['100.64.10.2', 'pixel.tracking-demo.example', 'warn', 'blocked'],
     ];
     return (
         <div className="mock mock-list" aria-hidden="true">
-            {rows.map(([name, detail]) => (
-                <div className="mock-line mock-health" key={name}>
-                    <span>{name}</span>
-                    <span className="mock-mono mock-faint">{detail}</span>
-                    <Pill tone="ok">ok</Pill>
+            {rows.map(([client, domain, tone, status]) => (
+                <div className="mock-line mock-query" key={domain}>
+                    <span className="mock-mono mock-faint">{client}</span>
+                    <span className="mock-mono mock-cut">{domain}</span>
+                    <Pill tone={tone}>{status}</Pill>
                 </div>
             ))}
         </div>
@@ -261,43 +257,47 @@ const MODULES: { area: string; icon: string; title: string; items: string[]; moc
         area: 'zones',
         icon: 'globe',
         title: 'Zones and records',
-        items: ['Authoritative zones on BIND, edited cPanel-style', 'A, AAAA, CNAME, MX, TXT, NS, SRV, CAA and PTR', 'Every record checked before it is saved'],
+        items: [
+            'Authoritative zones on BIND, edited cPanel-style or imported from a zone file',
+            'Every record checked before it is saved; zone files checked and swapped in, rolled back if BIND rejects them',
+            'DNSSEC signing per zone',
+        ],
         mock: <RecordsMock />,
         wide: true,
     },
     {
-        area: 'publish',
-        icon: 'refresh',
-        title: 'Safe publishing',
-        items: ['Zone files generated from MySQL', 'Checked, then swapped in atomically', 'Rolled back if BIND rejects them'],
-        mock: <PublishMock />,
+        area: 'groups',
+        icon: 'clients',
+        title: 'Client groups',
+        items: ['Each customer network in its own group', 'Own blocklists, allowlists and rules per group', 'No ad-blocking for business, a family filter for homes'],
+        mock: <GroupsMock />,
     },
     {
         area: 'blocking',
         icon: 'ban',
         title: 'Ad-blocking',
-        items: ['Blocklists turned into an RPZ for the Recursor', 'Block and allow rules, with a domain lookup', 'Reloaded without a restart or lost queries'],
+        items: ['Blocklists turned into an RPZ for the Recursor', 'Domain and regular-expression rules, with a domain check', 'Pause blocking for minutes, or until resumed'],
         mock: <BlocklistsMock />,
     },
     {
         area: 'limits',
         icon: 'gauge',
         title: 'Resolver protection',
-        items: ['Only your customer networks may recurse', 'Rate limits per address, higher for NAT', 'Floods get a dynamic block'],
+        items: ['Only your customer networks may recurse', 'Rate limits per address, higher for NAT', 'Encrypted DNS over TLS and HTTPS'],
         mock: <LimitsMock />,
     },
     {
-        area: 'health',
-        icon: 'activity',
-        title: 'Health and statistics',
-        items: ['Queries and blocked queries per hour', 'Live checks of every DNS service', 'An /api/health address for your monitoring'],
-        mock: <HealthMock />,
+        area: 'queries',
+        icon: 'search',
+        title: 'Query log',
+        items: ['Every query, searchable by client, domain and reply', 'Top domains, top blocked and top clients', 'Live health checks of every DNS service'],
+        mock: <QueryLogMock />,
     },
     {
         area: 'safety',
         icon: 'shield',
         title: 'Safety',
-        items: ['Admin, operator and viewer roles', 'An audit log of every change', 'Daily verified backups of the database and every config, kept for 14 days'],
+        items: ['Admin, operator and viewer roles', 'An audit log of every change', 'Daily verified backups of the database and every config'],
         mock: <SafetyMock />,
         full: true,
     },
@@ -311,7 +311,7 @@ function Modules() {
                     <h2 id="features-title" className="h2">
                         Every DNS job, in one console.
                     </h2>
-                    <p className="lead">Hosted zones, the customer resolver and ad-blocking, run by the same team from the same screen.</p>
+                    <p className="lead">Hosted zones, the customer resolver, ad-blocking and the query log, run by the same team from the same screen.</p>
                 </div>
                 <div className="modules">
                     {MODULES.map((m) => (
@@ -400,32 +400,6 @@ function UseCases() {
     );
 }
 
-function CopyCommand() {
-    const [copied, setCopied] = useState(false);
-    const copy = async () => {
-        if (await copyText(CLONE)) {
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1600);
-        }
-    };
-    return (
-        <div className="command">
-            <code>
-                <span className="command-prompt" aria-hidden="true">
-                    $
-                </span>{' '}
-                {CLONE}
-            </code>
-            <button type="button" className="icon-btn" onClick={copy} aria-label={copied ? 'Copied' : 'Copy the clone command'}>
-                <Icon name={copied ? 'check' : 'copy'} />
-            </button>
-            <span className="sr-only" role="status">
-                {copied ? 'Copied to clipboard' : ''}
-            </span>
-        </div>
-    );
-}
-
 // What dnsone-status prints at the end of the runbook: every probe ok.
 function Terminal() {
     const width = Math.max(...STATUS.map(([name]) => name.length));
@@ -505,97 +479,6 @@ function NetworkPath() {
     );
 }
 
-// The hero: the console's zone editor, with the dashboard's query chart floating over its corner. Sample data.
-const HOURS = [38, 34, 30, 27, 25, 26, 31, 42, 58, 66, 70, 72, 74, 71, 69, 72, 77, 84, 92, 98, 100, 94, 76, 52];
-const NAV = [
-    ['grid', 'Dashboard'],
-    ['globe', 'Zones'],
-    ['ban', 'Ad-blocking'],
-    ['eye', 'Audit log'],
-    ['tools', 'Settings'],
-] as const;
-
-function ConsoleMock() {
-    return (
-        <div className="console-mock" aria-hidden="true">
-            <aside className="console-side">
-                <span className="console-brand">
-                    <Mark brand="dnsone" size={22} />
-                    <Wordmark brand="dnsone" />
-                </span>
-                {NAV.map(([icon, label]) => (
-                    <span className={label === 'Zones' ? 'console-nav is-active' : 'console-nav'} key={label}>
-                        <Icon name={icon} />
-                        {label}
-                    </span>
-                ))}
-            </aside>
-            <div className="console-main">
-                <div className="console-top">
-                    <span className="console-crumb">Zones /</span>
-                    <strong>example.net</strong>
-                    <span className="mock-btn mock-btn-primary">Publish</span>
-                </div>
-                <div className="console-figures">
-                    {[
-                        ['Records', '18'],
-                        ['Serial', '2026102403'],
-                        ['State', 'Published'],
-                    ].map(([label, value]) => (
-                        <span key={label}>
-                            <span className="mock-faint">{label}</span>
-                            <strong className={label === 'State' ? 'console-ok' : undefined}>{value}</strong>
-                        </span>
-                    ))}
-                </div>
-                <table className="console-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Value</th>
-                            <th>TTL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {[...RECORDS, ['_sip._tcp', 'SRV', '10 60 5060 sip.example.net.', '3600'], ['@', 'CAA', '0 issue "letsencrypt.org"', '86400']].map(([name, type, value, ttl], i) => (
-                            <tr key={i}>
-                                <td className="mock-mono">{name}</td>
-                                <td>
-                                    <span className="mock-type">{type}</span>
-                                </td>
-                                <td className="mock-mono">{value}</td>
-                                <td className="mock-mono mock-faint">{ttl}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-}
-
-function QueriesMock() {
-    return (
-        <div className="queries-mock" aria-hidden="true">
-            <span className="queries-title">Queries, last 24 hours</span>
-            <div className="queries-bars">
-                {HOURS.map((h, i) => (
-                    <span key={i} style={{ height: `${h}%` }}>
-                        <span style={{ height: `${Math.round(h * 0.16)}%` }} />
-                    </span>
-                ))}
-            </div>
-            <span className="queries-legend">
-                <i />
-                Answered
-                <i className="blocked" />
-                Blocked
-            </span>
-        </div>
-    );
-}
-
 export default function DNSOne() {
     return (
         <>
@@ -612,15 +495,12 @@ export default function DNSOne() {
                             DNS for ISPs, on your own server.
                         </h1>
                         <p className="lead">
-                            Hosted zones, the customer resolver and ad-blocking in one console, on BIND, PowerDNS Recursor and dnsdist.
+                            Hosted zones, the customer resolver, ad-blocking and a query log in one console, on BIND, PowerDNS Recursor and
+                            dnsdist.
                         </p>
                         <div className="actions">
-                            <a className="btn btn-primary btn-lg" href={DNSONE_REPO_URL} target="_blank" rel="noopener">
-                                <Icon name="code" />
-                                Get the code
-                            </a>
-                            <a className="btn btn-lg btn-ghost" href={RUNBOOK_URL} target="_blank" rel="noopener">
-                                Read the runbook
+                            <a className="btn btn-primary btn-lg" href={DNSONE_DEMO_URL} target="_blank" rel="noopener">
+                                Try the demo
                                 <Icon name="external" />
                             </a>
                             <a className="btn btn-lg btn-ghost" href={mailto('DNSOne')}>
@@ -628,10 +508,10 @@ export default function DNSOne() {
                             </a>
                         </div>
                     </div>
-                    <figure className="product-hero-shot product-hero-console">
-                        <ConsoleMock />
-                        <div className="hero-float hero-float-queries">
-                            <QueriesMock />
+                    <figure className="product-hero-shot">
+                        <Shot name="dnsone-dashboard" alt="The DNSOne dashboard: queries, blocked queries, cache hit rate and service health" eager />
+                        <div className="hero-float" aria-hidden="true">
+                            <Shot name="dnsone-queries" alt="" eager />
                         </div>
                     </figure>
                 </div>
@@ -653,18 +533,7 @@ export default function DNSOne() {
                             Every step comes with its commands and the checks that prove it worked, from a fresh server to a console behind
                             HTTPS.
                         </p>
-                        <p className="small muted">
-                            Get the code from the{' '}
-                            <a href={DNSONE_REPO_URL} target="_blank" rel="noopener">
-                                DNSOne repository on GitHub
-                            </a>
-                            , then follow{' '}
-                            <a href={RUNBOOK_URL} target="_blank" rel="noopener">
-                                docs/RUNBOOK.md
-                            </a>
-                            :
-                        </p>
-                        <CopyCommand />
+                        <p className="small muted">The runbook ships with DNSOne, in eight chapters:</p>
                         <ol className="runbook-steps">
                             {RUNBOOK_STEPS.map((s) => (
                                 <li key={s}>{s}</li>
@@ -683,7 +552,13 @@ export default function DNSOne() {
                 </div>
             </section>
 
-            <Contact title="Running DNS for an ISP?" text="Tell us about your network, and we will help you plan a DNSOne server for it." />
+            <Contact
+                demo
+                demoUrl={DNSONE_DEMO_URL}
+                demoLabel="Try the DNSOne demo"
+                title="See it on sample data."
+                text="The demo runs the real DNSOne console on sample data. Click through anything, then tell us about your network."
+            />
         </>
     );
 }
