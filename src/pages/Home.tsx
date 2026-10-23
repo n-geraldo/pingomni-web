@@ -55,7 +55,6 @@ function Launcher() {
                     </div>
                 </div>
                 <figure className="tile-shot">
-                    <figcaption className="shot-label">Demo data</figcaption>
                     <Shot name="dashboard" alt="The RadiusOne dashboard: online clients, NAS status and top users" eager />
                 </figure>
             </article>
