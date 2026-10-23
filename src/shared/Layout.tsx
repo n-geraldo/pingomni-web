@@ -19,11 +19,11 @@ function currentTheme(): Theme {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-// The Products menu: what is available first, then what is coming.
+// The Products menu: RadiusOne featured, then the other products available, then what is coming.
 const PRODUCTS: { page: Brand & PageId; href: string; job: string; soon?: boolean }[] = [
     { page: 'radiusone', href: 'radiusone/', job: 'ISP back office on FreeRADIUS' },
+    { page: 'dnsone', href: 'dnsone/', job: 'DNS for ISPs: zones, resolver and ad-blocking' },
     { page: 'ticketone', href: 'ticketone/', job: 'Support tickets for ISP help desks', soon: true },
-    { page: 'dnsone', href: 'dnsone/', job: 'DNS for ISPs and network operators', soon: true },
 ];
 
 // Shared open/close behaviour for the navbar menus: Escape or a click outside closes them.
@@ -156,21 +156,28 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
                         </div>
                     </div>
                     <div className="mega-soon">
-                        <p className="mega-soon-title">Coming soon</p>
-                        <ul>
-                            {PRODUCTS.filter((p) => p.soon).map((p) => (
-                                <li key={p.page}>
-                                    <a href={`${root}${p.href}`} aria-current={p.page === page ? 'page' : undefined} onClick={close}>
-                                        <Mark brand={p.page} size={32} />
-                                        <span className="mega-soon-text">
-                                            <Wordmark brand={p.page} />
-                                            <span className="mega-soon-job">{p.job}</span>
-                                        </span>
-                                        <Icon name="arrow" />
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
+                        {([
+                            ['Also available', PRODUCTS.filter((p) => p.page !== 'radiusone' && !p.soon)],
+                            ['Coming soon', PRODUCTS.filter((p) => p.soon)],
+                        ] as const).map(([title, list]) => (
+                            <div className="mega-soon-group" key={title}>
+                                <p className="mega-soon-title">{title}</p>
+                                <ul>
+                                    {list.map((p) => (
+                                        <li key={p.page}>
+                                            <a href={`${root}${p.href}`} aria-current={p.page === page ? 'page' : undefined} onClick={close}>
+                                                <Mark brand={p.page} size={32} />
+                                                <span className="mega-soon-text">
+                                                    <Wordmark brand={p.page} />
+                                                    <span className="mega-soon-job">{p.job}</span>
+                                                </span>
+                                                <Icon name="arrow" />
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -288,11 +295,9 @@ function Footer() {
                         <h2 id="footer-products">Products</h2>
                         <a href={`${root}radiusone/`}>RadiusOne</a>
                         <a href={`${root}radiusone/#use-cases`}>RadiusOne use cases</a>
+                        <a href={`${root}dnsone/`}>DNSOne</a>
                         <a className="footer-soon" href={`${root}ticketone/`}>
                             TicketOne <span>Soon</span>
-                        </a>
-                        <a className="footer-soon" href={`${root}dnsone/`}>
-                            DNSOne <span>Soon</span>
                         </a>
                     </nav>
                     <nav className="footer-col" aria-labelledby="footer-company">

@@ -17,8 +17,8 @@ export function Mark({ brand, size = 32, className }: { brand: Brand; size?: num
         <svg className={className ? `mark ${className}` : 'mark'} width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
             <defs>
                 <linearGradient id={id} x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stopColor="#2f6bf0" />
-                    <stop offset="1" stopColor="#4338ca" />
+                    <stop offset="0" stopColor="#0d7f78" />
+                    <stop offset="1" stopColor="#155e75" />
                 </linearGradient>
             </defs>
             <rect width="64" height="64" rx="15" fill={`url(#${id})`} />

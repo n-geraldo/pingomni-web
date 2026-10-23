@@ -1,4 +1,5 @@
 import ComingSoon from './pages/ComingSoon';
+import DNSOne from './pages/DNSOne';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import RadiusOne from './pages/RadiusOne';
@@ -9,7 +10,7 @@ const PAGES: Record<PageId, () => React.ReactNode> = {
     home: () => <Home />,
     radiusone: () => <RadiusOne />,
     ticketone: () => <ComingSoon brand="ticketone" />,
-    dnsone: () => <ComingSoon brand="dnsone" />,
+    dnsone: () => <DNSOne />,
     'tools-network': () => <Tools group="network" />,
     'tools-email': () => <Tools group="email" />,
     'tools-bgp': () => <Tools group="bgp" />,

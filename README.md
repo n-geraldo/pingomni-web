@@ -1,6 +1,6 @@
 # PingOmni website
 
-The company site for PingOmni, the home of RadiusOne and the "One" product family (TicketOne and DNSOne are coming). It's a static Vite + React build, plus a small PHP API for the network tools page. It uses the RadiusOne portal's design tokens, system font and logo language.
+The company site for PingOmni, the home of RadiusOne, DNSOne and the "One" product family (TicketOne is coming). It's a static Vite + React build, plus a small PHP API for the network tools page. It uses the RadiusOne portal's token names and logo language, in the brand's teal palette (the DNSOne colours).
 
 ## Develop and build
 
@@ -20,6 +20,7 @@ Set these at build time in `.env` (or `.env.production`):
 |---|---|---|
 | `VITE_SITE_URL` | `https://pingomni.com` | Canonical links, Open Graph tags, structured data, sitemap.xml and robots.txt |
 | `VITE_DEMO_URL` | `https://demo-radiusone.pingomni.com/?r=/login` | "Try the demo" buttons. The RadiusOne demo is its own site (`/opt/radiusone-demo`); `?r=/login` opens it at the sign-in page |
+| `VITE_DNSONE_REPO_URL` | `https://github.com/n-geraldo/dnsone` | DNSOne "Get the code" and runbook links |
 | `VITE_CONTACT_EMAIL` | `hello@pingomni.com` | Contact and "Tell me when it's ready" links |
 
 ## Network tools
@@ -58,7 +59,7 @@ sudo cp deploy/nginx.conf /etc/nginx/sites-available/pingomni-web && sudo nginx 
 ## Files
 
 - `index.html`, `radiusone/`, `ticketone/`, `dnsone/`, `tools/network/`, `tools/email/`, `tools/bgp/`: one HTML file per page, so every address works on any static host.
-- `src/pages/`: the home, RadiusOne and coming-soon pages; `src/shared/Layout.tsx`: header, footer, contact band and theme switch.
+- `src/pages/`: the home, RadiusOne, DNSOne and coming-soon pages; `src/shared/Layout.tsx`: header, footer, contact band and theme switch.
 - `src/site.css`: tokens (same names and values as the portal's `resources/css/app.css`) and styles.
 - `src/brand.tsx`: the family marks (one tile, gradient and teal "ping" dot; one letter per product) and wordmarks.
 - `src/pages/Tools.tsx` and `src/lib/ipcalc.ts`: the tools page and the subnet maths.
