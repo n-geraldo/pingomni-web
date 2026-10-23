@@ -537,7 +537,6 @@ export default function RadiusOne() {
                         </div>
                     </div>
                     <figure className="product-hero-shot">
-                        <figcaption className="shot-label">Demo data</figcaption>
                         <Shot name="dashboard" alt="The RadiusOne dashboard: online clients, NAS status and top users" eager />
                         <div className="hero-float" aria-hidden="true">
                             <Shot name="clients" alt="" eager />
