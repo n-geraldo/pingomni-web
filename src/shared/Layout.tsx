@@ -6,6 +6,9 @@ import Icon from '../Icon';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 
 export type Theme = 'light' | 'dark';
+
+// Bump when the screenshots are retaken: browsers and Cloudflare keep /shots/ for a day under the same address.
+export const SHOTS_VERSION = '?v=2';
 export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'notfound';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
@@ -136,7 +139,7 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
                         <p className="mega-feature-job">The ISP back office on FreeRADIUS: subscribers, plans, billing and NAS monitoring.</p>
                         <div className="mega-feature-body">
                             <a className="mega-shot" href={`${root}radiusone/`} tabIndex={-1} aria-hidden="true" onClick={close}>
-                                <img src={`${root}shots/dashboard-${theme}.jpg`} alt="" width={1800} height={1500} loading="lazy" />
+                                <img src={`${root}shots/dashboard-${theme}.jpg${SHOTS_VERSION}`} alt="" width={1800} height={1500} loading="lazy" />
                             </a>
                             <div className="mega-feature-links">
                                 <a
@@ -377,7 +380,7 @@ export function Shot({ name, alt, eager = false }: { name: string; alt: string; 
     return (
         <img
             className="shot"
-            src={`${root}shots/${name}-${theme}.jpg`}
+            src={`${root}shots/${name}-${theme}.jpg${SHOTS_VERSION}`}
             {...size}
             alt={alt}
             loading={eager ? 'eager' : 'lazy'}
