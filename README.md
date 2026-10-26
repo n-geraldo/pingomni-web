@@ -55,12 +55,16 @@ sudo cp deploy/nginx.conf /etc/nginx/sites-available/pingomni-web && sudo nginx 
 
 ## Screenshots
 
-`public/shots/` holds real RadiusOne screens captured from the static demo (sample data), in light and dark. Each file names its source in its JPEG comment. Recapture them after a RadiusOne update changes the screens.
+`public/shots/` holds real RadiusOne and DNSOne screens captured from their static demos (sample data), in light and dark. Each file names its source in its JPEG comment. Recapture them after an update changes the screens, and bump `SHOTS_VERSION` in `src/shared/Layout.tsx` (new pixel sizes go in `SHOT_SIZES` there). The DNSOne 1.5 screens (Protection, Firewall, Transfers) use the demo's 1.5 sample data (`dnsone-demo/src/fixtures-1.5.json`).
+
+## Documentation
+
+`/docs/` lists both product guides, with one search over both; `/docs/radiusone/` and `/docs/dnsone/` show each guide. They are the same `docs/USER-GUIDE.md` each console shows (RadiusOne: Documentation, DNSOne: Help), drawn by the same component (RadiusOne's `resources/js/components/guide.tsx`), so they read alike. After a guide changes, run `bash scripts/sync-docs.sh` (it copies both guides, the component and the versions into `src/docs/` and `src/shared/guide.tsx`; `DNSONE_GUIDE` says where DNSOne's guide is, by default over ssh from the DNSOne server), then `npm run build`.
 
 ## Files
 
-- `index.html`, `radiusone/`, `ticketone/`, `dnsone/`, `tools/network/`, `tools/email/`, `tools/bgp/`: one HTML file per page, so every address works on any static host.
-- `src/pages/`: the home, RadiusOne, DNSOne and coming-soon pages; `src/shared/Layout.tsx`: header, footer, contact band and theme switch.
+- `index.html`, `radiusone/`, `ticketone/`, `dnsone/`, `docs/`, `docs/radiusone/`, `docs/dnsone/`, `tools/network/`, `tools/email/`, `tools/bgp/`: one HTML file per page, so every address works on any static host.
+- `src/pages/`: the home, RadiusOne, DNSOne, documentation and coming-soon pages; `src/shared/Layout.tsx`: header, footer, contact band and theme switch.
 - `src/site.css`: tokens (same names and values as the portal's `resources/css/app.css`) and styles.
 - `src/brand.tsx`: the family marks (one tile, gradient and teal "ping" dot; one letter per product) and wordmarks.
 - `src/pages/Tools.tsx` and `src/lib/ipcalc.ts`: the tools page and the subnet maths.
