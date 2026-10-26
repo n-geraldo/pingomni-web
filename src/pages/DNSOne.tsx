@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { Mark, Wordmark } from '../brand';
-import { DNSONE_DEMO_URL, mailto } from '../config';
+import { DNSONE_DEMO_URL, DNSONE_REPO_URL, mailto } from '../config';
 import Icon from '../Icon';
 import { Contact, Shot } from '../shared/Layout';
 
@@ -503,6 +503,10 @@ export default function DNSOne() {
                                 Try the demo
                                 <Icon name="external" />
                             </a>
+                            <a className="btn btn-lg btn-ghost" href={DNSONE_REPO_URL} target="_blank" rel="noopener">
+                                <Icon name="code" />
+                                Get the code
+                            </a>
                             <a className="btn btn-lg btn-ghost" href={mailto('DNSOne')}>
                                 Email us
                             </a>
@@ -533,7 +537,13 @@ export default function DNSOne() {
                             Every step comes with its commands and the checks that prove it worked, from a fresh server to a console behind
                             HTTPS.
                         </p>
-                        <p className="small muted">The runbook ships with DNSOne, in eight chapters:</p>
+                        <p className="small muted">
+                            The runbook ships with DNSOne in the{' '}
+                            <a href={DNSONE_REPO_URL} target="_blank" rel="noopener">
+                                DNSOne repository on GitHub
+                            </a>
+                            , in eight chapters:
+                        </p>
                         <ol className="runbook-steps">
                             {RUNBOOK_STEPS.map((s) => (
                                 <li key={s}>{s}</li>

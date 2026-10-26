@@ -21,6 +21,7 @@ Set these at build time in `.env` (or `.env.production`):
 | `VITE_SITE_URL` | `https://pingomni.com` | Canonical links, Open Graph tags, structured data, sitemap.xml and robots.txt |
 | `VITE_DEMO_URL` | `https://demo-radiusone.pingomni.com/?r=/login` | "Try the demo" buttons. The RadiusOne demo is its own site (`/opt/radiusone-demo`); `?r=/login` opens it at the sign-in page |
 | `VITE_DNSONE_DEMO_URL` | `https://demo-dns.pingomni.com/` | DNSOne "Try the demo" buttons |
+| `VITE_DNSONE_REPO_URL` | `https://github.com/Pingomni/dnsone` | DNSOne "Get the code" button and runbook link |
 | `VITE_CONTACT_EMAIL` | `hello@pingomni.com` | Contact and "Tell me when it's ready" links |
 
 ## Network tools
