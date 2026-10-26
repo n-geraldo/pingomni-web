@@ -8,8 +8,8 @@ import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 export type Theme = 'light' | 'dark';
 
 // Bump when the screenshots are retaken: browsers and Cloudflare keep /shots/ for a day under the same address.
-export const SHOTS_VERSION = '?v=2';
-export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'notfound';
+export const SHOTS_VERSION = '?v=3';
+export type PageId = 'home' | 'radiusone' | 'ticketone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'notfound';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
 type Site = { page: PageId; root: string; theme: Theme };
@@ -105,7 +105,10 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
     );
 }
 
-const NAV: { href: string; label: string; page?: PageId }[] = [{ href: '#about', label: 'About' }];
+const NAV: { href: string; label: string; page?: PageId }[] = [
+    { href: 'docs/', label: 'Docs', page: 'docs' },
+    { href: '#about', label: 'About' },
+];
 
 function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
     const { page, root, theme } = useSite();
@@ -139,7 +142,7 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
                         <p className="mega-feature-job">The ISP back office on FreeRADIUS: subscribers, plans, billing and NAS monitoring.</p>
                         <div className="mega-feature-body">
                             <a className="mega-shot" href={`${root}radiusone/`} tabIndex={-1} aria-hidden="true" onClick={close}>
-                                <img src={`${root}shots/dashboard-${theme}.jpg${SHOTS_VERSION}`} alt="" width={1800} height={1500} loading="lazy" />
+                                <img src={`${root}shots/dashboard-${theme}-600.webp${SHOTS_VERSION}`} alt="The RadiusOne dashboard" width={600} height={500} loading="lazy" />
                             </a>
                             <div className="mega-feature-links">
                                 <a
@@ -221,7 +224,7 @@ function Header({ onTheme }: { onTheme: () => void }) {
                         <a
                             key={item.href}
                             href={`${root}${item.href}`}
-                            aria-current={item.page && item.page === page ? 'page' : undefined}
+                            aria-current={item.page && (page.startsWith(item.page) || (item.page === 'docs' && page.startsWith('guide-'))) ? 'page' : undefined}
                             onClick={() => setOpen(false)}
                         >
                             {item.label}
@@ -295,16 +298,19 @@ function Footer() {
                         <p>Self-hosted software for ISPs and network operators, one product for each job.</p>
                     </div>
                     <nav className="footer-col" aria-labelledby="footer-products">
-                        <h2 id="footer-products">Products</h2>
+                        <p className="footer-title" id="footer-products">Products</p>
                         <a href={`${root}radiusone/`}>RadiusOne</a>
                         <a href={`${root}radiusone/#use-cases`}>RadiusOne use cases</a>
                         <a href={`${root}dnsone/`}>DNSOne</a>
+                        <a href={`${root}docs/`}>Documentation</a>
+                        <a href={`${root}guides/mikrotik-pppoe-freeradius/`}>MikroTik PPPoE with RadiusOne</a>
+                        <a href={`${root}guides/rpz-ad-blocking-powerdns/`}>Ad-blocking with DNSOne</a>
                         <a className="footer-soon" href={`${root}ticketone/`}>
                             TicketOne <span>Soon</span>
                         </a>
                     </nav>
                     <nav className="footer-col" aria-labelledby="footer-company">
-                        <h2 id="footer-company">Company</h2>
+                        <p className="footer-title" id="footer-company">Company</p>
                         <a href={`${root}tools/network/`}>Network tools</a>
                         <a href={`${root}tools/email/`}>DNS & Email tools</a>
                         <a href={`${root}tools/bgp/`}>BGP & ASN tools</a>
@@ -312,7 +318,7 @@ function Footer() {
                         <a href="#contact">Contact</a>
                     </nav>
                     <div className="footer-col">
-                        <h2>Get in touch</h2>
+                        <p className="footer-title">Get in touch</p>
                         <a href={mailto('Question for PingOmni')}>{CONTACT_EMAIL}</a>
                     </div>
                 </div>
@@ -374,17 +380,42 @@ export function Layout({ page, root, children }: { page: PageId; root: string; c
     );
 }
 
-export function Shot({ name, alt, eager = false }: { name: string; alt: string; eager?: boolean }) {
+// Pixel sizes of the files in public/shots/ (the dashboards are 1800 x 1500).
+const SHOT_SIZES: Record<string, { width: number; height: number }> = {
+    clients: { width: 1200, height: 750 },
+    'dnsone-queries': { width: 1200, height: 750 },
+    'dnsone-protection': { width: 1920, height: 1200 },
+    'dnsone-firewall': { width: 1920, height: 1200 },
+    'dnsone-transfers': { width: 1920, height: 1200 },
+};
+
+// The smaller copies beside each screenshot (scripts/shot-variants.mjs), for files wider than them.
+const SHOT_WIDTHS = [600, 1200];
+
+/**
+ * A screenshot as WebP (with JPEG for older browsers), in the smallest copy that is sharp at the size shown.
+ * sizes: how wide the shot is drawn; the default fits a product hero (seven twelfths of the page).
+ */
+export function Shot({ name, alt, eager = false, sizes = '(max-width: 980px) 100vw, 680px' }: { name: string; alt: string; eager?: boolean; sizes?: string }) {
     const { root, theme } = useSite();
-    const size = name === 'clients' || name === 'dnsone-queries' ? { width: 1200, height: 750 } : { width: 1800, height: 1500 };
+    const size = SHOT_SIZES[name] ?? { width: 1800, height: 1500 };
+    const base = `${root}shots/${name}-${theme}`;
+    const set = (ext: string) =>
+        [...SHOT_WIDTHS.filter((w) => w < size.width).map((w) => `${base}-${w}.${ext}${SHOTS_VERSION} ${w}w`), `${base}.${ext}${SHOTS_VERSION} ${size.width}w`].join(', ');
     return (
-        <img
-            className="shot"
-            src={`${root}shots/${name}-${theme}.jpg${SHOTS_VERSION}`}
-            {...size}
-            alt={alt}
-            loading={eager ? 'eager' : 'lazy'}
-            decoding="async"
-        />
+        <picture>
+            <source type="image/webp" srcSet={set('webp')} sizes={sizes} />
+            <img
+                className="shot"
+                src={`${base}.jpg${SHOTS_VERSION}`}
+                srcSet={set('jpg')}
+                sizes={sizes}
+                {...size}
+                alt={alt}
+                loading={eager ? 'eager' : 'lazy'}
+                fetchPriority={eager ? 'high' : undefined}
+                decoding="async"
+            />
+        </picture>
     );
 }

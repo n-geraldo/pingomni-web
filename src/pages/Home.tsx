@@ -351,6 +351,68 @@ function About() {
     );
 }
 
+// Questions ISPs ask before trying the products. Every answer is something the product pages and guides also say.
+const FAQ: { q: string; a: string }[] = [
+    {
+        q: 'What is RadiusOne?',
+        a: 'RadiusOne is a web portal for FreeRADIUS: PPPoE subscribers and their service plans, the NAS routers they connect through, invoices and payments, SNMP monitoring, customer messages by email and SMS, and admin alerts. Changes are written to the database FreeRADIUS reads, so they apply at the next customer login.',
+    },
+    {
+        q: 'What is DNSOne?',
+        a: 'DNSOne runs an ISP’s DNS from one web console: authoritative zones on BIND with DNSSEC, a PowerDNS Recursor resolver for your customers with ad-blocking and client groups, a query log, and dnsdist rate limits and attack protection in front of both.',
+    },
+    {
+        q: 'Do the products run on my own server?',
+        a: 'Yes. Both are self-hosted on Ubuntu 24.04 LTS, so subscriber data, logs and DNS queries stay on servers you control. RadiusOne installs with one command; DNSOne comes with a step-by-step runbook whose every step ends with a check.',
+    },
+    {
+        q: 'Which routers work with RadiusOne?',
+        a: 'MikroTik RouterOS is tested end to end: login, IP address, speed limits and disconnects (RADIUS CoA, or the RouterOS API). Cisco IOS XE support is marked beta until it has been tested on a real router.',
+    },
+    {
+        q: 'How big a network can DNSOne serve?',
+        a: 'One server handles about 10,000 clients and is tuned for up to 50,000. More servers can join as secondaries that take their zones and settings from the primary.',
+    },
+    {
+        q: 'Can I try them before installing?',
+        a: 'Yes. Both have a public demo with sample data: sign in as demo / demo and click through every page. Changes stay in your browser tab and never reach a real server.',
+    },
+    {
+        q: 'Are the network tools free?',
+        a: 'Yes, with no account: ping, traceroute and MTR (also from probes in other countries), port checks, a subnet calculator, DNS, MX, SPF, DMARC and DKIM checks, a blacklist check, WHOIS, ASN and prefix lookups with RPKI, and a BGP looking glass.',
+    },
+    {
+        q: 'Where is the documentation?',
+        a: 'Each product’s user guide is on this site under Docs, the same guide the console carries inside for its version: every page, how to set it up and how it works.',
+    },
+];
+
+function Faq() {
+    return (
+        <section className="section section-surface" id="faq" aria-labelledby="faq-title">
+            <div className="container">
+                <div className="section-head">
+                    <h2 id="faq-title" className="h2">
+                        Questions ISPs ask us.
+                    </h2>
+                    <p className="lead">What RadiusOne and DNSOne do, where they run, and how to try them first.</p>
+                </div>
+                <div className="faq-list">
+                    {FAQ.map((f) => (
+                        <details className="faq-item" key={f.q}>
+                            <summary>
+                                <h3 className="h3">{f.q}</h3>
+                                <Icon name="chevron" />
+                            </summary>
+                            <p>{f.a}</p>
+                        </details>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
+
 export default function Home() {
     return (
         <>
@@ -373,6 +435,7 @@ export default function Home() {
             </section>
             <FreeTools />
             <About />
+            <Faq />
             <Contact
                 title="Talk to us."
                 text="Email us with questions about RadiusOne, the products coming next or the free tools."

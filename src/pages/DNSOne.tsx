@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from
 import { Mark, Wordmark } from '../brand';
 import { DNSONE_DEMO_URL, DNSONE_REPO_URL, mailto } from '../config';
 import Icon from '../Icon';
-import { Contact, Shot } from '../shared/Layout';
+import { Contact, Shot, useSite } from '../shared/Layout';
 
 const REQUIREMENTS: { term: string; text: string }[] = [
     { term: 'Operating system', text: 'Ubuntu 24.04 LTS, server or minimal' },
@@ -260,7 +260,8 @@ const MODULES: { area: string; icon: string; title: string; items: string[]; moc
         items: [
             'Authoritative zones on BIND, edited cPanel-style or imported from a zone file',
             'Every record checked before it is saved; zone files checked and swapped in, rolled back if BIND rejects them',
-            'DNSSEC signing per zone',
+            'DNSSEC signing with key rollovers and DS updates that complete by themselves',
+            'Zone transfers to customers’ own secondaries, with TSIG',
         ],
         mock: <RecordsMock />,
         wide: true,
@@ -283,7 +284,7 @@ const MODULES: { area: string; icon: string; title: string; items: string[]; moc
         area: 'limits',
         icon: 'gauge',
         title: 'Resolver protection',
-        items: ['Only your customer networks may recurse', 'Rate limits per address, higher for NAT', 'Encrypted DNS over TLS and HTTPS'],
+        items: ['Only your customer networks may recurse', 'Rate limits per address, higher for NAT, and attack detection in dnsdist', 'Serve-stale, EDNS Client Subnet for CDNs, DNS over TLS and HTTPS'],
         mock: <LimitsMock />,
     },
     {
@@ -297,7 +298,7 @@ const MODULES: { area: string; icon: string; title: string; items: string[]; moc
         area: 'safety',
         icon: 'shield',
         title: 'Safety',
-        items: ['Admin, operator and viewer roles', 'An audit log of every change', 'Daily verified backups of the database and every config'],
+        items: ['Roles, resellers and customer accounts with quotas', 'The server’s firewall from the console, with automatic roll-back', 'An audit log of every change, and daily verified backups'],
         mock: <SafetyMock />,
         full: true,
     },
@@ -331,6 +332,144 @@ function Modules() {
                         </article>
                     ))}
                 </div>
+            </div>
+        </section>
+    );
+}
+
+// DNSOne 1.5 (docs/releases/v1.5.0.md): the three new screens, each with its screenshot from the demo, then the rest.
+const RELEASE: { id: string; icon: string; tab: string; title: string; shot: string; alt: string; how: string[] }[] = [
+    {
+        id: 'protection',
+        icon: 'activity',
+        tab: 'Attack protection',
+        title: 'Attacks stopped by dnsdist, and shown to you',
+        shot: 'dnsone-protection',
+        alt: 'DNSOne Protection: a random-subdomain attack, an amplification victim and a query flood blocked now, and the most blocked targets of the last 24 hours',
+        how: [
+            'Random-subdomain ("water torture") attacks, infected clients and amplification victims detected by dnsdist itself',
+            'What is blocked now, the last 24 hours by kind, and a week of history',
+            'Block a client or a domain on every node, or a client at the firewall, with thresholds you can change',
+        ],
+    },
+    {
+        id: 'firewall',
+        icon: 'shield',
+        tab: 'Firewall',
+        title: 'The server’s firewall, managed from the console',
+        shot: 'dnsone-firewall',
+        alt: 'DNSOne Settings, Firewall: management networks, the DNS services open to everyone and three ordered rules, in force',
+        how: [
+            'nftables rules in order, with an expiry for temporary blocks',
+            'SSH and the console stay open to the management networks, whatever the rules say',
+            'An apply the console cannot confirm within a minute is rolled back by itself',
+        ],
+    },
+    {
+        id: 'transfers',
+        icon: 'swap',
+        tab: 'Zone transfers',
+        title: 'Zone transfers to your customers’ own secondaries',
+        shot: 'dnsone-transfers',
+        alt: 'DNSOne zone Transfers tab: two allowed secondaries, one notified, and a required TSIG key',
+        how: [
+            'Allowed addresses or networks per zone, notified when the zone changes',
+            'An optional TSIG key, with the BIND configuration for the secondary ready to paste',
+            'Every other transfer is refused, also through port 53',
+        ],
+    },
+];
+
+const RELEASE_MORE: { icon: string; title: string; text: string }[] = [
+    { icon: 'id', title: 'Customer quotas', text: 'Zones per account, records per zone and API requests per minute; resellers’ customers stay within the reseller’s limits.' },
+    { icon: 'refresh', title: 'Serve-stale', text: 'Customers keep getting a domain’s last answers for up to 12 hours (you choose) while its name servers are down.' },
+    { icon: 'globe', title: 'EDNS Client Subnet', text: 'For the CDN domains you list, so streams come from the nearest cache; never for private or CGNAT addresses.' },
+    { icon: 'key', title: 'DNSSEC automation', text: 'CDS and CDNSKEY, the parent’s DS followed by itself, child DS kept in step, and key rollovers that complete on their own.' },
+];
+
+function Release() {
+    const [active, setActive] = useState(RELEASE[0].id);
+    const current = RELEASE.find((r) => r.id === active) ?? RELEASE[0];
+    const { root } = useSite();
+    const onKey = (e: KeyboardEvent, i: number) => {
+        const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+        if (!step) return;
+        e.preventDefault();
+        const next = RELEASE[(i + step + RELEASE.length) % RELEASE.length];
+        setActive(next.id);
+        document.getElementById(`release-tab-${next.id}`)?.focus();
+    };
+    return (
+        <section className="section section-bg" id="new" aria-labelledby="new-title">
+            <div className="container">
+                <div className="section-head">
+                    <span className="badge badge-success release-badge">New in 1.5</span>
+                    <h2 id="new-title" className="h2">
+                        Protection, a firewall and zone transfers.
+                    </h2>
+                    <p className="lead">DNSOne 1.5 adds what ISPs asked for after 1.4. It installs from the console (Settings → Software update); DNS pauses for a second or two while dnsdist restarts.</p>
+                </div>
+                <div className="release">
+                    <div className="release-tabs" role="tablist" aria-label="New in DNSOne 1.5">
+                        {RELEASE.map((r, i) => (
+                            <button
+                                key={r.id}
+                                type="button"
+                                role="tab"
+                                id={`release-tab-${r.id}`}
+                                aria-selected={r.id === active}
+                                aria-controls="release-panel"
+                                tabIndex={r.id === active ? 0 : -1}
+                                className="release-tab"
+                                onClick={() => setActive(r.id)}
+                                onKeyDown={(e) => onKey(e, i)}
+                            >
+                                <Icon name={r.icon} />
+                                {r.tab}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="release-panel" role="tabpanel" id="release-panel" aria-labelledby={`release-tab-${current.id}`} key={current.id}>
+                        <div className="release-text">
+                            <h3 className="h3">{current.title}</h3>
+                            <ul className="case-how">
+                                {current.how.map((line) => (
+                                    <li key={line}>
+                                        <span className="case-check">
+                                            <Icon name="check" />
+                                        </span>
+                                        {line}
+                                    </li>
+                                ))}
+                            </ul>
+                            <a className="text-link" href={`${root}docs/dnsone/`}>
+                                How it works, in the user guide
+                                <Icon name="arrow" />
+                            </a>
+                        </div>
+                        <figure className="frame release-shot">
+                            <Shot name={current.shot} alt={current.alt} sizes="(max-width: 980px) 100vw, 720px" />
+                        </figure>
+                    </div>
+                </div>
+                <ul className="release-more">
+                    {RELEASE_MORE.map((m) => (
+                        <li key={m.title}>
+                            <span className="release-more-icon">
+                                <Icon name={m.icon} />
+                            </span>
+                            <strong>{m.title}</strong>
+                            <span>{m.text}</span>
+                        </li>
+                    ))}
+                </ul>
+                <p className="release-fix">
+                    <Icon name="lock" />
+                    <span>
+                        <strong>Security fix.</strong> Up to 1.4, anyone could download a hosted zone with a transfer over port 53. 1.5 refuses every
+                        transfer except from the secondaries a zone lists: update every 1.4 server.
+                    </span>
+                </p>
             </div>
         </section>
     );
@@ -495,8 +634,8 @@ export default function DNSOne() {
                             DNS for ISPs, on your own server.
                         </h1>
                         <p className="lead">
-                            Hosted zones, the customer resolver, ad-blocking and a query log in one console, on BIND, PowerDNS Recursor and
-                            dnsdist.
+                            Hosted zones, the customer resolver, ad-blocking, attack protection and a query log in one console, on BIND, PowerDNS
+                            Recursor and dnsdist.
                         </p>
                         <div className="actions">
                             <a className="btn btn-primary btn-lg" href={DNSONE_DEMO_URL} target="_blank" rel="noopener">
@@ -515,11 +654,13 @@ export default function DNSOne() {
                     <figure className="product-hero-shot">
                         <Shot name="dnsone-dashboard" alt="The DNSOne dashboard: queries, blocked queries, cache hit rate and service health" eager />
                         <div className="hero-float" aria-hidden="true">
-                            <Shot name="dnsone-queries" alt="" eager />
+                            <Shot name="dnsone-queries" alt="The DNSOne query log" eager sizes="(max-width: 980px) 52vw, 360px" />
                         </div>
                     </figure>
                 </div>
             </section>
+
+            <Release />
 
             <Modules />
 

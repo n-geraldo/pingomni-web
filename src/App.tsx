@@ -1,5 +1,7 @@
 import ComingSoon from './pages/ComingSoon';
 import DNSOne from './pages/DNSOne';
+import { DocsGuide, DocsHub } from './pages/Docs';
+import { HowTo } from './pages/Guides';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import RadiusOne from './pages/RadiusOne';
@@ -11,6 +13,11 @@ const PAGES: Record<PageId, () => React.ReactNode> = {
     radiusone: () => <RadiusOne />,
     ticketone: () => <ComingSoon brand="ticketone" />,
     dnsone: () => <DNSOne />,
+    docs: () => <DocsHub />,
+    'docs-radiusone': () => <DocsGuide product="radiusone" />,
+    'docs-dnsone': () => <DocsGuide product="dnsone" />,
+    'guide-mikrotik-pppoe': () => <HowTo id="mikrotik-pppoe-freeradius" />,
+    'guide-rpz-powerdns': () => <HowTo id="rpz-ad-blocking-powerdns" />,
     'tools-network': () => <Tools group="network" />,
     'tools-email': () => <Tools group="email" />,
     'tools-bgp': () => <Tools group="bgp" />,
