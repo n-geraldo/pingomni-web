@@ -3,9 +3,13 @@ import type { ReactNode } from 'react';
 import { ACCOUNT_URL } from '../config';
 import Icon from '../Icon';
 
-export type EditionGroup = { group: string; rows: { feature: string; detail: string; community: boolean }[] };
+// A row is a check or a dash, or, with text (a limit), the same words in both columns' place.
+export type EditionGroup = { group: string; rows: { feature: string; detail: string; community: boolean | string; pro?: string }[] };
 
-function Has({ yes, edition }: { yes: boolean; edition: string }) {
+function Has({ yes, edition }: { yes: boolean | string; edition: string }) {
+    if (typeof yes === 'string') {
+        return <span className="edition-value">{yes}</span>;
+    }
     return yes ? (
         <span className="edition-yes">
             <Icon name="check" />
@@ -71,7 +75,7 @@ export function Editions({ product, lead, communityTerms, repoUrl, groups, note 
                                             <Has yes={r.community} edition="Community" />
                                         </td>
                                         <td className="edition-pro">
-                                            <Has yes edition="Pro" />
+                                            <Has yes={r.pro ?? true} edition="Pro" />
                                         </td>
                                     </tr>
                                 ))}

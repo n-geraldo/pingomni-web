@@ -5419,6 +5419,14 @@ abbr[title] {
   font-size: 18px;
 }
 
+.edition-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-strong);
+}
+
 .editions-table tfoot td {
   padding-top: 18px;
   padding-bottom: 20px;
