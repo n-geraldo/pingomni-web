@@ -3,6 +3,7 @@ import { Mark, Wordmark } from '../brand';
 import { DEMO_URL, REPO_URL, mailto } from '../config';
 import Icon from '../Icon';
 import { copyText } from '../lib/copy';
+import { type EditionGroup, Editions } from '../shared/Editions';
 import { Contact, Shot } from '../shared/Layout';
 
 const REQUIREMENTS: { term: string; text: string }[] = [
@@ -250,6 +251,30 @@ function UpkeepMock() {
         </div>
     );
 }
+
+// The editions (RadiusOne's app/Support/License.php FEATURES; README "Editions"). Same code: a licence key turns Pro on.
+const EDITIONS: EditionGroup[] = [
+    {
+        group: 'In both editions',
+        rows: [
+            { feature: 'Subscribers', detail: 'PPPoE and DHCP customers, service plans, static IPs and pools, suspension and expiry', community: true },
+            { feature: 'Usage and data caps', detail: 'Daily download and upload per customer, caps per plan', community: true },
+            { feature: 'NAS and FreeRADIUS', detail: 'Routers, disconnects over RADIUS CoA or the RouterOS API, live sessions and authentication logs', community: true },
+            { feature: 'Server and reports', detail: 'Monitoring overview, the RADIUS server page with restarts, reports', community: true },
+            { feature: 'Operations', detail: 'Seven operator roles, two-factor sign-in, audit log, nightly local backups, updates and rollback', community: true },
+        ],
+    },
+    {
+        group: 'RadiusOne Pro',
+        rows: [
+            { feature: 'Billing', detail: 'Recurring invoices every night, payments with PDF receipts, overdue invoices', community: false },
+            { feature: 'Notifications', detail: 'Customer email and SMS, admin alerts and reports by email or Telegram', community: false },
+            { feature: 'NAS monitoring', detail: 'SNMP v1, v2c and v3 per router, traffic, health and temperature graphs', community: false },
+            { feature: 'Remote backups', detail: 'Encrypted nightly copies to Backblaze B2, Cloudflare R2 or SFTP', community: false },
+            { feature: 'Your logo', detail: 'On the portal, the sign-in page and PDF invoices', community: false },
+        ],
+    },
+];
 
 const MODULES: { area: string; icon: string; title: string; items: string[]; mock: ReactNode; wide?: boolean; full?: boolean }[] = [
     {
@@ -550,6 +575,15 @@ export default function RadiusOne() {
             <NetworkPath />
 
             <UseCases />
+
+            <Editions
+                product="RadiusOne"
+                lead="RadiusOne is free to run. RadiusOne Pro is the same software with a licence key: add it under Settings → License and billing, notifications, NAS monitoring, remote backups and your logo turn on, with no reinstall."
+                communityTerms="Free"
+                repoUrl={REPO_URL}
+                groups={EDITIONS}
+                note="If a licence expires, RADIUS keeps authenticating exactly as before: the Pro features keep running as they were, and can be changed again once it is renewed."
+            />
 
             <section className="section section-bg" id="install" aria-labelledby="install-title">
                 <div className="container install-layout">
