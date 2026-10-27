@@ -96,7 +96,8 @@ export function Editions({ product, lead, communityTerms, repoUrl, groups, note,
                                 </th>
                                 <th scope="col">
                                     <span className="edition-name">Community</span>
-                                    <span className="edition-terms">{communityTerms}</span>
+                                    {/* Non-breaking hyphens: "AGPL-3.0" never splits at its hyphen on a phone. */}
+                                    <span className="edition-terms">{communityTerms.replace(/-/g, '\u2011')}</span>
                                 </th>
                                 <th scope="col" className="edition-pro">
                                     <span className="edition-name">Pro</span>
