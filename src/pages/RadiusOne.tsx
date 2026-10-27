@@ -282,12 +282,12 @@ const EDITIONS: EditionGroup[] = [
     },
 ];
 
-// Prices per month, by active subscribers (PPPoE + DHCP).
+// Prices per month, by active subscribers (PPPoE + DHCP); a year costs ten months (the account portal's yearly plans).
 const TIERS: PriceTier[] = [
     { name: 'Free', range: 'Up to 150', price: '€0', action: 'code' },
-    { name: 'Licence 1', range: '151–999', price: '€36', per: '/ month', action: 'buy' },
-    { name: 'Licence 2', range: '1,000–4,999', price: '€99', per: '/ month', action: 'buy' },
-    { name: 'Licence 3', range: '5,000+', price: '€199', per: '/ month', action: 'buy' },
+    { name: 'Licence 1', range: '151–999', price: '€36', per: '/ month', yearly: 'or €360 / year, 2 months free', action: 'buy' },
+    { name: 'Licence 2', range: '1,000–4,999', price: '€99', per: '/ month', yearly: 'or €990 / year, 2 months free', action: 'buy' },
+    { name: 'Licence 3', range: '5,000+', price: '€199', per: '/ month', yearly: 'or €1,990 / year, 2 months free', action: 'buy' },
 ];
 
 const MODULES: { area: string; icon: string; title: string; items: string[]; mock: ReactNode; wide?: boolean; full?: boolean }[] = [
@@ -597,7 +597,7 @@ export default function RadiusOne() {
                 repoUrl={REPO_URL}
                 groups={EDITIONS}
                 tiers={TIERS}
-                tierUnit="active subscribers (PPPoE + DHCP), prices per month"
+                tierUnit="active subscribers (PPPoE + DHCP), paid monthly or yearly"
                 note="If a licence expires, RADIUS keeps authenticating exactly as before: the Pro features keep running as they were, and can be changed again once it is renewed."
             />
 

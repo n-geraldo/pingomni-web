@@ -7,7 +7,7 @@ import Icon from '../Icon';
 export type EditionGroup = { group: string; rows: { feature: string; detail: string; community: boolean | string; pro?: string }[] };
 
 // A price tier: who it is for (a count range), the price, and what its button does.
-export type PriceTier = { name: string; range: string; price: string; per?: string; action: 'code' | 'buy' | 'quote' };
+export type PriceTier = { name: string; range: string; price: string; per?: string; yearly?: string; action: 'code' | 'buy' | 'quote' };
 
 function Tiers({ product, unit, tiers, repoUrl }: { product: string; unit: string; tiers: PriceTier[]; repoUrl: string }) {
     return (
@@ -23,6 +23,7 @@ function Tiers({ product, unit, tiers, repoUrl }: { product: string; unit: strin
                             {t.price}
                             {t.per && <span className="tier-per"> {t.per}</span>}
                         </span>
+                        {t.yearly && <span className="tier-yearly">{t.yearly}</span>}
                         {t.action === 'code' && (
                             <a className="btn btn-sm btn-ghost" href={repoUrl} target="_blank" rel="noopener">
                                 <Icon name="code" />
