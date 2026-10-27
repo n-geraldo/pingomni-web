@@ -3,7 +3,7 @@ import { Mark, Wordmark } from '../brand';
 import { DEMO_URL, REPO_URL, mailto } from '../config';
 import Icon from '../Icon';
 import { copyText } from '../lib/copy';
-import { type EditionGroup, Editions } from '../shared/Editions';
+import { type EditionGroup, type PriceTier, Editions } from '../shared/Editions';
 import { Contact, Shot } from '../shared/Layout';
 
 const REQUIREMENTS: { term: string; text: string }[] = [
@@ -257,7 +257,7 @@ const EDITIONS: EditionGroup[] = [
     {
         group: 'Clients',
         rows: [
-            { feature: 'Clients on one server', detail: 'Archived clients do not count. At the limit, every client keeps working; only new ones wait for a licence.', community: 'Up to 150', pro: 'Up to 999, or unlimited' },
+            { feature: 'Active subscribers on one server', detail: 'PPPoE and DHCP together; archived clients do not count. At the limit, every client keeps working; only new ones wait for a licence.', community: 'Up to 150', pro: '151 and up, by licence' },
         ],
     },
     {
@@ -280,6 +280,14 @@ const EDITIONS: EditionGroup[] = [
             { feature: 'Your logo', detail: 'On the portal, the sign-in page and PDF invoices', community: false },
         ],
     },
+];
+
+// Prices per month, by active subscribers (PPPoE + DHCP).
+const TIERS: PriceTier[] = [
+    { name: 'Free', range: 'Up to 150', price: '€0', action: 'code' },
+    { name: 'Licence 1', range: '151–999', price: '€36', per: '/ month', action: 'buy' },
+    { name: 'Licence 2', range: '1,000–4,999', price: '€99', per: '/ month', action: 'buy' },
+    { name: 'Licence 3', range: '5,000+', price: 'Quote', action: 'quote' },
 ];
 
 const MODULES: { area: string; icon: string; title: string; items: string[]; mock: ReactNode; wide?: boolean; full?: boolean }[] = [
@@ -584,10 +592,12 @@ export default function RadiusOne() {
 
             <Editions
                 product="RadiusOne"
-                lead="RadiusOne is free for up to 150 clients. RadiusOne Pro is the same software with a licence key: add it under Settings → License and billing, notifications, NAS monitoring, remote backups and your logo turn on, for up to 999 clients, or with no limit on Pro Unlimited. No reinstall."
+                lead="RadiusOne is free for up to 150 active subscribers. RadiusOne Pro is the same software with a licence key: add it under Settings → License and billing, notifications, NAS monitoring, remote backups and your logo turn on. The licence follows your number of active subscribers, from €36 a month. No reinstall."
                 communityTerms="Free"
                 repoUrl={REPO_URL}
                 groups={EDITIONS}
+                tiers={TIERS}
+                tierUnit="active subscribers (PPPoE + DHCP), prices per month"
                 note="If a licence expires, RADIUS keeps authenticating exactly as before: the Pro features keep running as they were, and can be changed again once it is renewed."
             />
 
