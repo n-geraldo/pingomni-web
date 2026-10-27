@@ -560,10 +560,10 @@ const EDITIONS: EditionGroup[] = [
     },
 ];
 
-// Prices (the account portal's DNSOne plans): one Pro licence covers a 2-server cluster; a year costs ten months.
+// Prices (the account portal's DNSOne plans): one Pro licence covers a 2-server cluster, more servers cost extra; a year costs ten months.
 const TIERS: PriceTier[] = [
     { name: 'Community', range: 'One server', price: '€0', action: 'code' },
-    { name: 'Pro', range: 'Up to 2 servers: a primary and a replica', price: '€10', per: '/ month', yearly: 'or €100 / year, 2 months free', action: 'buy' },
+    { name: 'Pro', range: '2 servers, a primary and a replica; each one more €5 / month or €50 / year', price: '€10', per: '/ month', yearly: 'or €100 / year, 2 months free', action: 'buy' },
 ];
 
 // What dnsone-status prints at the end of the runbook: every probe ok.
