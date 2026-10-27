@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { Mark, Wordmark } from '../brand';
-import { DNSONE_DEMO_URL, DNSONE_REPO_URL, mailto } from '../config';
+import { ACCOUNT_URL, DNSONE_DEMO_URL, DNSONE_REPO_URL } from '../config';
 import Icon from '../Icon';
 import { Contact, Shot, useSite } from '../shared/Layout';
 
@@ -539,6 +539,129 @@ function UseCases() {
     );
 }
 
+// The editions (README "Editions and licences"; backend/dnsone/edition.py lists the Pro modules). Same code: a licence key turns Pro on.
+const EDITIONS: { group: string; rows: { feature: string; detail: string; community: boolean }[] }[] = [
+    {
+        group: 'In both editions',
+        rows: [
+            { feature: 'Hosted zones', detail: 'Records checked like named-checkzone, zone import, bulk reverse DNS, DNSSEC signing', community: true },
+            { feature: 'Customer resolver', detail: 'Only your networks recurse, rate limits per address and for NAT, DNS over TLS and HTTPS', community: true },
+            { feature: 'Ad-blocking', detail: 'Blocklists and rules as an RPZ, client groups, pauses', community: true },
+            { feature: 'Query log', detail: 'Every query, top domains and clients, privacy levels', community: true },
+            { feature: 'Operations', detail: 'Roles, two-factor, audit log, alerts, Prometheus metrics, daily backups', community: true },
+        ],
+    },
+    {
+        group: 'DNSOne Pro',
+        rows: [
+            { feature: 'Attack protection', detail: 'dnsdist blocks floods and abusive clients as they happen', community: false },
+            { feature: 'Firewall', detail: 'The server’s nftables rules, managed from the console', community: false },
+            { feature: 'Zone transfers', detail: 'To your customers’ own secondary servers, with TSIG keys', community: false },
+            { feature: 'Quotas and resellers', detail: 'Customer and reseller accounts, limited in zones, records and API requests', community: false },
+            { feature: 'Court-ordered blocking', detail: 'Its own list, ahead of every allow rule, for every client group', community: false },
+            { feature: 'Single sign-on', detail: 'Google Workspace, Microsoft Entra ID, Okta or any OpenID Connect provider', community: false },
+            { feature: 'Query log export', detail: 'Every answer, or only blocked ones, to your SIEM over syslog', community: false },
+            { feature: 'Cluster', detail: 'Several DNSOne servers sharing one database, run from one console', community: false },
+        ],
+    },
+];
+
+function Has({ yes, edition }: { yes: boolean; edition: string }) {
+    return yes ? (
+        <span className="edition-yes">
+            <Icon name="check" />
+            <span className="sr-only">Included in {edition}</span>
+        </span>
+    ) : (
+        <span className="edition-no">
+            <span aria-hidden="true">–</span>
+            <span className="sr-only">Not in {edition}</span>
+        </span>
+    );
+}
+
+function Editions() {
+    return (
+        <section className="section section-bg" id="editions" aria-labelledby="editions-title">
+            <div className="container">
+                <div className="section-head">
+                    <h2 id="editions-title" className="h2">
+                        Community or Pro.
+                    </h2>
+                    <p className="lead">
+                        DNSOne is free and open source. DNSOne Pro is the same software with a licence key: add it under Settings → License and
+                        the Pro features turn on, with no reinstall.
+                    </p>
+                </div>
+                <div className="editions">
+                    <table className="editions-table">
+                        <caption className="sr-only">What DNSOne Community and DNSOne Pro include</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col" className="edition-feature-head">
+                                    <span className="sr-only">Feature</span>
+                                </th>
+                                <th scope="col">
+                                    <span className="edition-name">Community</span>
+                                    <span className="edition-terms">Free, AGPL-3.0</span>
+                                </th>
+                                <th scope="col" className="edition-pro">
+                                    <span className="edition-name">Pro</span>
+                                    <span className="edition-terms">With a licence key</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        {EDITIONS.map((g) => (
+                            <tbody key={g.group}>
+                                <tr className="edition-group">
+                                    <th scope="colgroup" colSpan={3}>
+                                        {g.group}
+                                    </th>
+                                </tr>
+                                {g.rows.map((r) => (
+                                    <tr key={r.feature}>
+                                        <th scope="row">
+                                            <span className="edition-feature">{r.feature}</span>
+                                            <span className="edition-detail">{r.detail}</span>
+                                        </th>
+                                        <td>
+                                            <Has yes={r.community} edition="Community" />
+                                        </td>
+                                        <td className="edition-pro">
+                                            <Has yes edition="Pro" />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        ))}
+                        <tfoot>
+                            <tr>
+                                <td />
+                                <td>
+                                    <a className="btn btn-sm btn-ghost" href={DNSONE_REPO_URL} target="_blank" rel="noopener">
+                                        <Icon name="code" />
+                                        Get the code
+                                    </a>
+                                </td>
+                                <td className="edition-pro">
+                                    <a className="btn btn-sm btn-primary" href={`${ACCOUNT_URL}/buy`}>
+                                        <Icon name="key" />
+                                        Buy Pro
+                                    </a>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <p className="small muted editions-note">
+                        If a licence expires, DNS keeps answering exactly as before: the Pro features keep running as they were, and can be
+                        changed again once it is renewed.
+                    </p>
+                </div>
+            </div>
+        </section>
+    );
+}
+
 // What dnsone-status prints at the end of the runbook: every probe ok.
 function Terminal() {
     const width = Math.max(...STATUS.map(([name]) => name.length));
@@ -646,8 +769,8 @@ export default function DNSOne() {
                                 <Icon name="code" />
                                 Get the code
                             </a>
-                            <a className="btn btn-lg btn-ghost" href={mailto('DNSOne')}>
-                                Email us
+                            <a className="btn btn-lg btn-ghost" href={`${ACCOUNT_URL}/buy`}>
+                                Buy DNSOne Pro
                             </a>
                         </div>
                     </div>
@@ -667,6 +790,8 @@ export default function DNSOne() {
             <NetworkPath />
 
             <UseCases />
+
+            <Editions />
 
             <section className="section section-bg" id="install" aria-labelledby="install-title">
                 <div className="container install-layout">

@@ -1,7 +1,7 @@
 // Header, footer and contact band shared by every page, plus the theme switch.
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Mark, Wordmark, type Brand } from '../brand';
-import { CONTACT_EMAIL, DEMO_URL, mailto } from '../config';
+import { ACCOUNT_URL, CONTACT_EMAIL, DEMO_URL, mailto } from '../config';
 import Icon from '../Icon';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 
@@ -232,6 +232,9 @@ function Header({ onTheme }: { onTheme: () => void }) {
                     ))}
                 </nav>
                 <div className="header-actions">
+                    <a className="btn btn-sm btn-ghost header-signin" href={`${ACCOUNT_URL}/login`}>
+                        Sign in
+                    </a>
                     <button
                         type="button"
                         className="icon-btn"
