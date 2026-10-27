@@ -5463,7 +5463,7 @@ abbr[title] {
 
 .tier {
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto auto 1fr auto;
   gap: 4px;
   padding: 20px;
   border: 1px solid var(--accent-line);
@@ -5492,7 +5492,7 @@ abbr[title] {
 }
 
 .tier-price {
-  margin: 10px 0 14px;
+  margin: 10px 0 0;
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -.03em;
@@ -5507,8 +5507,16 @@ abbr[title] {
   color: var(--text-muted);
 }
 
+.tier-yearly {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
 .tier .btn {
   justify-self: start;
+  margin-top: 14px;
 }
 
 @media (max-width: 980px) {
