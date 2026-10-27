@@ -5306,6 +5306,168 @@ abbr[title] {
   }
 }
 
+/* DNSOne page: Community and Pro side by side. One table; the Pro column carries the accent. */
+.editions {
+  display: grid;
+  gap: 16px;
+}
+
+.editions-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  table-layout: fixed;
+}
+
+.editions-table th,
+.editions-table td {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.editions-table th[scope="row"],
+.edition-feature-head {
+  text-align: left;
+}
+
+.editions-table thead th:not(.edition-feature-head) {
+  width: 176px;
+}
+
+.editions-table thead th {
+  padding-top: 22px;
+  padding-bottom: 18px;
+}
+
+.edition-name {
+  display: block;
+  font-size: 20px;
+  font-weight: 650;
+  color: var(--text-strong);
+}
+
+.edition-terms {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.editions-table .edition-pro {
+  background: var(--accent-bg);
+}
+
+.edition-pro .edition-name {
+  color: var(--accent);
+}
+
+.edition-group th {
+  padding-top: 18px;
+  padding-bottom: 8px;
+  background: var(--bg);
+  text-align: left;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.edition-feature {
+  display: block;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.edition-detail {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.edition-yes {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.edition-yes .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.edition-pro .edition-yes {
+  background: var(--accent-solid);
+  color: var(--on-accent);
+}
+
+.edition-no {
+  color: var(--text-faint);
+  font-size: 18px;
+}
+
+.editions-table tfoot td {
+  padding-top: 18px;
+  padding-bottom: 20px;
+  border-bottom: 0;
+}
+
+.editions-note {
+  max-width: 70ch;
+}
+
+/* Phone width: the two edition columns narrow, and the buttons under them wrap their labels. */
+@media (max-width: 640px) {
+  .editions-table th,
+  .editions-table td {
+    padding: 12px 10px;
+  }
+
+  .editions-table th[scope="row"],
+  .edition-group th {
+    padding-left: 14px;
+  }
+
+  .editions-table thead th:not(.edition-feature-head) {
+    width: 84px;
+  }
+
+  .edition-name {
+    font-size: 16px;
+  }
+
+  .edition-terms {
+    font-size: 12px;
+  }
+
+  .editions-table tfoot .btn {
+    width: 100%;
+    height: auto;
+    min-height: 44px;
+    padding: 6px 8px;
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  .editions-table tfoot .btn .icon {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
