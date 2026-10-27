@@ -287,7 +287,7 @@ const TIERS: PriceTier[] = [
     { name: 'Free', range: 'Up to 150', price: '€0', action: 'code' },
     { name: 'Licence 1', range: '151–999', price: '€36', per: '/ month', action: 'buy' },
     { name: 'Licence 2', range: '1,000–4,999', price: '€99', per: '/ month', action: 'buy' },
-    { name: 'Licence 3', range: '5,000+', price: 'Quote', action: 'quote' },
+    { name: 'Licence 3', range: '5,000+', price: '€199', per: '/ month', action: 'buy' },
 ];
 
 const MODULES: { area: string; icon: string; title: string; items: string[]; mock: ReactNode; wide?: boolean; full?: boolean }[] = [
