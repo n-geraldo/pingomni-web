@@ -464,13 +464,6 @@ function Release() {
                         </li>
                     ))}
                 </ul>
-                <p className="release-fix">
-                    <Icon name="lock" />
-                    <span>
-                        <strong>Security fix.</strong> Up to 1.4, anyone could download a hosted zone with a transfer over port 53. 1.5 refuses every
-                        transfer except from the secondaries a zone lists: update every 1.4 server.
-                    </span>
-                </p>
             </div>
         </section>
     );
