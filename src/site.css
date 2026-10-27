@@ -5437,6 +5437,92 @@ abbr[title] {
   max-width: 70ch;
 }
 
+/* Price tiers under the editions table: one card per licence, the free one plain, the paid ones in the Pro accent. */
+.tiers-block {
+  display: grid;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.tiers-title {
+  margin: 0;
+}
+
+.tiers-unit {
+  margin: 0 0 12px;
+}
+
+.tiers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tier {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 4px;
+  padding: 20px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-lg);
+  background: var(--accent-bg);
+}
+
+.tier-free {
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+.tier-name {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--accent);
+}
+
+.tier-free .tier-name {
+  color: var(--text-strong);
+}
+
+.tier-range {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.tier-price {
+  margin: 10px 0 14px;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -.03em;
+  line-height: 1.1;
+  color: var(--text-strong);
+}
+
+.tier-per {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
+
+.tier .btn {
+  justify-self: start;
+}
+
+@media (max-width: 980px) {
+  .tiers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .tiers {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* Phone width: the two edition columns narrow, and the buttons under them wrap their labels. */
 @media (max-width: 640px) {
   .editions-table th,
