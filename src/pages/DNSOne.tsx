@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from
 import { Mark, Wordmark } from '../brand';
 import { ACCOUNT_URL, DNSONE_DEMO_URL, DNSONE_REPO_URL } from '../config';
 import Icon from '../Icon';
-import { type EditionGroup, Editions } from '../shared/Editions';
+import { type EditionGroup, type PriceTier, Editions } from '../shared/Editions';
 import { Contact, Shot, useSite } from '../shared/Layout';
 
 const REQUIREMENTS: { term: string; text: string }[] = [
@@ -555,9 +555,15 @@ const EDITIONS: EditionGroup[] = [
             { feature: 'Court-ordered blocking', detail: 'Its own list, ahead of every allow rule, for every client group', community: false },
             { feature: 'Single sign-on', detail: 'Google Workspace, Microsoft Entra ID, Okta or any OpenID Connect provider', community: false },
             { feature: 'Query log export', detail: 'Every answer, or only blocked ones, to your SIEM over syslog', community: false },
-            { feature: 'Cluster', detail: 'Several DNSOne servers sharing one database, run from one console', community: false },
+            { feature: 'Cluster', detail: 'Two DNSOne servers, a primary and a replica, sharing one database, run from one console', community: false },
         ],
     },
+];
+
+// Prices (the account portal's DNSOne plans): one Pro licence covers a 2-server cluster; a year costs ten months.
+const TIERS: PriceTier[] = [
+    { name: 'Community', range: 'One server', price: '€0', action: 'code' },
+    { name: 'Pro', range: 'Up to 2 servers: a primary and a replica', price: '€10', per: '/ month', yearly: 'or €100 / year, 2 months free', action: 'buy' },
 ];
 
 // What dnsone-status prints at the end of the runbook: every probe ok.
@@ -691,10 +697,12 @@ export default function DNSOne() {
 
             <Editions
                 product="DNSOne"
-                lead="DNSOne is free and open source. DNSOne Pro is the same software with a licence key: add it under Settings → License and the Pro features turn on, with no reinstall."
+                lead="DNSOne is free and open source. DNSOne Pro is the same software with a licence key: add it under Settings → License and the Pro features turn on, with no reinstall. One licence covers a 2-server cluster, from €10 a month."
                 communityTerms="Free, AGPL-3.0"
                 repoUrl={DNSONE_REPO_URL}
                 groups={EDITIONS}
+                tiers={TIERS}
+                tierUnit="licence, paid monthly or yearly"
                 note="If a licence expires, DNS keeps answering exactly as before: the Pro features keep running as they were, and can be changed again once it is renewed."
             />
 
