@@ -255,6 +255,12 @@ function UpkeepMock() {
 // The editions (RadiusOne's app/Support/License.php FEATURES; README "Editions"). Same code: a licence key turns Pro on.
 const EDITIONS: EditionGroup[] = [
     {
+        group: 'Clients',
+        rows: [
+            { feature: 'Clients on one server', detail: 'Archived clients do not count. At the limit, every client keeps working; only new ones wait for a licence.', community: 'Up to 150', pro: 'Up to 999, or unlimited' },
+        ],
+    },
+    {
         group: 'In both editions',
         rows: [
             { feature: 'Subscribers', detail: 'PPPoE and DHCP customers, service plans, static IPs and pools, suspension and expiry', community: true },
@@ -578,7 +584,7 @@ export default function RadiusOne() {
 
             <Editions
                 product="RadiusOne"
-                lead="RadiusOne is free to run. RadiusOne Pro is the same software with a licence key: add it under Settings → License and billing, notifications, NAS monitoring, remote backups and your logo turn on, with no reinstall."
+                lead="RadiusOne is free for up to 150 clients. RadiusOne Pro is the same software with a licence key: add it under Settings → License and billing, notifications, NAS monitoring, remote backups and your logo turn on, for up to 999 clients, or with no limit on Pro Unlimited. No reinstall."
                 communityTerms="Free"
                 repoUrl={REPO_URL}
                 groups={EDITIONS}
