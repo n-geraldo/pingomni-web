@@ -1,129 +1,303 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Mark, Wordmark } from '../brand';
-import { DNSONE_DEMO_URL, mailto } from '../config';
+import { Mark, Wordmark, type Brand } from '../brand';
+import { ACCOUNT_URL, buyUrl, DEMO_URL, DNSONE_DEMO_URL } from '../config';
 import Icon from '../Icon';
 import { api } from '../lib/api';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { Contact, Shot, useSite } from '../shared/Layout';
 import { TOOL_PREVIEW } from '../shared/ToolPreviews';
 
-function Launcher() {
+// The product line, one row under the headline: each one a tap away, with its status in a word.
+const LINEUP: { brand: Brand; job: string; href: string; status: 'available' | 'new' | 'soon' }[] = [
+    { brand: 'monitor', job: 'Uptime, SSL and domains for any website', href: '#monitor', status: 'new' },
+    { brand: 'radiusone', job: 'The ISP back office on FreeRADIUS', href: '#radiusone', status: 'available' },
+    { brand: 'dnsone', job: 'DNS for ISPs, on your own server', href: '#dnsone', status: 'available' },
+    { brand: 'ticketone', job: 'Support tickets for ISP help desks', href: 'ticketone/', status: 'soon' },
+];
+
+const STATUS = { available: ['badge-success', 'Available'], new: ['badge-success', 'New'], soon: ['badge-warning', 'Coming soon'] } as const;
+
+function Lineup() {
     const { root } = useSite();
     return (
-        <div className="launcher" id="products">
-            <article className="tile tile-open" aria-labelledby="tile-radiusone">
-                <div className="tile-body">
-                    <div className="tile-head">
-                        <Mark brand="radiusone" size={44} className="ping-on-load" />
-                        <h2 id="tile-radiusone" className="tile-name">
-                            <a href={`${root}radiusone/`}>
-                                <Wordmark brand="radiusone" />
-                            </a>
-                        </h2>
-                    </div>
-                    <p className="tile-pitch">The ISP back office on FreeRADIUS.</p>
-                    <p className="tile-text">
-                        Subscribers, service plans, billing and NAS monitoring in one portal, installed with one command on your own Ubuntu
-                        server.
-                    </p>
-                    <ul className="tile-points">
-                        <li>
-                            <Icon name="clients" />
-                            PPPoE subscribers, plans, static IPs and expiry
-                        </li>
-                        <li>
-                            <Icon name="billing" />
-                            Invoices, payments and PDF receipts
-                        </li>
-                        <li>
-                            <Icon name="server" />
-                            NAS monitoring over SNMP, disconnects over CoA
-                        </li>
-                        <li>
-                            <Icon name="shield" />
-                            Operator roles, two-factor sign-in and encrypted backups
-                        </li>
-                    </ul>
-                    <div className="actions">
-                        <a className="btn btn-primary" href={mailto('RadiusOne')}>
-                            Email us
-                        </a>
-                        <a className="text-link" href={`${root}radiusone/`}>
-                            About RadiusOne
-                            <Icon name="arrow" />
-                        </a>
-                    </div>
-                </div>
-                <figure className="tile-shot">
-                    <Shot name="dashboard" alt="The RadiusOne dashboard: online clients, NAS status and top users" eager />
-                </figure>
-            </article>
-
-            <article className="tile tile-open tile-flip" aria-labelledby="tile-dnsone">
-                <div className="tile-body">
-                    <div className="tile-head">
-                        <Mark brand="dnsone" size={44} className="ping-on-load" />
-                        <h2 id="tile-dnsone" className="tile-name">
-                            <a href={`${root}dnsone/`}>
-                                <Wordmark brand="dnsone" />
-                            </a>
-                        </h2>
-                    </div>
-                    <p className="tile-pitch">DNS for ISPs, on your own server.</p>
-                    <p className="tile-text">
-                        Hosted zones, the customer resolver, ad-blocking and a query log in one console, on BIND, PowerDNS Recursor and
-                        dnsdist.
-                    </p>
-                    <ul className="tile-points">
-                        <li>
-                            <Icon name="globe" />
-                            Authoritative zones and records, with DNSSEC
-                        </li>
-                        <li>
-                            <Icon name="ban" />
-                            Ad-blocking and client groups for every customer
-                        </li>
-                        <li>
-                            <Icon name="search" />
-                            A searchable log of every query
-                        </li>
-                        <li>
-                            <Icon name="gauge" />
-                            Rate limits, and DNS over TLS and HTTPS
-                        </li>
-                    </ul>
-                    <div className="actions">
-                        <a className="btn btn-primary" href={DNSONE_DEMO_URL} target="_blank" rel="noopener">
-                            Try the demo
-                            <Icon name="external" />
-                        </a>
-                        <a className="text-link" href={`${root}dnsone/`}>
-                            About DNSOne
-                            <Icon name="arrow" />
-                        </a>
-                    </div>
-                </div>
-                <figure className="tile-shot">
-                    <Shot name="dnsone-dashboard" alt="The DNSOne dashboard: queries, blocked queries, cache hit rate and service health" eager />
-                </figure>
-            </article>
-
-            <article className="tile tile-closed" aria-labelledby="tile-ticketone">
-                <Mark brand="ticketone" size={40} />
-                <div className="tile-closed-text">
-                    <h2 id="tile-ticketone" className="tile-name">
-                        <a href={`${root}ticketone/`}>
-                            <Wordmark brand="ticketone" />
-                        </a>
-                    </h2>
-                    <p>Support tickets for ISP help desks.</p>
-                </div>
-                <span className="badge badge-warning">Coming soon</span>
-                <a className="tile-link" href={mailto('Tell me when TicketOne is ready')}>
-                    Tell me when it’s ready
+        <nav className="lineup" id="products" aria-label="Products">
+            {LINEUP.map((p) => (
+                <a key={p.brand} className="lineup-item" href={p.href.startsWith('#') ? p.href : `${root}${p.href}`}>
+                    <Mark brand={p.brand} size={44} className="ping-on-load" />
+                    <span className="lineup-text">
+                        <Wordmark brand={p.brand} />
+                        <span className="lineup-job">{p.job}</span>
+                    </span>
+                    <span className={`badge ${STATUS[p.status][0]}`}>{STATUS[p.status][1]}</span>
                 </a>
-            </article>
-        </div>
+            ))}
+        </nav>
+    );
+}
+
+// PingOmni Monitor's plans, as PingOmni Account sells them (EUR, VAT added where it applies; a year is ten months' price).
+const PLANS: { name: string; monthly: number; yearly: number; limits: string[]; note?: string }[] = [
+    { name: 'Free', monthly: 0, yearly: 0, limits: ['10 monitors', 'Checks every 5 minutes', '1 status page', '1 person', '7 days of history'], note: 'Ready at once' },
+    { name: 'Starter', monthly: 6, yearly: 60, limits: ['25 monitors', 'Checks every minute', '2 status pages', '3 people', '30 days of history'] },
+    { name: 'Pro', monthly: 19, yearly: 190, limits: ['100 monitors', 'Checks every 30 seconds', '10 status pages', '10 people', '90 days of history'] },
+    { name: 'Business', monthly: 45, yearly: 450, limits: ['500 monitors', 'Checks every 30 seconds', '50 status pages', '50 people', '180 days of history'] },
+];
+
+const MONITOR_FEATURES: { icon: string; title: string; text: string }[] = [
+    { icon: 'globe', title: 'Every kind of check', text: 'Websites and APIs, keywords, SSL certificates, domain registrations, DNS records, ping, TCP ports and cron-job heartbeats.' },
+    { icon: 'message', title: 'Alerts that mean it', text: 'Email, Slack, Telegram or a webhook, after a second check confirms the failure, and again when it recovers.' },
+    { icon: 'eye', title: 'Status pages', text: 'A public page with your services, 90 days of uptime and recent incidents, for your customers.' },
+    { icon: 'clients', title: 'A team, with roles', text: 'Owners, admins, members and viewers in a company workspace; sign in with your PingOmni Account.' },
+];
+
+function MonitorShowcase() {
+    return (
+        <section className="section section-surface showcase" id="monitor" aria-labelledby="monitor-title">
+            <div className="container">
+                <div className="showcase-head">
+                    <Mark brand="monitor" size={56} className="ping-on-load" />
+                    <p className="showcase-name">
+                        <Wordmark brand="monitor" /> <span className="badge badge-success">New</span>
+                    </p>
+                    <h2 id="monitor-title" className="h1">
+                        Know the moment a site goes down.
+                    </h2>
+                    <p className="lead">
+                        PingOmni Monitor checks your websites, certificates, domains and servers from the outside, around the clock, and tells you
+                        before your customers do. For any website, not only ISPs.
+                    </p>
+                    <div className="actions actions-center">
+                        <a className="btn btn-primary btn-lg" href={buyUrl('monitor')}>
+                            Start free
+                        </a>
+                        <a className="text-link" href="#monitor-plans">
+                            See the plans
+                            <Icon name="arrow" />
+                        </a>
+                    </div>
+                </div>
+                <figure className="showcase-shot">
+                    <Shot name="monitor-overview" alt="The PingOmni Monitor overview: monitors that need attention, 30-day uptime, response times and the latest checks" sizes="(max-width: 1160px) 100vw, 1100px" />
+                    <figcaption className="small faint">Demo data</figcaption>
+                </figure>
+                <ul className="feature-row">
+                    {MONITOR_FEATURES.map((f) => (
+                        <li key={f.title}>
+                            <Icon name={f.icon} />
+                            <strong>{f.title}</strong>
+                            <span>{f.text}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </section>
+    );
+}
+
+function MonitorPlans() {
+    const [yearly, setYearly] = useState(true);
+    const euro = (n: number) => `€${n.toLocaleString('en')}`;
+    return (
+        <section className="section section-bg" id="monitor-plans" aria-labelledby="plans-title">
+            <div className="container">
+                <div className="section-head section-head-center">
+                    <h2 id="plans-title" className="h2">
+                        Start free. Grow when you need to.
+                    </h2>
+                    <p className="lead">Every plan has every check type, alerts and status pages. Paid plans add monitors, faster checks, people and history.</p>
+                    <div className="period" role="group" aria-label="Billing period">
+                        <button type="button" aria-pressed={!yearly} onClick={() => setYearly(false)}>
+                            Monthly
+                        </button>
+                        <button type="button" aria-pressed={yearly} onClick={() => setYearly(true)}>
+                            Yearly <span className="period-save">2 months free</span>
+                        </button>
+                    </div>
+                </div>
+                <div className="plans">
+                    {PLANS.map((p) => {
+                        const price = yearly ? p.yearly : p.monthly;
+                        return (
+                            <article className="plan" key={p.name} aria-labelledby={`plan-${p.name}`} data-featured={p.name === 'Pro' || undefined}>
+                                <h3 id={`plan-${p.name}`} className="plan-name">
+                                    {p.name}
+                                </h3>
+                                <p className="plan-price">
+                                    <strong>{euro(price)}</strong>
+                                    <span>{price === 0 ? 'forever' : yearly ? '/ year' : '/ month'}</span>
+                                </p>
+                                <p className="plan-sub small muted">{p.note ?? (yearly ? `${euro(p.monthly)} a month, paid monthly` : `or ${euro(p.yearly)} a year`)}</p>
+                                <ul className="plan-limits">
+                                    {p.limits.map((l) => (
+                                        <li key={l}>
+                                            <Icon name="check" />
+                                            {l}
+                                        </li>
+                                    ))}
+                                </ul>
+                                <a className={p.name === 'Free' || p.name === 'Pro' ? 'btn btn-primary' : 'btn'} href={buyUrl('monitor')}>
+                                    {p.name === 'Free' ? 'Start free' : `Choose ${p.name}`}
+                                </a>
+                            </article>
+                        );
+                    })}
+                </div>
+                <p className="plans-note small muted">
+                    Prices in euros; VAT is added where it applies. Paid plans are invoiced and paid by bank transfer: the plan starts as soon as
+                    the payment arrives, and until then the workspace keeps its current plan.
+                </p>
+            </div>
+        </section>
+    );
+}
+
+function IspProducts() {
+    const { root } = useSite();
+    return (
+        <section className="section section-surface" id="isp" aria-labelledby="isp-title">
+            <div className="container">
+                <div className="section-head">
+                    <h2 id="isp-title" className="h2">
+                        For ISPs, on your own servers.
+                    </h2>
+                    <p className="lead">RadiusOne and DNSOne install on your Ubuntu servers and keep subscriber data, logs and DNS queries there.</p>
+                </div>
+                <div className="launcher">
+                    <article className="tile tile-open" id="radiusone" aria-labelledby="tile-radiusone">
+                        <div className="tile-body">
+                            <div className="tile-head">
+                                <Mark brand="radiusone" size={44} />
+                                <h3 id="tile-radiusone" className="tile-name">
+                                    <a href={`${root}radiusone/`}>
+                                        <Wordmark brand="radiusone" />
+                                    </a>
+                                </h3>
+                            </div>
+                            <p className="tile-pitch">The ISP back office on FreeRADIUS.</p>
+                            <p className="tile-text">
+                                Subscribers, service plans, billing and NAS monitoring in one portal, installed with one command on your own Ubuntu
+                                server.
+                            </p>
+                            <ul className="tile-points">
+                                <li>
+                                    <Icon name="clients" />
+                                    PPPoE subscribers, plans, static IPs and expiry
+                                </li>
+                                <li>
+                                    <Icon name="billing" />
+                                    Invoices, payments and PDF receipts
+                                </li>
+                                <li>
+                                    <Icon name="server" />
+                                    NAS monitoring over SNMP, disconnects over CoA
+                                </li>
+                                <li>
+                                    <Icon name="shield" />
+                                    Operator roles, two-factor sign-in and encrypted backups
+                                </li>
+                            </ul>
+                            <p className="tile-price">Free up to 150 subscribers. Licences from €36 a month.</p>
+                            <div className="actions">
+                                <a className="btn btn-primary" href={buyUrl('radiusone')}>
+                                    Buy a licence
+                                </a>
+                                <a className="btn" href={DEMO_URL} target="_blank" rel="noopener">
+                                    Try the demo
+                                    <Icon name="external" />
+                                </a>
+                                <a className="text-link" href={`${root}radiusone/`}>
+                                    About RadiusOne
+                                    <Icon name="arrow" />
+                                </a>
+                            </div>
+                        </div>
+                        <figure className="tile-shot">
+                            <Shot name="dashboard" alt="The RadiusOne dashboard: online clients, NAS status and top users" />
+                        </figure>
+                    </article>
+
+                    <article className="tile tile-open tile-flip" id="dnsone" aria-labelledby="tile-dnsone">
+                        <div className="tile-body">
+                            <div className="tile-head">
+                                <Mark brand="dnsone" size={44} />
+                                <h3 id="tile-dnsone" className="tile-name">
+                                    <a href={`${root}dnsone/`}>
+                                        <Wordmark brand="dnsone" />
+                                    </a>
+                                </h3>
+                            </div>
+                            <p className="tile-pitch">DNS for ISPs, on your own server.</p>
+                            <p className="tile-text">
+                                Hosted zones, the customer resolver, ad-blocking and a query log in one console, on BIND, PowerDNS Recursor and
+                                dnsdist.
+                            </p>
+                            <ul className="tile-points">
+                                <li>
+                                    <Icon name="globe" />
+                                    Authoritative zones and records, with DNSSEC
+                                </li>
+                                <li>
+                                    <Icon name="ban" />
+                                    Ad-blocking and client groups for every customer
+                                </li>
+                                <li>
+                                    <Icon name="search" />
+                                    A searchable log of every query
+                                </li>
+                                <li>
+                                    <Icon name="gauge" />
+                                    Rate limits, and DNS over TLS and HTTPS
+                                </li>
+                            </ul>
+                            <p className="tile-price">Community is free. Pro from €10 a month for a 2-server cluster.</p>
+                            <div className="actions">
+                                <a className="btn btn-primary" href={buyUrl('dnsone')}>
+                                    Buy Pro
+                                </a>
+                                <a className="btn" href={DNSONE_DEMO_URL} target="_blank" rel="noopener">
+                                    Try the demo
+                                    <Icon name="external" />
+                                </a>
+                                <a className="text-link" href={`${root}dnsone/`}>
+                                    About DNSOne
+                                    <Icon name="arrow" />
+                                </a>
+                            </div>
+                        </div>
+                        <figure className="tile-shot">
+                            <Shot name="dnsone-dashboard" alt="The DNSOne dashboard: queries, blocked queries, cache hit rate and service health" />
+                        </figure>
+                    </article>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function AccountBand() {
+    return (
+        <section className="section section-bg" id="account" aria-labelledby="account-title">
+            <div className="container account-band">
+                <Mark brand="pingomni" size={56} />
+                <div>
+                    <h2 id="account-title" className="h2">
+                        One account for all of it.
+                    </h2>
+                    <p className="lead">
+                        Your PingOmni Account holds your licences and invoices, buys and renews them online, and signs you in to PingOmni
+                        Monitor.
+                    </p>
+                </div>
+                <div className="actions">
+                    <a className="btn btn-primary btn-lg" href={`${ACCOUNT_URL}/register`}>
+                        Create an account
+                    </a>
+                    <a className="btn btn-lg" href={`${ACCOUNT_URL}/login`}>
+                        Sign in
+                    </a>
+                </div>
+            </div>
+        </section>
     );
 }
 
@@ -221,14 +395,17 @@ function FreeTools() {
     return (
         <section className="section section-surface" id="tools" aria-labelledby="tools-title">
             <div className="container">
-                <div className="section-head">
-                    <h2 id="tools-title" className="h2">
-                        Free network, email and BGP tools.
-                    </h2>
-                    <p className="lead">
-                        {TOOL_LIST.length} checks for anyone who runs a network. Run them from our server, from probes in other countries through
-                        Globalping, or against the internet’s live routing table. No account, nothing to install.
-                    </p>
+                <div className="tools-head">
+                    <div className="section-head">
+                        <h2 id="tools-title" className="h2">
+                            Free network, email and BGP tools.
+                        </h2>
+                        <p className="lead">
+                            {TOOL_LIST.length} checks for anyone who runs a network. Run them from our server, from probes in other countries
+                            through Globalping, or against the internet’s live routing table. No account, nothing to install.
+                        </p>
+                    </div>
+                    <HeroConsole />
                 </div>
                 <div className="toolgroups">
                     {groups.map((g) => {
@@ -299,10 +476,11 @@ const COMMITMENTS: { term: string; icon: string; text: string }[] = [
 ];
 
 // The product family in release order: what is out, then what comes next.
-const FAMILY: { brand: 'radiusone' | 'ticketone' | 'dnsone'; job: string; available?: boolean }[] = [
-    { brand: 'radiusone', job: 'ISP back office', available: true },
-    { brand: 'dnsone', job: 'DNS', available: true },
-    { brand: 'ticketone', job: 'Support tickets' },
+const FAMILY: { brand: Brand; job: string; href: string; available?: boolean }[] = [
+    { brand: 'radiusone', job: 'ISP back office', href: 'radiusone/', available: true },
+    { brand: 'dnsone', job: 'DNS', href: 'dnsone/', available: true },
+    { brand: 'monitor', job: 'Monitoring', href: '#monitor', available: true },
+    { brand: 'ticketone', job: 'Support tickets', href: 'ticketone/' },
 ];
 
 function About() {
@@ -316,16 +494,16 @@ function About() {
                     </h2>
                     <p className="lead">
                         PingOmni builds software for the people who keep networks running: ISP owners, network engineers, office staff and field
-                        technicians.
+                        technicians, and anyone whose website has to stay up.
                     </p>
                     <p className="muted">
-                        We start from what an ISP actually runs (FreeRADIUS, PPPoE, NAS devices, billing) and make one product for each job. The
-                        free tools on this site are the checks we reach for ourselves every day.
+                        We start from what an ISP actually runs (FreeRADIUS, PPPoE, NAS devices, billing) and make one product for each job.
+                        PingOmni Monitor and the free tools on this site are the checks we reach for ourselves every day.
                     </p>
                     <ol className="family" aria-label="The product family, in release order">
                         {FAMILY.map((f) => (
                             <li key={f.brand} data-available={f.available || undefined}>
-                                <a href={`${root}${f.brand}/`}>
+                                <a href={f.href.startsWith('#') ? f.href : `${root}${f.href}`}>
                                     <Mark brand={f.brand} size={40} />
                                     <Wordmark brand={f.brand} />
                                     <span className="family-job">{f.job}</span>
@@ -353,6 +531,18 @@ function About() {
 
 // Questions ISPs ask before trying the products. Every answer is something the product pages and guides also say.
 const FAQ: { q: string; a: string }[] = [
+    {
+        q: 'What is PingOmni Monitor?',
+        a: 'A hosted monitoring service: it checks your websites and APIs, SSL certificates, domain registrations, DNS records, servers by ping, TCP ports and cron jobs from the outside, and alerts you by email, Slack, Telegram or webhook. It is for any website, with status pages for your customers and a team with roles.',
+    },
+    {
+        q: 'What does PingOmni Monitor cost?',
+        a: 'The Free plan costs nothing and covers 10 monitors checked every 5 minutes. Starter is €6 a month, Pro €19 and Business €45; a year costs ten months. Paid plans are invoiced and paid by bank transfer, and the plan starts when the payment arrives.',
+    },
+    {
+        q: 'How do I buy RadiusOne or DNSOne?',
+        a: 'Online, in your PingOmni Account: choose the plan, and you get an invoice to pay by bank transfer. The licence key appears in your account as soon as the payment arrives, and you paste it into the product under Settings → License.',
+    },
     {
         q: 'What is RadiusOne?',
         a: 'RadiusOne is a web portal for FreeRADIUS: PPPoE subscribers and their service plans, the NAS routers they connect through, invoices and payments, SNMP monitoring, customer messages by email and SMS, and admin alerts. Changes are written to the database FreeRADIUS reads, so they apply at the next customer login.',
@@ -393,9 +583,9 @@ function Faq() {
             <div className="container">
                 <div className="section-head">
                     <h2 id="faq-title" className="h2">
-                        Questions ISPs ask us.
+                        Questions we hear.
                     </h2>
-                    <p className="lead">What RadiusOne and DNSOne do, where they run, and how to try them first.</p>
+                    <p className="lead">What each product does, what it costs, where it runs, and how to try it first.</p>
                 </div>
                 <div className="faq-list">
                     {FAQ.map((f) => (
@@ -416,29 +606,36 @@ function Faq() {
 export default function Home() {
     return (
         <>
-            <section className="stage hero" aria-labelledby="hero-title">
+            <section className="stage hero hero-center" aria-labelledby="hero-title">
                 <div className="container">
-                    <div className="hero-head">
-                        <div className="hero-copy">
-                            <h1 id="hero-title" className="display">
-                                Software that ISPs run on.
-                            </h1>
-                            <p className="lead">
-                                Self-hosted software for ISPs and network operators, plus {TOOL_LIST.length} free tools for anyone who runs a
-                                network.
-                            </p>
-                        </div>
-                        <HeroConsole />
+                    <h1 id="hero-title" className="display">
+                        Keep every network running.
+                    </h1>
+                    <p className="lead">
+                        PingOmni Monitor for anyone with a website. RadiusOne and DNSOne for ISPs, on your own servers. And {TOOL_LIST.length} free
+                        tools for everyone who runs a network.
+                    </p>
+                    <div className="actions actions-center">
+                        <a className="btn btn-primary btn-lg" href={buyUrl('monitor')}>
+                            Start Monitor, free
+                        </a>
+                        <a className="btn btn-lg" href="#isp">
+                            Software for ISPs
+                        </a>
                     </div>
-                    <Launcher />
+                    <Lineup />
                 </div>
             </section>
+            <MonitorShowcase />
+            <MonitorPlans />
+            <IspProducts />
+            <AccountBand />
             <FreeTools />
             <About />
             <Faq />
             <Contact
                 title="Talk to us."
-                text="Email us with questions about RadiusOne, the products coming next or the free tools."
+                text="Email us with questions about PingOmni Monitor, RadiusOne, DNSOne, the products coming next or the free tools."
             />
         </>
     );

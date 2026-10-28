@@ -1,4 +1,4 @@
-// Site settings that change per deployment. Override at build time with VITE_DEMO_URL / VITE_REPO_URL / VITE_DNSONE_DEMO_URL / VITE_DNSONE_REPO_URL / VITE_ACCOUNT_URL / VITE_CONTACT_EMAIL.
+// Site settings that change per deployment. Override at build time with VITE_DEMO_URL / VITE_REPO_URL / VITE_DNSONE_DEMO_URL / VITE_DNSONE_REPO_URL / VITE_ACCOUNT_URL / VITE_MONITOR_URL / VITE_CONTACT_EMAIL.
 // The RadiusOne demo is a separate site; ?r=/login opens it at the sign-in page.
 export const DEMO_URL: string = import.meta.env.VITE_DEMO_URL ?? 'https://demo-radiusone.pingomni.com/?r=/login';
 // Where the RadiusOne source and installer live.
@@ -9,7 +9,10 @@ export const DNSONE_DEMO_URL: string = import.meta.env.VITE_DNSONE_DEMO_URL ?? '
 export const DNSONE_REPO_URL: string = import.meta.env.VITE_DNSONE_REPO_URL ?? 'https://github.com/Pingomni/dnsone';
 // The customers' portal: licences, orders and invoices (account.pingomni.com).
 export const ACCOUNT_URL: string = import.meta.env.VITE_ACCOUNT_URL ?? 'https://account.pingomni.com';
+// PingOmni Monitor, the hosted monitoring service.
+export const MONITOR_URL: string = import.meta.env.VITE_MONITOR_URL ?? 'https://mon.pingomni.com';
 export const CONTACT_EMAIL: string = import.meta.env.VITE_CONTACT_EMAIL ?? 'hello@pingomni.com';
 
 export const mailto = (subject: string) => `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
-
+// A product's plans in PingOmni Account: signed-out visitors sign in or create an account first, then land on them.
+export const buyUrl = (product: 'radiusone' | 'dnsone' | 'monitor') => `${ACCOUNT_URL}/buy?product=${product}`;

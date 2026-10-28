@@ -6399,3 +6399,295 @@ abbr[title] {
   color: var(--on-stage-muted);
   font-size: 14px;
 }
+
+/* ---------- Home, 2026-10-29: one idea per section, the product line up front, Monitor's plans in the open ---------- */
+
+/* The hero: one headline, one sentence, two actions, then the product line. Centered, with room around it. */
+.hero-center .container {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 22px;
+}
+
+.hero-center .display {
+  max-width: 16ch;
+  font-size: clamp(42px, 7vw, 88px);
+  line-height: .98;
+  letter-spacing: -.045em;
+}
+
+.hero-center .lead {
+  max-width: 54ch;
+}
+
+.actions-center {
+  justify-content: center;
+  align-items: center;
+}
+
+/* The product line: every product a tap away, with its status in a word. */
+.lineup {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  margin-top: clamp(28px, 4vw, 48px);
+  border: 1px solid var(--stage-line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  text-align: left;
+}
+
+.lineup-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "mark text" "mark badge";
+  align-items: center;
+  gap: 4px 14px;
+  padding: 18px 20px;
+  color: var(--on-stage);
+  text-decoration: none;
+  transition: background-color 160ms var(--ease-out);
+}
+
+.lineup-item + .lineup-item {
+  border-left: 1px solid var(--stage-line);
+}
+
+.lineup-item:hover {
+  background: var(--stage-hover);
+}
+
+.lineup-item .mark { grid-area: mark; }
+.lineup-item .badge { grid-area: badge; justify-self: start; }
+.lineup-text { grid-area: text; display: grid; gap: 2px; min-width: 0; }
+.lineup-text .wordmark { font-size: 17px; }
+.lineup-job { color: var(--on-stage-muted); font-size: 14px; line-height: 1.35; }
+
+/* A product showcase: the name, one promise, the actions, then its real screen, large. */
+.h1 {
+  font-size: clamp(34px, 5vw, 60px);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -.035em;
+  color: var(--text-strong);
+  text-wrap: balance;
+}
+
+.showcase-head {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto clamp(32px, 5vw, 56px);
+  text-align: center;
+}
+
+.showcase-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.showcase-shot {
+  margin: 0 auto;
+  max-width: 1100px;
+}
+
+.showcase-shot .shot {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-shot);
+}
+
+.showcase-shot figcaption {
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* Four facts in a row, divided by hairlines (no cards). */
+.feature-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: clamp(40px, 6vw, 72px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feature-row li {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 4px 24px;
+}
+
+.feature-row li + li { border-left: 1px solid var(--line); }
+.feature-row li:first-child { padding-left: 0; }
+.feature-row .icon { width: 24px; height: 24px; color: var(--accent); }
+.feature-row strong { color: var(--text-strong); font-size: 17px; font-weight: 600; }
+.feature-row span { color: var(--text-muted); font-size: 15px; line-height: 1.5; }
+
+/* Monitor's plans: a period switch, then four columns side by side. */
+.section-head-center {
+  margin-inline: auto;
+  justify-items: center;
+  text-align: center;
+}
+
+.section-head-center .lead { margin-inline: auto; }
+
+.period {
+  display: inline-flex;
+  gap: 2px;
+  margin-top: 8px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+}
+
+.period button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font: 600 14px/1 var(--font);
+  cursor: pointer;
+}
+
+.period button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.period button:focus-visible { outline: none; box-shadow: var(--focus); }
+.period-save { color: var(--success); font-size: 12px; }
+
+.plans {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.plan {
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  gap: 10px;
+  padding: 28px 24px;
+}
+
+.plan + .plan { border-left: 1px solid var(--line); }
+.plan[data-featured] { background: var(--accent-bg); }
+.plan-name { font-size: 18px; font-weight: 600; color: var(--text-strong); }
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-price strong {
+  color: var(--text-strong);
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+
+.plan-price span { color: var(--text-muted); font-size: 15px; }
+
+.plan-limits {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  margin: 8px 0 12px;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+  font-size: 15px;
+}
+
+.plan-limits li { display: flex; align-items: center; gap: 8px; color: var(--text); }
+.plan-limits .icon { width: 16px; height: 16px; color: var(--success); flex: none; }
+.plans-note { max-width: 72ch; margin: 18px auto 0; text-align: center; }
+
+/* The ISP products keep their tiles; a price line sits above the actions. */
+.tile-price {
+  margin: 4px 0 2px;
+  color: var(--text-strong);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.launcher .tile .actions { align-items: center; }
+
+/* One account: mark, sentence, two actions, on one line where there is room. */
+.account-band {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px clamp(24px, 4vw, 48px);
+}
+
+.account-band .lead { margin-top: 8px; }
+
+/* The tools section opens with its heading, then the live console as one full-width strip. */
+.tools-head {
+  display: grid;
+  gap: clamp(24px, 3vw, 36px);
+  margin-bottom: clamp(32px, 4vw, 48px);
+}
+
+/* The account band is one line: it needs less room than a full section. */
+#account { padding-block: clamp(48px, 6vw, 80px); }
+
+.tools-head .section-head { margin-bottom: 0; }
+
+@media (max-width: 980px) {
+  .lineup { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lineup-item:nth-child(3) { border-left: 0; }
+  .lineup-item:nth-child(n+3) { border-top: 1px solid var(--stage-line); }
+  .feature-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 0; }
+  .feature-row li:nth-child(3) { border-left: 0; padding-left: 0; }
+  .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plan:nth-child(3) { border-left: 0; }
+  .plan:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .account-band { grid-template-columns: minmax(0, 1fr); justify-items: start; }
+}
+
+@media (max-width: 600px) {
+  .lineup { grid-template-columns: minmax(0, 1fr); }
+  .lineup-item + .lineup-item { border-left: 0; border-top: 1px solid var(--stage-line); }
+  .feature-row { grid-template-columns: minmax(0, 1fr); }
+  .feature-row li, .feature-row li:first-child { padding: 0; border-left: 0; }
+  .plans { grid-template-columns: minmax(0, 1fr); }
+  .plan + .plan { border-left: 0; border-top: 1px solid var(--line); }
+  .hero-center .actions-center .btn { width: 100%; }
+}
+
+/* In the dark theme the wordmark's accent half is the light teal wherever it sits on the page, as on the tiles. */
+:root[data-theme="dark"] .showcase .wordmark-accent,
+:root[data-theme="dark"] .family .wordmark-accent {
+  color: var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .showcase .wordmark-accent,
+  :root:not([data-theme="light"]) .family .wordmark-accent {
+    color: var(--accent);
+  }
+}
