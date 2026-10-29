@@ -5,15 +5,18 @@ import Icon from '../Icon';
 import { Contact, Shot } from '../shared/Layout';
 import { MonitorPlans } from '../shared/MonitorPlans';
 
-// What one monitor can watch: the eight check types, each with what it actually catches.
+// What one monitor can watch: the eleven check types, each with what it actually catches.
 const CHECKS: { icon: string; name: string; text: string }[] = [
-    { icon: 'globe', name: 'Websites and APIs', text: 'The status code you expect, response time, redirects and the TLS handshake. GET, HEAD or POST.' },
+    { icon: 'globe', name: 'Websites and APIs', text: 'The status code you expect, response time, redirects and the TLS handshake. For APIs, a field of the JSON answer too, like status is ok.' },
     { icon: 'search', name: 'Keywords', text: 'A word that must be on the page (or must not), so an error page that answers 200 still counts as down.' },
     { icon: 'lock', name: 'SSL certificates', text: 'Expiry, chain and host name, with a warning days before the certificate ends.' },
     { icon: 'id', name: 'Domain registration', text: 'When the domain itself expires, read from the registry, so a forgotten renewal never takes you offline.' },
     { icon: 'nodes', name: 'DNS records', text: 'A, AAAA, CNAME, MX, NS or TXT, with the answer you expect.' },
     { icon: 'signal', name: 'Ping', text: 'Routers, servers and links, with the round-trip time.' },
-    { icon: 'plug', name: 'TCP ports', text: 'Mail, databases, RADIUS, SSH or any service that listens on a port.' },
+    { icon: 'plug', name: 'TCP ports', text: 'RADIUS, SSH or any service that listens on a port.' },
+    { icon: 'mail', name: 'Mail servers', text: 'The server greets, answers and offers STARTTLS, and its certificate is warned about before it ends.' },
+    { icon: 'server', name: 'Databases', text: 'MySQL, MariaDB, PostgreSQL, Redis or MongoDB answers and is not full, without a password.' },
+    { icon: 'swap', name: 'WebSockets', text: 'The socket opens and, if you want, answers a message with the text you expect.' },
     { icon: 'activity', name: 'Heartbeats', text: 'Your backups and cron jobs call a link when they finish; a missed call is an alert.' },
 ];
 
@@ -67,6 +70,7 @@ const AREAS: { id: string; title: string; pitch: string; points: { icon: string;
             { icon: 'mail', text: 'Visitors subscribe by email and hear when a service goes down, gets an update and recovers' },
             { icon: 'globe', text: 'On your own domain, like status.yourcompany.com, with HTTPS set up for you (Pro and Business)' },
             { icon: 'seal', text: 'Live status and uptime badges for your website or README' },
+            { icon: 'code', text: 'A widget for your website that shows the live status, and the same status as JSON' },
         ],
         shot: 'monitor-status',
         alt: 'A public status page: five services with 90 days of uptime bars, and a public update on an ongoing incident',
@@ -79,7 +83,8 @@ const AREAS: { id: string; title: string; pitch: string; points: { icon: string;
             { icon: 'grid', text: 'Tags to group monitors by customer, site or team, and filter by them' },
             { icon: 'check', text: 'Bulk actions: pause, resume, alerts on or off, tag or remove many monitors at once' },
             { icon: 'swap', text: 'Import monitors from a CSV file, and export them again' },
-            { icon: 'code', text: 'A REST API with keys, for the monitors your own systems create' },
+            { icon: 'code', text: 'A REST API with keys: monitors, incidents, status updates and maintenance from your own systems' },
+            { icon: 'message', text: 'A connector for Claude and other AI assistants (MCP): ask what is down, or have it draft the status update' },
             { icon: 'clients', text: 'A team with owners, admins, members and viewers' },
         ],
         shot: 'monitor-list',
@@ -131,7 +136,8 @@ const USE_CASES: { id: string; icon: string; tab: string; title: string; scene: 
         title: 'A product team that ships every day',
         scene: 'The API, the background jobs and the nightly backup all fail quietly unless someone is watching.',
         how: [
-            'API checks with the expected status code and a time-out',
+            'API checks with the expected status code, a field of the JSON answer, and a time-out',
+            'Database, WebSocket and mail server checks for the parts behind the API',
             'Heartbeats for cron jobs and backups: a missed call is an alert',
             'Webhooks into your own tools, and the REST API to create monitors from code',
         ],
@@ -200,7 +206,7 @@ function Checks() {
             <div className="container">
                 <div className="section-head">
                     <h2 id="checks-title" className="h2">
-                        Eight kinds of checks.
+                        Eleven kinds of checks.
                     </h2>
                     <p className="lead">Everything a customer would notice, and the things that expire quietly before they do.</p>
                 </div>
@@ -363,7 +369,7 @@ export default function Monitor() {
                             Know the moment a site goes down.
                         </h1>
                         <p className="lead">
-                            Websites, APIs, certificates, domains, servers and cron jobs, checked from outside your network around the clock.
+                            Websites, APIs, certificates, domains, servers, mail, databases and cron jobs, checked from outside your network around the clock.
                             Every failure is confirmed before anyone is alerted, and your customers see it on your status page.
                         </p>
                         <div className="actions">
