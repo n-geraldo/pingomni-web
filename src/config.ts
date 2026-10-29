@@ -16,4 +16,6 @@ export const CONTACT_EMAIL: string = import.meta.env.VITE_CONTACT_EMAIL ?? 'hell
 export const mailto = (subject: string) => `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
 // Buying a product: PingOmni Account's sign-up for it. New visitors create an account and land on the product's plans;
 // someone who has an account signs in from there, and a signed-in visitor goes straight to the plans.
-export const buyUrl = (product: 'radiusone' | 'dnsone' | 'monitor') => `${ACCOUNT_URL}/register?product=${product}`;
+// A plan's button names the plan and the period, so PingOmni Account opens checkout with it chosen after sign-up or sign-in.
+export const buyUrl = (product: 'radiusone' | 'dnsone' | 'monitor', plan?: string, yearly?: boolean) =>
+    `${ACCOUNT_URL}/register?${new URLSearchParams({ product, ...(plan ? { plan } : {}), ...(plan && yearly !== undefined ? { period: yearly ? '12' : '1' } : {}) })}`;
