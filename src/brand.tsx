@@ -2,12 +2,11 @@
 // Glyphs are drawn on the RadiusOne mark's 64x64 grid (the portal's public/brand/logo-mark.svg).
 import { useId } from 'react';
 
-export type Brand = 'pingomni' | 'radiusone' | 'ticketone' | 'dnsone' | 'monitor';
+export type Brand = 'pingomni' | 'radiusone' | 'dnsone' | 'monitor';
 
 const GLYPHS: Record<Brand, string> = {
     pingomni: 'M22 47V17h10.5a8.75 8.75 0 0 1 0 17.5H22',
     radiusone: 'M22 47V17h10.5a8.75 8.75 0 0 1 0 17.5H22M32 34.5L40.5 43',
-    ticketone: 'M18 18h28M32 18v28',
     dnsone: 'M20 17v28h7a14 14 0 0 0 0-28z',
     // A pulse: the check that goes out and comes back.
     monitor: 'M14 33h9l5-12 8 22 5-10h9',
@@ -37,7 +36,6 @@ export function Mark({ brand, size = 32, className }: { brand: Brand; size?: num
 const WORDS: Record<Brand, [string, string]> = {
     pingomni: ['Ping', 'Omni'],
     radiusone: ['Radius', 'One'],
-    ticketone: ['Ticket', 'One'],
     dnsone: ['DNS', 'One'],
     monitor: ['PingOmni ', 'Monitor'],
 };

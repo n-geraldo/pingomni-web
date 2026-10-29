@@ -1,4 +1,3 @@
-import ComingSoon from './pages/ComingSoon';
 import DNSOne from './pages/DNSOne';
 import { DocsGuide, DocsHub } from './pages/Docs';
 import { HowTo } from './pages/Guides';
@@ -11,7 +10,6 @@ import { Layout, type PageId } from './shared/Layout';
 const PAGES: Record<PageId, () => React.ReactNode> = {
     home: () => <Home />,
     radiusone: () => <RadiusOne />,
-    ticketone: () => <ComingSoon brand="ticketone" />,
     dnsone: () => <DNSOne />,
     docs: () => <DocsHub />,
     'docs-radiusone': () => <DocsGuide product="radiusone" />,
