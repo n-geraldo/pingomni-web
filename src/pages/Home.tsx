@@ -41,7 +41,7 @@ const PRODUCT_CARDS: { brand: Brand; page: string; pitch: string; points: { icon
         page: 'monitor/',
         pitch: 'Know the moment a site goes down.',
         points: [
-            { icon: 'globe', text: 'Websites, APIs, SSL, domains, DNS, ping, ports and cron jobs' },
+            { icon: 'globe', text: 'Websites, APIs, SSL, domains, DNS, mail, databases and cron jobs' },
             { icon: 'message', text: 'Confirmed alerts to 8 channels, with escalation' },
             { icon: 'eye', text: 'Status pages with email subscribers, on your own domain' },
         ],
@@ -135,12 +135,12 @@ function Products() {
 
 // What changed in PingOmni Monitor lately, each linking to where /monitor/ explains it.
 const MONITOR_NEW: { icon: string; title: string; text: string; anchor: string }[] = [
+    { icon: 'server', title: 'Mail, database and WebSocket checks', text: 'SMTP with STARTTLS, MySQL to MongoDB without a password, and live sockets.', anchor: 'checks' },
+    { icon: 'globe', title: 'JSON checks for APIs', text: 'Down when a field of the answer is wrong, even when the status code is fine.', anchor: 'checks' },
+    { icon: 'code', title: 'Status widget', text: 'One line on your website shows the live status to your visitors.', anchor: 'status' },
+    { icon: 'message', title: 'A connector for Claude', text: 'Ask your AI assistant what is down, or have it draft the status update.', anchor: 'scale' },
     { icon: 'user', title: 'Escalation', text: 'A channel alerts only when nobody has acknowledged the incident in time.', anchor: 'alerts' },
-    { icon: 'gauge', title: 'Slow-response alerts', text: 'Hear about a site that stays slow for minutes, not one slow answer.', anchor: 'alerts' },
     { icon: 'mail', title: 'Status page subscribers', text: 'Your customers get an email when a service goes down and when it is back.', anchor: 'status' },
-    { icon: 'globe', title: 'Your own domain', text: 'status.yourcompany.com, with HTTPS set up for you.', anchor: 'status' },
-    { icon: 'seal', title: 'Status badges', text: 'Live status and uptime on your website or README.', anchor: 'status' },
-    { icon: 'grid', title: 'Tags, bulk and CSV', text: 'Group, change and import hundreds of monitors at once.', anchor: 'scale' },
 ];
 
 function MonitorNew() {
@@ -440,7 +440,7 @@ function About() {
 const FAQ: { q: string; a: string }[] = [
     {
         q: 'What is PingOmni Monitor?',
-        a: 'A hosted monitoring service: it checks your websites and APIs, SSL certificates, domain registrations, DNS records, servers by ping, TCP ports and cron jobs from outside your network, confirms every failure from other networks, and alerts you by email, Slack, Teams, Telegram, Discord, Google Chat, PagerDuty or webhook, with escalation when nobody answers. Status pages with email subscribers keep your customers informed.',
+        a: 'A hosted monitoring service: it checks your websites and APIs, SSL certificates, domain registrations, DNS records, servers by ping, TCP ports, mail servers, databases, WebSockets and cron jobs from outside your network, confirms every failure from other networks, and alerts you by email, Slack, Teams, Telegram, Discord, Google Chat, PagerDuty or webhook, with escalation when nobody answers. Status pages with email subscribers keep your customers informed.',
     },
     {
         q: 'What does PingOmni Monitor cost?',
