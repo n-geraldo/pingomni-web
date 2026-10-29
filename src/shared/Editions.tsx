@@ -1,6 +1,9 @@
 // Community and Pro side by side, on each product's page: one table, the Pro column carries the accent.
 import type { ReactNode } from 'react';
-import { ACCOUNT_URL, mailto } from '../config';
+import { buyUrl, mailto } from '../config';
+
+// "RadiusOne" -> "radiusone": the product's name in PingOmni Account's links.
+const slug = (product: string) => product.toLowerCase() as 'radiusone' | 'dnsone';
 import Icon from '../Icon';
 
 // A row is a check or a dash, or, with text (a limit), the same words in both columns' place.
@@ -31,7 +34,7 @@ function Tiers({ product, unit, tiers, repoUrl }: { product: string; unit: strin
                             </a>
                         )}
                         {t.action === 'buy' && (
-                            <a className="btn btn-sm btn-primary" href={`${ACCOUNT_URL}/buy`}>
+                            <a className="btn btn-sm btn-primary" href={buyUrl(slug(product))}>
                                 <Icon name="key" />
                                 Buy {t.name}
                             </a>
@@ -138,7 +141,7 @@ export function Editions({ product, lead, communityTerms, repoUrl, groups, note,
                                     </a>
                                 </td>
                                 <td className="edition-pro">
-                                    <a className="btn btn-sm btn-primary" href={`${ACCOUNT_URL}/buy`}>
+                                    <a className="btn btn-sm btn-primary" href={buyUrl(slug(product))}>
                                         <Icon name="key" />
                                         Buy Pro
                                     </a>
