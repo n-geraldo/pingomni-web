@@ -342,6 +342,24 @@ a:hover {
   overflow: visible;
 }
 
+/* The Pulse (PingOmni, Monitor): ink in the text colour (the header's and stages' own on them), the ping in teal. */
+:root { --pulse-dot: #0d9488; }
+:root[data-theme="dark"] { --pulse-dot: #2dd4bf; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pulse-dot: #2dd4bf; } }
+
+.mark-pulse {
+  color: var(--wordmark);
+}
+
+.mark-pulse .mark-dot {
+  fill: var(--pulse-dot);
+}
+
+.stage .mark-pulse,
+.site-header .mark-pulse {
+  color: var(--on-stage);
+}
+
 .wordmark {
   font-size: 19px;
   font-weight: 600;
