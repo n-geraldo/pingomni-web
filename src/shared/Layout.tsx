@@ -9,7 +9,7 @@ export type Theme = 'light' | 'dark';
 
 // Bump when the screenshots are retaken: browsers and Cloudflare keep /shots/ for a day under the same address.
 export const SHOTS_VERSION = '?v=3';
-export type PageId = 'home' | 'radiusone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'notfound';
+export type PageId = 'home' | 'radiusone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'terms' | 'privacy' | 'notfound';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
 type Site = { page: PageId; root: string; theme: Theme };
@@ -322,6 +322,8 @@ function Footer() {
                     <div className="footer-col">
                         <p className="footer-title">Get in touch</p>
                         <a href={mailto('Question for PingOmni')}>{CONTACT_EMAIL}</a>
+                        <a href={`${root}terms/`}>Terms and Conditions</a>
+                        <a href={`${root}privacy/`}>Privacy Policy</a>
                     </div>
                 </div>
                 <p className="footer-bottom small faint">© {new Date().getFullYear()} PingOmni</p>

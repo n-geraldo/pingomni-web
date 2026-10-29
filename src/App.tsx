@@ -2,6 +2,7 @@ import DNSOne from './pages/DNSOne';
 import { DocsGuide, DocsHub } from './pages/Docs';
 import { HowTo } from './pages/Guides';
 import Home from './pages/Home';
+import Legal from './pages/Legal';
 import NotFound from './pages/NotFound';
 import RadiusOne from './pages/RadiusOne';
 import Tools from './pages/Tools';
@@ -19,6 +20,8 @@ const PAGES: Record<PageId, () => React.ReactNode> = {
     'tools-network': () => <Tools group="network" />,
     'tools-email': () => <Tools group="email" />,
     'tools-bgp': () => <Tools group="bgp" />,
+    terms: () => <Legal id="terms" />,
+    privacy: () => <Legal id="privacy" />,
     notfound: () => <NotFound />,
 };
 
