@@ -9,7 +9,7 @@ export type Theme = 'light' | 'dark';
 
 // Bump when the screenshots are retaken: browsers and Cloudflare keep /shots/ for a day under the same address.
 export const SHOTS_VERSION = '?v=3';
-export type PageId = 'home' | 'radiusone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'terms' | 'privacy' | 'notfound';
+export type PageId = 'home' | 'monitor' | 'radiusone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'terms' | 'privacy' | 'notfound';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
 type Site = { page: PageId; root: string; theme: Theme };
@@ -25,7 +25,7 @@ function currentTheme(): Theme {
 // The Products menu: RadiusOne featured, then the other products available, then what is coming.
 const PRODUCTS: { brand: Brand; page?: PageId; href: string; job: string; soon?: boolean }[] = [
     { brand: 'radiusone', page: 'radiusone', href: 'radiusone/', job: 'ISP back office on FreeRADIUS' },
-    { brand: 'monitor', href: '#monitor', job: 'Uptime, SSL and domain monitoring for any website' },
+    { brand: 'monitor', page: 'monitor', href: 'monitor/', job: 'Uptime, SSL and domain monitoring for any website' },
     { brand: 'dnsone', page: 'dnsone', href: 'dnsone/', job: 'DNS for ISPs: zones, resolver and ad-blocking' },
 ];
 
@@ -304,7 +304,7 @@ function Footer() {
                         <p className="footer-title" id="footer-products">Products</p>
                         <a href={`${root}radiusone/`}>RadiusOne</a>
                         <a href={`${root}radiusone/#use-cases`}>RadiusOne use cases</a>
-                        <a href={`${root}#monitor`}>PingOmni Monitor</a>
+                        <a href={`${root}monitor/`}>PingOmni Monitor</a>
                         <a href={`${root}dnsone/`}>DNSOne</a>
                         <a href={`${root}docs/`}>Documentation</a>
                         <a href={`${root}guides/mikrotik-pppoe-freeradius/`}>MikroTik PPPoE with RadiusOne</a>

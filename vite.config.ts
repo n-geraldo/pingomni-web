@@ -17,6 +17,7 @@ export default defineConfig({
         rollupOptions: {
             input: {
                 home: page('index.html'),
+                monitor: page('monitor/index.html'),
                 radiusone: page('radiusone/index.html'),
                 dnsone: page('dnsone/index.html'),
                 docs: page('docs/index.html'),
