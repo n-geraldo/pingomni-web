@@ -84,8 +84,8 @@ function Tiers({ product, unit, tiers, repoUrl }: { product: string; unit: strin
                 })}
             </div>
             <p className="plans-note small muted">
-                Prices in euros; VAT is added where it applies. Buy in PingOmni Account: you get an invoice to pay by bank transfer, and the
-                licence key appears in your account as soon as the payment arrives.
+                Prices in euros; VAT is added where it applies. Buy in PingOmni Account and pay by card through POK’s secure payment page; the
+                licence key appears in your account as soon as the payment goes through.
             </p>
         </div>
     );

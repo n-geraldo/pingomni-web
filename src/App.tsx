@@ -3,6 +3,7 @@ import { DocsGuide, DocsHub } from './pages/Docs';
 import { HowTo } from './pages/Guides';
 import Home from './pages/Home';
 import Legal from './pages/Legal';
+import Monitor from './pages/Monitor';
 import NotFound from './pages/NotFound';
 import RadiusOne from './pages/RadiusOne';
 import Tools from './pages/Tools';
@@ -10,6 +11,7 @@ import { Layout, type PageId } from './shared/Layout';
 
 const PAGES: Record<PageId, () => React.ReactNode> = {
     home: () => <Home />,
+    monitor: () => <Monitor />,
     radiusone: () => <RadiusOne />,
     dnsone: () => <DNSOne />,
     docs: () => <DocsHub />,
