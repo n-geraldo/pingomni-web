@@ -12,7 +12,6 @@ const LINEUP: { brand: Brand; job: string; href: string; status: 'available' | '
     { brand: 'monitor', job: 'Uptime, SSL and domains for any website', href: '#monitor', status: 'new' },
     { brand: 'radiusone', job: 'The ISP back office on FreeRADIUS', href: '#radiusone', status: 'available' },
     { brand: 'dnsone', job: 'DNS for ISPs, on your own server', href: '#dnsone', status: 'available' },
-    { brand: 'ticketone', job: 'Support tickets for ISP help desks', href: 'ticketone/', status: 'soon' },
 ];
 
 const STATUS = { available: ['badge-success', 'Available'], new: ['badge-success', 'New'], soon: ['badge-warning', 'Coming soon'] } as const;
@@ -480,7 +479,6 @@ const FAMILY: { brand: Brand; job: string; href: string; available?: boolean }[]
     { brand: 'radiusone', job: 'ISP back office', href: 'radiusone/', available: true },
     { brand: 'dnsone', job: 'DNS', href: 'dnsone/', available: true },
     { brand: 'monitor', job: 'Monitoring', href: '#monitor', available: true },
-    { brand: 'ticketone', job: 'Support tickets', href: 'ticketone/' },
 ];
 
 function About() {
@@ -635,7 +633,7 @@ export default function Home() {
             <Faq />
             <Contact
                 title="Talk to us."
-                text="Email us with questions about PingOmni Monitor, RadiusOne, DNSOne, the products coming next or the free tools."
+                text="Email us with questions about PingOmni Monitor, RadiusOne, DNSOne or the free tools."
             />
         </>
     );
