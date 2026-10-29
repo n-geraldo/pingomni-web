@@ -27,7 +27,6 @@ const PRODUCTS: { brand: Brand; page?: PageId; href: string; job: string; soon?:
     { brand: 'radiusone', page: 'radiusone', href: 'radiusone/', job: 'ISP back office on FreeRADIUS' },
     { brand: 'monitor', href: '#monitor', job: 'Uptime, SSL and domain monitoring for any website' },
     { brand: 'dnsone', page: 'dnsone', href: 'dnsone/', job: 'DNS for ISPs: zones, resolver and ad-blocking' },
-    { brand: 'ticketone', page: 'ticketone', href: 'ticketone/', job: 'Support tickets for ISP help desks', soon: true },
 ];
 
 // Shared open/close behaviour for the navbar menus: Escape or a click outside closes them.
@@ -166,7 +165,7 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
                         {([
                             ['Also available', PRODUCTS.filter((p) => p.brand !== 'radiusone' && !p.soon)],
                             ['Coming soon', PRODUCTS.filter((p) => p.soon)],
-                        ] as const).map(([title, list]) => (
+                        ] as const).filter(([, list]) => list.length > 0).map(([title, list]) => (
                             <div className="mega-soon-group" key={title}>
                                 <p className="mega-soon-title">{title}</p>
                                 <ul>
@@ -310,9 +309,6 @@ function Footer() {
                         <a href={`${root}docs/`}>Documentation</a>
                         <a href={`${root}guides/mikrotik-pppoe-freeradius/`}>MikroTik PPPoE with RadiusOne</a>
                         <a href={`${root}guides/rpz-ad-blocking-powerdns/`}>Ad-blocking with DNSOne</a>
-                        <a className="footer-soon" href={`${root}ticketone/`}>
-                            TicketOne <span>Soon</span>
-                        </a>
                     </nav>
                     <nav className="footer-col" aria-labelledby="footer-company">
                         <p className="footer-title" id="footer-company">Company</p>
