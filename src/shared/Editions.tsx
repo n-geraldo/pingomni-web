@@ -1,53 +1,92 @@
 // Community and Pro side by side, on each product's page: one table, the Pro column carries the accent.
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { buyUrl, mailto } from '../config';
+import Icon from '../Icon';
 
 // "RadiusOne" -> "radiusone": the product's name in PingOmni Account's links.
 const slug = (product: string) => product.toLowerCase() as 'radiusone' | 'dnsone';
-import Icon from '../Icon';
 
 // A row is a check or a dash, or, with text (a limit), the same words in both columns' place.
 export type EditionGroup = { group: string; rows: { feature: string; detail: string; community: boolean | string; pro?: string }[] };
 
-// A price tier: who it is for (a count range), the price, and what its button does.
-export type PriceTier = { name: string; range: string; price: string; per?: string; yearly?: string; action: 'code' | 'buy' | 'quote' };
+// A plan: who it is for, its price a month and a year (PingOmni Account's plans; a year costs ten months), what it
+// includes beyond the edition table, and what its button does. Free plans have no price.
+export type PriceTier = { name: string; range: string; monthly?: number; yearly?: number; points?: string[]; action: 'code' | 'buy' | 'quote' };
 
+const euro = (n: number) => `€${n.toLocaleString('en')}`;
+
+/** The plans as cards side by side, with a monthly/yearly switch: the same layout as PingOmni Monitor's on the home page. */
 function Tiers({ product, unit, tiers, repoUrl }: { product: string; unit: string; tiers: PriceTier[]; repoUrl: string }) {
+    const [yearly, setYearly] = useState(true);
     return (
         <div className="tiers-block">
-            <h3 className="h3 tiers-title">Prices</h3>
-            <p className="small muted tiers-unit">By {unit}.</p>
-            <ol className="tiers">
-                {tiers.map((t) => (
-                    <li className={t.action === 'code' ? 'tier tier-free' : 'tier'} key={t.name}>
-                        <span className="tier-name">{t.name}</span>
-                        <span className="tier-range">{t.range}</span>
-                        <span className="tier-price">
-                            {t.price}
-                            {t.per && <span className="tier-per"> {t.per}</span>}
-                        </span>
-                        {t.yearly && <span className="tier-yearly">{t.yearly}</span>}
-                        {t.action === 'code' && (
-                            <a className="btn btn-sm btn-ghost" href={repoUrl} target="_blank" rel="noopener">
-                                <Icon name="code" />
-                                Get the code
-                            </a>
-                        )}
-                        {t.action === 'buy' && (
-                            <a className="btn btn-sm btn-primary" href={buyUrl(slug(product))}>
-                                <Icon name="key" />
-                                Buy {t.name}
-                            </a>
-                        )}
-                        {t.action === 'quote' && (
-                            <a className="btn btn-sm btn-ghost" href={mailto(`${product} ${t.name}: quote`)}>
-                                <Icon name="mail" />
-                                Ask for a quote
-                            </a>
-                        )}
-                    </li>
-                ))}
-            </ol>
+            <div className="tiers-head">
+                <div>
+                    <h3 className="h3 tiers-title">Prices</h3>
+                    <p className="small muted tiers-unit">By {unit}.</p>
+                </div>
+                <div className="period" role="group" aria-label="Billing period">
+                    <button type="button" aria-pressed={!yearly} onClick={() => setYearly(false)}>
+                        Monthly
+                    </button>
+                    <button type="button" aria-pressed={yearly} onClick={() => setYearly(true)}>
+                        Yearly <span className="period-save">2 months free</span>
+                    </button>
+                </div>
+            </div>
+            <div className="plans" style={{ ['--plans' as string]: tiers.length }}>
+                {tiers.map((t, i) => {
+                    const price = t.monthly === undefined ? undefined : yearly ? t.yearly ?? t.monthly * 10 : t.monthly;
+                    return (
+                        <article className="plan" key={t.name} aria-labelledby={`tier-${slug(product)}-${i}`} data-featured={(t.action === 'buy' && i === 1) || undefined}>
+                            <h4 id={`tier-${slug(product)}-${i}`} className="plan-name">
+                                {t.name}
+                            </h4>
+                            <p className="plan-price">
+                                <strong>{price === undefined ? '€0' : euro(price)}</strong>
+                                <span>{price === undefined ? 'forever' : yearly ? '/ year' : '/ month'}</span>
+                            </p>
+                            <p className="plan-sub small muted">
+                                {t.monthly === undefined ? 'Free and open source' : yearly ? `${euro(t.monthly)} a month, paid monthly` : `or ${euro(t.yearly ?? t.monthly * 10)} a year`}
+                            </p>
+                            <ul className="plan-limits">
+                                <li>
+                                    <Icon name="check" />
+                                    {t.range}
+                                </li>
+                                {t.points?.map((pt) => (
+                                    <li key={pt}>
+                                        <Icon name="check" />
+                                        {pt}
+                                    </li>
+                                ))}
+                            </ul>
+                            {t.action === 'code' && (
+                                <a className="btn" href={repoUrl} target="_blank" rel="noopener">
+                                    <Icon name="code" />
+                                    Get the code
+                                </a>
+                            )}
+                            {t.action === 'buy' && (
+                                <a className="btn btn-primary" href={buyUrl(slug(product))}>
+                                    <Icon name="key" />
+                                    Buy {t.name}
+                                </a>
+                            )}
+                            {t.action === 'quote' && (
+                                <a className="btn" href={mailto(`${product} ${t.name}: quote`)}>
+                                    <Icon name="mail" />
+                                    Ask for a quote
+                                </a>
+                            )}
+                        </article>
+                    );
+                })}
+            </div>
+            <p className="plans-note small muted">
+                Prices in euros; VAT is added where it applies. Buy in PingOmni Account: you get an invoice to pay by bank transfer, and the
+                licence key appears in your account as soon as the payment arrives.
+            </p>
         </div>
     );
 }

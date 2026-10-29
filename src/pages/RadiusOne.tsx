@@ -284,10 +284,10 @@ const EDITIONS: EditionGroup[] = [
 
 // Prices per month, by active subscribers (PPPoE + DHCP); a year costs ten months (the account portal's yearly plans).
 const TIERS: PriceTier[] = [
-    { name: 'Free', range: 'Up to 150', price: '€0', action: 'code' },
-    { name: 'Licence 1', range: '151–999', price: '€36', per: '/ month', yearly: 'or €360 / year, 2 months free', action: 'buy' },
-    { name: 'Licence 2', range: '1,000–4,999', price: '€99', per: '/ month', yearly: 'or €990 / year, 2 months free', action: 'buy' },
-    { name: 'Licence 3', range: '5,000+', price: '€199', per: '/ month', yearly: 'or €1,990 / year, 2 months free', action: 'buy' },
+    { name: 'Free', range: 'Up to 150 active subscribers', points: ['Every Community feature'], action: 'code' },
+    { name: 'Licence 1', range: '151–999 active subscribers', monthly: 36, yearly: 360, points: ['Every Pro feature'], action: 'buy' },
+    { name: 'Licence 2', range: '1,000–4,999 active subscribers', monthly: 99, yearly: 990, points: ['Every Pro feature'], action: 'buy' },
+    { name: 'Licence 3', range: '5,000 active subscribers or more', monthly: 199, yearly: 1990, points: ['Every Pro feature'], action: 'buy' },
 ];
 
 const MODULES: { area: string; icon: string; title: string; items: string[]; mock: ReactNode; wide?: boolean; full?: boolean }[] = [
