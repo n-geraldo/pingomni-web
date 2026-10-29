@@ -68,7 +68,7 @@ function Tiers({ product, unit, tiers, repoUrl }: { product: string; unit: strin
                                 </a>
                             )}
                             {t.action === 'buy' && (
-                                <a className="btn btn-primary" href={buyUrl(slug(product))}>
+                                <a className="btn btn-primary" href={buyUrl(slug(product), t.name, yearly)}>
                                     <Icon name="key" />
                                     Buy {t.name}
                                 </a>

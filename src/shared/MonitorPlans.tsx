@@ -92,7 +92,7 @@ export function MonitorPlans({ id = 'plans' }: { id?: string }) {
                                         </li>
                                     ))}
                                 </ul>
-                                <a className={p.name === 'Free' || p.name === 'Pro' ? 'btn btn-primary' : 'btn'} href={buyUrl('monitor')}>
+                                <a className={p.name === 'Free' || p.name === 'Pro' ? 'btn btn-primary' : 'btn'} href={buyUrl('monitor', p.name, p.name === 'Free' ? true : yearly)}>
                                     {p.name === 'Free' ? 'Start free' : `Choose ${p.name}`}
                                 </a>
                             </article>
