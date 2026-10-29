@@ -1,7 +1,7 @@
 // Header, footer and contact band shared by every page, plus the theme switch.
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Mark, Wordmark, type Brand } from '../brand';
-import { ACCOUNT_URL, CONTACT_EMAIL, DEMO_URL, mailto } from '../config';
+import { ACCOUNT_URL, buyUrl, CONTACT_EMAIL, DEMO_URL, mailto } from '../config';
 import Icon from '../Icon';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 
@@ -24,8 +24,8 @@ function currentTheme(): Theme {
 
 // The Products menu: RadiusOne featured, then the other products available, then what is coming.
 const PRODUCTS: { brand: Brand; page?: PageId; href: string; job: string; soon?: boolean }[] = [
-    { brand: 'radiusone', page: 'radiusone', href: 'radiusone/', job: 'ISP back office on FreeRADIUS' },
     { brand: 'monitor', page: 'monitor', href: 'monitor/', job: 'Uptime, SSL and domain monitoring for any website' },
+    { brand: 'radiusone', page: 'radiusone', href: 'radiusone/', job: 'ISP back office on FreeRADIUS' },
     { brand: 'dnsone', page: 'dnsone', href: 'dnsone/', job: 'DNS for ISPs: zones, resolver and ad-blocking' },
 ];
 
@@ -136,34 +136,34 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
                 <div className="container mega-grid">
                     <div className="mega-feature">
                         <div className="mega-feature-head">
-                            <Mark brand="radiusone" size={36} />
-                            <Wordmark brand="radiusone" />
+                            <Mark brand="monitor" size={36} />
+                            <Wordmark brand="monitor" />
                         </div>
-                        <p className="mega-feature-job">The ISP back office on FreeRADIUS: subscribers, plans, billing and NAS monitoring.</p>
+                        <p className="mega-feature-job">Websites, APIs, certificates, domains and servers, checked from outside your network, with alerts and status pages.</p>
                         <div className="mega-feature-body">
-                            <a className="mega-shot" href={`${root}radiusone/`} tabIndex={-1} aria-hidden="true" onClick={close}>
-                                <img src={`${root}shots/dashboard-${theme}-600.webp${SHOTS_VERSION}`} alt="The RadiusOne dashboard" width={600} height={500} loading="lazy" />
+                            <a className="mega-shot" href={`${root}monitor/`} tabIndex={-1} aria-hidden="true" onClick={close}>
+                                <img src={`${root}shots/monitor-overview-${theme}-600.webp${SHOTS_VERSION}`} alt="The PingOmni Monitor overview" width={600} height={500} loading="lazy" />
                             </a>
                             <div className="mega-feature-links">
                                 <a
                                     className="text-link"
-                                    href={`${root}radiusone/`}
-                                    aria-current={page === 'radiusone' ? 'page' : undefined}
+                                    href={`${root}monitor/`}
+                                    aria-current={page === 'monitor' ? 'page' : undefined}
                                     onClick={close}
                                 >
-                                    RadiusOne overview
+                                    PingOmni Monitor overview
                                     <Icon name="arrow" />
                                 </a>
-                                <a className="text-link" href={DEMO_URL} target="_blank" rel="noopener" onClick={close}>
-                                    Try the demo
-                                    <Icon name="external" />
+                                <a className="text-link" href={buyUrl('monitor')} onClick={close}>
+                                    Start free
+                                    <Icon name="arrow" />
                                 </a>
                             </div>
                         </div>
                     </div>
                     <div className="mega-soon">
                         {([
-                            ['Also available', PRODUCTS.filter((p) => p.brand !== 'radiusone' && !p.soon)],
+                            ['Also available', PRODUCTS.filter((p) => p.brand !== 'monitor' && !p.soon)],
                             ['Coming soon', PRODUCTS.filter((p) => p.soon)],
                         ] as const).filter(([, list]) => list.length > 0).map(([title, list]) => (
                             <div className="mega-soon-group" key={title}>
