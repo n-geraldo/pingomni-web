@@ -25,6 +25,8 @@ export default defineConfig({
                 guideMikrotikPppoe: page('guides/mikrotik-pppoe-freeradius/index.html'),
                 guideRpzPowerdns: page('guides/rpz-ad-blocking-powerdns/index.html'),
                 tools: page('tools/index.html'),
+                terms: page('terms/index.html'),
+                privacy: page('privacy/index.html'),
                 notFound: page('404.html'),
                 toolsNetwork: page('tools/network/index.html'),
                 toolsEmail: page('tools/email/index.html'),
