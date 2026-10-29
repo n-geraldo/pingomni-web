@@ -6575,7 +6575,7 @@ abbr[title] {
 
 .plans {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--plans, 4), minmax(0, 1fr));
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -6692,3 +6692,18 @@ abbr[title] {
     color: var(--accent);
   }
 }
+
+/* Product pages: the price block's heading and the period switch on one line, then the plan cards. */
+.tiers-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 20px;
+}
+
+.tiers-head .period { margin-top: 0; }
+.tiers-block .plans-note { text-align: left; margin-left: 0; }
+.tiers-block .plan-name { font-size: 18px; }
+.plan > * { margin: 0; }
