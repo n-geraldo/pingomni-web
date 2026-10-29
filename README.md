@@ -1,6 +1,6 @@
 # PingOmni website
 
-The company site for PingOmni, the home of RadiusOne, DNSOne and the "One" product family (TicketOne is coming). It's a static Vite + React build, plus a small PHP API for the network tools page. It uses the RadiusOne portal's token names and logo language, in the brand's teal palette (the DNSOne colours).
+The company site for PingOmni, the home of RadiusOne, DNSOne and PingOmni Monitor. It's a static Vite + React build, plus a small PHP API for the network tools page. It uses the RadiusOne portal's token names and logo language, in the brand's teal palette (the DNSOne colours).
 
 ## Develop and build
 
@@ -63,7 +63,7 @@ sudo cp deploy/nginx.conf /etc/nginx/sites-available/pingomni-web && sudo nginx 
 
 ## Files
 
-- `index.html`, `radiusone/`, `ticketone/`, `dnsone/`, `docs/`, `docs/radiusone/`, `docs/dnsone/`, `tools/network/`, `tools/email/`, `tools/bgp/`: one HTML file per page, so every address works on any static host.
+- `index.html`, `radiusone/`, `dnsone/`, `docs/`, `docs/radiusone/`, `docs/dnsone/`, `tools/network/`, `tools/email/`, `tools/bgp/`: one HTML file per page, so every address works on any static host.
 - `src/pages/`: the home, RadiusOne, DNSOne, documentation and coming-soon pages; `src/shared/Layout.tsx`: header, footer, contact band and theme switch.
 - `src/site.css`: tokens (same names and values as the portal's `resources/css/app.css`) and styles.
 - `src/brand.tsx`: the family marks (one tile, gradient and teal "ping" dot; one letter per product) and wordmarks.

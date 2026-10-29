@@ -18,7 +18,6 @@ export default defineConfig({
             input: {
                 home: page('index.html'),
                 radiusone: page('radiusone/index.html'),
-                ticketone: page('ticketone/index.html'),
                 dnsone: page('dnsone/index.html'),
                 docs: page('docs/index.html'),
                 docsRadiusone: page('docs/radiusone/index.html'),
