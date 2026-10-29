@@ -14,5 +14,6 @@ export const MONITOR_URL: string = import.meta.env.VITE_MONITOR_URL ?? 'https://
 export const CONTACT_EMAIL: string = import.meta.env.VITE_CONTACT_EMAIL ?? 'hello@pingomni.com';
 
 export const mailto = (subject: string) => `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
-// A product's plans in PingOmni Account: signed-out visitors sign in or create an account first, then land on them.
-export const buyUrl = (product: 'radiusone' | 'dnsone' | 'monitor') => `${ACCOUNT_URL}/buy?product=${product}`;
+// Buying a product: PingOmni Account's sign-up for it. New visitors create an account and land on the product's plans;
+// someone who has an account signs in from there, and a signed-in visitor goes straight to the plans.
+export const buyUrl = (product: 'radiusone' | 'dnsone' | 'monitor') => `${ACCOUNT_URL}/register?product=${product}`;

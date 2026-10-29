@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { Mark, Wordmark } from '../brand';
-import { ACCOUNT_URL, DNSONE_DEMO_URL, DNSONE_REPO_URL } from '../config';
+import { buyUrl, DNSONE_DEMO_URL, DNSONE_REPO_URL } from '../config';
 import Icon from '../Icon';
 import { type EditionGroup, type PriceTier, Editions } from '../shared/Editions';
 import { Contact, Shot, useSite } from '../shared/Layout';
@@ -673,7 +673,7 @@ export default function DNSOne() {
                                 <Icon name="code" />
                                 Get the code
                             </a>
-                            <a className="btn btn-lg btn-ghost" href={`${ACCOUNT_URL}/buy`}>
+                            <a className="btn btn-lg btn-ghost" href={buyUrl('dnsone')}>
                                 Buy DNSOne Pro
                             </a>
                         </div>
