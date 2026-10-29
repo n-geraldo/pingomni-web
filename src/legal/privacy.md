@@ -26,6 +26,8 @@ Orders and invoices (product, plan, amount, dates, payment method and reference)
 
 The addresses you monitor and their check results, your status pages, alert channels (such as email addresses or webhook addresses you add), and the people you invite to your workspace.
 
+When a monitor seems down, the address it checks is checked again from PingOmni's own probe servers in other countries and, when none of them answers, from the Globalping network, to confirm the outage before anyone is alerted. Only the address and the kind of check are sent, never your account or other details.
+
 ### The website and its tools
 
 Our web server records each request (IP address, page, time, browser) in its logs to keep the site working and secure. The free network, DNS and email tools send what you enter (a domain, address or host) to perform the check; some checks are run through the Globalping network or look up public registries (RDAP, PeeringDB, DNS blocklists). We do not use advertising or analytics trackers. The website stores only your choice of light or dark theme and tools view in your browser.
@@ -50,6 +52,8 @@ Only the providers we need, under contract and only for these purposes:
 - **Network and security:** Cloudflare, through which our websites are reached.
 - **Card payments:** our payment provider, when card payment is offered.
 - **Website tools:** the Globalping network and public registries, for the checks you run (they receive what you enter, not your account).
+- **Outage confirmation in PingOmni Monitor:** the Globalping network, when our own probes cannot confirm an outage (it receives the monitored address and the kind of check only).
+- **Alert channels you add:** the services you connect (for example Slack, Discord, Microsoft Teams, Google Chat, PagerDuty or Telegram) receive the alerts you chose to send them.
 
 Some of these providers may process data outside Albania; where they do, they are bound by contracts with appropriate safeguards. We also disclose data when the law requires it.
 
