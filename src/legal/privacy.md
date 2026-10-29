@@ -20,7 +20,7 @@ This policy explains what personal data PingOmni collects when you use pingomni.
 
 ### What you buy
 
-Orders and invoices (product, plan, amount, dates, payment method and reference), licences, and the servers that activate a licence (an identifier the product sends, its address and the time it last checked in). When you pay by card, the payment provider handles the card; we receive only the result.
+Orders and invoices (product, plan, amount, dates, payment method and reference), licences, and the servers that activate a licence (an identifier the product sends, its address and the time it last checked in). You pay by card on our payment provider's page; we receive only the result, never the card details.
 
 ### PingOmni Monitor
 
@@ -50,7 +50,7 @@ Only the providers we need, under contract and only for these purposes:
 
 - **Email delivery:** Mailgun, which sends our emails (confirmation, sign-in alerts, invoices, licence notices).
 - **Network and security:** Cloudflare, through which our websites are reached.
-- **Card payments:** our payment provider, when card payment is offered.
+- **Card payments:** POK (pokpay.io), our payment provider, which receives your card details on its own page and tells us the result.
 - **Website tools:** the Globalping network and public registries, for the checks you run (they receive what you enter, not your account).
 - **Outage confirmation in PingOmni Monitor:** the Globalping network, when our own probes cannot confirm an outage (it receives the monitored address and the kind of check only).
 - **Alert channels you add:** the services you connect (for example Slack, Discord, Microsoft Teams, Google Chat, PagerDuty or Telegram) receive the alerts you chose to send them.

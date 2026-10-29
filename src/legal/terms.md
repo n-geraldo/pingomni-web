@@ -59,8 +59,7 @@ The contract is concluded in English. We store each order, its invoice and the v
 
 ## 6. Payment
 
-- **Bank transfer** to the account shown on the order, with the order number as reference, by the due date on the order. The order is fulfilled when the transfer is received.
-- **Payment card**, where offered on the order, on the secure payment page of our payment provider. **We never receive or store your card number, expiry date or security code**; we only receive the result of the payment.
+You pay each order by **payment card** (Visa or Mastercard, with 3-D Secure where your bank uses it) on the secure payment page of our payment provider, POK (pokpay.io), opened from the invoice in your PingOmni Account. **We never receive or store your card number, expiry date or security code**; we only receive the result of the payment. The order is paid, and fulfilled, as soon as POK confirms the payment for its full amount.
 
 Each order is paid on its own. **We do not charge your card automatically** and we do not store cards for later payments.
 
@@ -94,7 +93,7 @@ If you ask for a plan to start during the withdrawal period and then withdraw, y
 
 ### Refunds
 
-We refund all payments due without undue delay and **no later than 14 days** after we receive your withdrawal, using the same payment method you used (the same card, or the bank account the transfer came from), unless you expressly agree otherwise. You pay no fees for the refund. Once a withdrawal is accepted the licence is revoked or the plan ends. Payment errors (a duplicate payment, or an amount different from the order) are always refunded in full, to consumers and business customers alike.
+We refund all payments due without undue delay and **no later than 14 days** after we receive your withdrawal, to the card you paid with, unless you expressly agree otherwise. You pay no fees for the refund. Once a withdrawal is accepted the licence is revoked or the plan ends. Payment errors (a duplicate payment, or an amount different from the order) are always refunded in full, to consumers and business customers alike.
 
 ## 10. Licence terms (RadiusOne and DNSOne)
 
