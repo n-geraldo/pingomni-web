@@ -2,7 +2,7 @@
 # Copies the product guides and RadiusOne's guide component into the site, unchanged except for the icon import:
 #   src/docs/radiusone.md   <- RadiusOne docs/USER-GUIDE.md       (RADIUSONE_DIR, default /opt/freeradius-web-laravel)
 #   src/docs/dnsone.md      <- DNSOne docs/USER-GUIDE.md          (DNSONE_GUIDE: a path, host:path for scp, or a URL;
-#                                                                  default the DNSOne server's source tree, over ssh)
+#                                                                  default GitHub's main branch, the released guide)
 #   src/docs/monitor.md     <- PingOmni Monitor docs/USER-GUIDE.md (MONITOR_DIR, default /opt/pingomni-monitor)
 #   src/shared/guide.tsx    <- RadiusOne resources/js/components/guide.tsx
 #   src/docs/versions.json  <- RadiusOne's and DNSOne's VERSION files and Monitor's latest tag (the version each guide describes)
@@ -11,7 +11,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 RADIUSONE="${RADIUSONE_DIR:-/opt/freeradius-web-laravel}"
-DNSONE="${DNSONE_GUIDE:-dnsone:dnsone-src/docs/USER-GUIDE.md}"
+DNSONE="${DNSONE_GUIDE:-https://raw.githubusercontent.com/Pingomni/dnsone/main/docs/USER-GUIDE.md}"
 MONITOR="${MONITOR_DIR:-/opt/pingomni-monitor}"
 [ -f "$RADIUSONE/docs/USER-GUIDE.md" ] || { echo "RadiusOne not found at $RADIUSONE (set RADIUSONE_DIR)" >&2; exit 1; }
 [ -f "$MONITOR/docs/USER-GUIDE.md" ] || { echo "PingOmni Monitor not found at $MONITOR (set MONITOR_DIR)" >&2; exit 1; }
