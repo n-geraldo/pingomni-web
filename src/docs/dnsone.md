@@ -3,7 +3,8 @@
 Everything the console does, for the people who use it: operators, administrators, resellers and
 customers. Installing and running the server is in [RUNBOOK.md](RUNBOOK.md).
 
-Page names below are as they appear in the console's navigation: **Page → tab**. In the console, this
+Parts marked **(Pro)** need a DNSOne Pro licence (*Settings → License*); without one, DNSOne runs as DNSOne
+Community and those pages are not shown. Page names below are as they appear in the console's navigation: **Page → tab**. In the console, this
 guide is under **Help**.
 
 ## Contents
@@ -15,10 +16,10 @@ guide is under **Help**.
 5. [Zones (authoritative DNS)](#5-zones-authoritative-dns)
 6. [The resolver for your customers](#6-the-resolver-for-your-customers)
 7. [Ad-blocking and client groups](#7-ad-blocking-and-client-groups)
-8. [Court-ordered blocking](#8-court-ordered-blocking)
+8. [Court-ordered blocking (Pro)](#8-court-ordered-blocking-pro)
 9. [Query log](#9-query-log)
-10. [Protection (attacks)](#10-protection-attacks)
-11. [Customers, resellers and quotas](#11-customers-resellers-and-quotas)
+10. [Protection (attacks) (Pro)](#10-protection-attacks-pro)
+11. [Customers, resellers and quotas (Pro)](#11-customers-resellers-and-quotas-pro)
 12. [Settings](#12-settings)
 13. [Audit log](#13-audit-log)
 14. [Automation: API, dynamic DNS, certbot](#14-automation-api-dynamic-dns-certbot)
@@ -35,7 +36,8 @@ DNSOne runs an ISP's DNS on one server (or a cluster):
 - **A resolver for your customers**: they use this server as their DNS. It resolves everything from
   the root, validates DNSSEC, and can block ads, malware and court-ordered names, per group of
   customers.
-- **Protection**: rate limits, attack detection and the server's firewall.
+- **Rate limits** per customer address, higher for NAT addresses.
+- **Protection** (Pro): attack detection and the server's firewall.
 
 What happens behind the scenes, in short: every change you make in the console is stored in MySQL,
 checked, and published to the DNS servers within seconds. If a change cannot be published (BIND
@@ -48,8 +50,8 @@ internet  ──53──────────▶ dnsdist ──▶ BIND (host
 
 ## 2. Signing in and your account
 
-- **Sign in** with your username and password, or with *Sign in with …* if your organisation uses
-  single sign-on (Google, Entra ID, Okta, any OpenID Connect provider).
+- **Sign in** with your username and password.
+- **Single sign-on** (Pro): *Sign in with …* if your organisation uses Google, Entra ID, Okta or any OpenID Connect provider.
 - After 5 wrong passwords the account is locked for 15 minutes.
 - Sessions last 12 hours of inactivity.
 
@@ -61,7 +63,7 @@ internet  ──53──────────▶ dnsdist ──▶ BIND (host
   phone. An administrator can also turn two-factor off for you.
 - **App passwords**: for scripts and tools that call the API (see section 14). Each can be
   read-only and can expire. The secret is shown once.
-- **Your limits**: if your account has quotas (section 11), they are shown under *Account*.
+- **Your limits** (Pro): if your account has quotas (section 11), they are shown under *Account*.
 
 ## 3. Who can do what
 
@@ -72,7 +74,7 @@ Every account has a **role**. Built-in roles:
 | admin | everything, including users, roles, settings and the firewall |
 | operator | zones, ad-blocking, groups, court orders (read), protection, query log, audit log |
 | viewer | see zones, ad-blocking and statistics; change nothing |
-| reseller | create zones and its own customer accounts; sees only its own zones and customers |
+| reseller (Pro) | create zones and its own customer accounts; sees only its own zones and customers |
 | customer | change the records of the zones given to it; nothing else |
 
 Administrators can make **custom roles** in *Settings → Users → Roles*: any set of permissions, and
@@ -84,10 +86,19 @@ The navigation only shows the pages your role can open.
 ## 4. Dashboard
 
 - **Key figures**: queries, blocked share, cache hit rate and queries per second, over 24 hours.
-- **Service health**: MySQL, BIND, the Recursor, dnsdist, publishing, ad-blocking, the query log,
-  disk, the firewall. Anything not green says what is wrong.
-- **Queries, last 24 hours**: per hour, with blocked queries.
+- **Service health**, under the key figures: one line that says whether every check passes or names the
+  ones that do not, then each check in its group (DNS service, DNSOne, Server) with ✓, ! (warning) or ×
+  (problem). A check that fails shows what is wrong under its name. It refreshes every 30 seconds.
+- **Queries over the last 24 hours**: answered and blocked queries every 10 minutes. Point at the chart
+  (or tap it) for the numbers at that moment; *Show as a table* lists them all.
+- **Clients over the last 24 hours**: queries per hour from the seven busiest clients, the rest as *Other*.
+- **Query types**, **Replies** (NOERROR, NXDOMAIN, SERVFAIL…) and **Answers** (answered, blocked,
+  allowed by a rule, court order): shares of the last 24 hours, with counts and percentages.
+- **Top domains**, **Top blocked domains** and **Top clients**: click one to open the query log for it.
 - **Recent changes**: the last changes from the audit log.
+
+The client and domain charts come from the query log, so they appear only for those who may see it
+(administrators and operators), and only as far as the privacy level keeps clients and domains.
 
 ## 5. Zones (authoritative DNS)
 
@@ -162,7 +173,7 @@ For routers, home servers and certbot. An administrator turns it on in *Settings
 types the key may change. The secret is shown once, with ready-made settings for nsupdate, routers
 (dyndns2) and certbot. Every update is checked, audited and kept in the zone's history.
 
-### Zone transfers to secondaries (new in 1.5)
+### Zone transfers to secondaries (Pro)
 
 *Zone → Transfers*: let other name servers (for example a customer's own) keep a copy of the zone.
 
@@ -172,7 +183,7 @@ types the key may change. The secret is shown once, with ready-made settings for
   for a BIND secondary. Make a new key at any time; secondaries using the old one stop receiving
   updates until they get it.
 - The secondary transfers from this server's DNS address, port 53.
-- **Every other transfer is refused.** (Before 1.4.5 anyone could copy any hosted zone.)
+- **Every other transfer is refused.**
 
 ### DNSSEC
 
@@ -220,7 +231,10 @@ their resolver; everyone else only gets answers for the zones hosted here.
 *Ad-blocking*:
 
 - **Blocklists and allowlists**: subscribe to lists by URL (hosts files, plain domain lists, Adblock
-  syntax). They are downloaded every 6 hours. Allowlists win over blocklists.
+  syntax). They are downloaded every 6 hours. Allowlists win over blocklists. **See list** shows the
+  domains of a list's last download, with a search, and **Download .txt** saves them all. Use the raw file's
+  address (`raw.githubusercontent.com/…`), not GitHub's page (`github.com/…/blob/…`), and a list of
+  domains, not a list of other lists' addresses (add each of those lists instead).
 - **Rules**: block or allow one domain (and, by default, everything below it), or a **regex**. A rule
   can apply to everyone or to one client group. *Import* adds up to 50,000 domains at once.
 - **Policy**: what a blocked name answers: "does not exist" (NXDOMAIN, default), "no data", a null IP
@@ -243,7 +257,7 @@ Changes reach customers within about a minute (blocked answers are cached for at
   - **DNS64**: IPv6-only customers reach IPv4-only sites (needs a NAT64 gateway).
 - *Which group is a client in?* answers for any address.
 
-## 8. Court-ordered blocking
+## 8. Court-ordered blocking (Pro)
 
 *Court orders*: names a court or regulator ordered blocked. Separate from ad-blocking on purpose:
 
@@ -267,10 +281,10 @@ Changes reach customers within about a minute (blocked answers are cached for at
 - **Privacy** (*Settings → Privacy*): keep everything, hide domains, hide domains and clients, or
   only totals; and how long queries are kept. *Erase now* deletes the log (and optionally the
   statistics).
-- **Export** (*Settings → Query log export*): send every answer (or only blocked ones) to your SIEM
+- **Export** (Pro) (*Settings → Query log export*): send every answer (or only blocked ones) to your SIEM
   by syslog, or the raw DNS messages by dnstap.
 
-## 10. Protection (attacks)
+## 10. Protection (attacks) (Pro)
 
 *Protection* (new in 1.5) shows what dnsdist is blocking by itself and why:
 
@@ -290,7 +304,7 @@ Changes reach customers within about a minute (blocked answers are cached for at
   also answer "does not exist": turn it on with a threshold above what a busy household sends.
 - NAT addresses and the server itself are never blocked automatically.
 
-## 11. Customers, resellers and quotas
+## 11. Customers, resellers and quotas (Pro)
 
 - **Resellers** create zones (which become theirs) and **customer accounts** under *Customers*. They
   can give their customers only their own zones, and see only their own customers.
@@ -317,13 +331,44 @@ Administrators only, except where noted.
 | **DNS server** | customer networks, NAT addresses, rate limits, public authoritative DNS on/off, DNS64 prefix, dynamic DNS on/off; **Resolver**: serve-stale and ECS (saving restarts the resolver; its cache starts empty) |
 | **Privacy** | what the query log keeps, and for how long; erase |
 | **Alerts** | email, webhook (Slack, Teams, Mattermost…) or Telegram when something breaks: a service, publishing, a blocklist, a certificate, a cluster node, a query flood. Plus the Prometheus metrics address |
-| **Query log export** | syslog to a SIEM, dnstap |
-| **Single sign-on** | an OpenID Connect provider, role mapping from a group claim, allowed email domains |
+| **Query log export** (Pro) | syslog to a SIEM, dnstap |
+| **Single sign-on** (Pro) | an OpenID Connect provider, role mapping from a group claim, allowed email domains |
 | **Backup** | download zones, ad-blocking, settings and court orders as one file, and restore any of them |
-| **Cluster** | the nodes sharing this database and their sync state; BIND secondaries for the hosted zones |
-| **Firewall** | the server's firewall, see below |
+| **Cluster** (Pro) | the nodes sharing this database and their sync state; adding servers to the cluster and joining one, see below; BIND secondaries for the hosted zones |
+| **Firewall** (Pro) | the server's firewall, see below |
+| **License** | DNSOne Community or Pro: this server's ID (a licence is issued for it), and paste a licence key to turn the Pro features on; who it is for, until when, and how many servers it covers. A cluster needs one licence for all its servers, pasted on any of them. An expired licence keeps the Pro features running as they were, but they cannot be changed until it is renewed |
 
-### Firewall (new in 1.5)
+### Cluster (Pro)
+
+Two or more DNSOne servers can serve the same customers: one **primary** and **replicas**. They share the
+primary's database, so a change made on any server's console reaches every server within 30 seconds; the
+replicas get the hosted zones from the primary's BIND. Give customers every server as a resolver (DNS 1, DNS 2
+in PPPoE or DHCP). Setting it up needs no terminal:
+
+1. Install DNSOne on each server, at the **same version**. Only the primary needs a licence: one that covers
+   every server of the cluster. The others may run DNSOne Community: they join with the cluster's licence.
+2. On the **primary**, Settings → Cluster → *Servers in this cluster*: enter the new server's address, a name
+   and this server's address (the one the new server reaches it on), and click **Add server**. In a few
+   seconds the server is **ready to join**: click **Join key** and copy the key.
+3. On the **new server**, Settings → Cluster → *Join a cluster*: paste the key and click **Join cluster**.
+   BIND and DNSOne restart there (DNS keeps answering); after a minute sign in again **with the primary's
+   accounts**. Both servers are listed under *Nodes*, and the primary shows the new one as **joined**.
+
+What it sets up: on the primary, a MySQL account only the new server's address may use, and only over
+TLS; MySQL and BIND listening on the primary's address; with ufw or the DNSOne firewall on, ports 3306 and
+5301 open to that server alone. On the new server: DNSOne pointed at the primary's database (checked against
+the primary's own certificate) and BIND following the primary's catalog of zones. If a step fails, the new
+server keeps its own configuration and the page shows what happened.
+
+Without a firewall, the primary's MySQL listens on its address for everyone; only the cluster's accounts can
+sign in, but turning the firewall on (Settings → Firewall, or ufw) is better.
+
+**Leave the cluster** (on a replica) gives the server back its own database, users and zones as they were
+when it joined. **Remove** (on the primary) deletes the server's database account, so a server removed
+without leaving first stops working: leave first, then remove. While a server is a replica, its own
+backups (Settings → Backup) still cover its standalone database, not the shared one: back up on the primary.
+
+### Firewall (Pro)
 
 DNSOne can manage the server's firewall. Off until you turn it on.
 
