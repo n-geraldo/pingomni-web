@@ -17,6 +17,7 @@ const PAGES: Record<PageId, () => React.ReactNode> = {
     docs: () => <DocsHub />,
     'docs-radiusone': () => <DocsGuide product="radiusone" />,
     'docs-dnsone': () => <DocsGuide product="dnsone" />,
+    'docs-monitor': () => <DocsGuide product="monitor" />,
     'guide-mikrotik-pppoe': () => <HowTo id="mikrotik-pppoe-freeradius" />,
     'guide-rpz-powerdns': () => <HowTo id="rpz-ad-blocking-powerdns" />,
     'tools-network': () => <Tools group="network" />,

@@ -1,8 +1,9 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Mark, Wordmark } from '../brand';
-import { DEMO_URL, DNSONE_DEMO_URL, REPO_URL } from '../config';
+import { DEMO_URL, DNSONE_DEMO_URL, MONITOR_URL, REPO_URL } from '../config';
 import radiusoneGuide from '../docs/radiusone.md?raw';
 import dnsoneGuide from '../docs/dnsone.md?raw';
+import monitorGuide from '../docs/monitor.md?raw';
 import versions from '../docs/versions.json';
 import Icon from '../Icon';
 import Guide, { slug, splitGuide } from '../shared/guide';
@@ -10,8 +11,9 @@ import { HOWTOS, type GuideId } from './Guides';
 import { useSite } from '../shared/Layout';
 
 // The product guides: the same docs/USER-GUIDE.md each console shows under Documentation (RadiusOne) and
-// Help (DNSOne), copied by scripts/sync-docs.sh and drawn by the same guide component, so they read alike.
-type Product = 'radiusone' | 'dnsone';
+// Help (DNSOne), and PingOmni Monitor's docs/USER-GUIDE.md, copied by scripts/sync-docs.sh and drawn by the same
+// guide component, so they read alike.
+type Product = 'radiusone' | 'dnsone' | 'monitor';
 
 const GUIDES: Record<
     Product,
@@ -22,6 +24,7 @@ const GUIDES: Record<
         job: string;
         lead: string;
         demo: string;
+        demoLabel?: string;
         docsBase: string;
         links: { label: string; href: string }[];
         placeholder: string;
@@ -94,15 +97,48 @@ const GUIDES: Record<
             'good-to-know': 'message',
         },
     },
+    monitor: {
+        name: 'PingOmni Monitor',
+        markdown: monitorGuide,
+        version: versions.monitor,
+        job: 'Uptime, status pages and alerts, hosted',
+        lead: 'Every feature with an example: the eleven kinds of check, incidents, alerts and escalation, status pages with their badge and widget, maintenance, reports, the API and AI assistants.',
+        demo: MONITOR_URL,
+        demoLabel: 'Start free',
+        docsBase: 'https://github.com/Pingomni/monitoring/blob/main/docs/',
+        links: [],
+        placeholder: 'e.g. heartbeat, webhook, widget',
+        icons: {
+            'what-pingomni-monitor-does': 'book',
+            'getting-started': 'arrow',
+            'plans-and-limits': 'billing',
+            'who-can-do-what': 'lock',
+            overview: 'dashboard',
+            'monitors-the-settings-every-check-has': 'settings',
+            'check-types-with-examples': 'activity',
+            'when-a-monitor-is-called-down': 'shield',
+            'working-with-many-monitors': 'grid',
+            incidents: 'logs',
+            alerts: 'message',
+            'status-pages': 'globe',
+            maintenance: 'tools',
+            reports: 'reports',
+            team: 'clients',
+            settings: 'settings',
+            'the-api': 'code',
+            'ai-assistants-mcp': 'plug',
+            'good-to-know': 'search',
+        },
+    },
 };
 
-const PRODUCTS: Product[] = ['radiusone', 'dnsone'];
+const PRODUCTS: Product[] = ['monitor', 'radiusone', 'dnsone'];
 const plain = (title: string) => title.replace(/^\d+\.\s*/, '');
 
 // Links to the consoles' own pages ("/clients") mean nothing on this site: the page name is shown instead.
 const appLink = (_href: string, children: ReactNode, key: string) => <strong key={key}>{children}</strong>;
 
-/** /docs/: both guides, their chapters, and one search over everything in them. */
+/** /docs/: the guides, their chapters, and one search over everything in them. */
 export function DocsHub() {
     const { root } = useSite();
     const [q, setQ] = useState('');
@@ -146,11 +182,11 @@ export function DocsHub() {
                     <h1 id="hero-title" className="display">
                         Documentation
                     </h1>
-                    <p className="lead">The user guides of RadiusOne and DNSOne: the same guides each console carries inside, for the version it runs.</p>
+                    <p className="lead">The user guides of PingOmni Monitor, RadiusOne and DNSOne. RadiusOne and DNSOne carry the same guide inside, for the version they run.</p>
                     <label className="docs-hub-search">
                         <Icon name="search" />
                         <span className="sr-only">Search the guides</span>
-                        <input type="search" placeholder="Search both guides, e.g. backups, DNSSEC, two-factor" value={q} onChange={(e) => setQ(e.target.value)} />
+                        <input type="search" placeholder="Search the guides, e.g. heartbeat, DNSSEC, backups" value={q} onChange={(e) => setQ(e.target.value)} />
                     </label>
                 </div>
             </section>
@@ -243,7 +279,7 @@ export function DocsHub() {
     );
 }
 
-/** /docs/radiusone/ and /docs/dnsone/: one guide, laid out like the console's own guide page. */
+/** /docs/radiusone/, /docs/dnsone/ and /docs/monitor/: one guide, laid out like the console's own guide page. */
 export function DocsGuide({ product }: { product: Product }) {
     const { root } = useSite();
     const g = GUIDES[product];
@@ -267,7 +303,7 @@ export function DocsGuide({ product }: { product: Product }) {
                     <p className="lead">{g.lead}</p>
                     <div className="actions">
                         <a className="btn btn-primary" href={g.demo} target="_blank" rel="noopener">
-                            Try the demo
+                            {g.demoLabel ?? 'Try the demo'}
                         </a>
                         <a className="btn btn-ghost" href={`${root}${product}/`}>
                             About {g.name}

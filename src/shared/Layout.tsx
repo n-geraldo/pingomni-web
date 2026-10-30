@@ -9,7 +9,7 @@ export type Theme = 'light' | 'dark';
 
 // Bump when the screenshots are retaken: browsers and Cloudflare keep /shots/ for a day under the same address.
 export const SHOTS_VERSION = '?v=3';
-export type PageId = 'home' | 'monitor' | 'radiusone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'terms' | 'privacy' | 'notfound';
+export type PageId = 'home' | 'monitor' | 'radiusone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'docs-monitor' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'terms' | 'privacy' | 'notfound';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
 type Site = { page: PageId; root: string; theme: Theme };
