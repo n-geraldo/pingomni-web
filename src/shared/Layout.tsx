@@ -235,6 +235,9 @@ function Header({ onTheme }: { onTheme: () => void }) {
                     <a className="btn btn-sm btn-ghost header-signin" href={`${ACCOUNT_URL}/login`}>
                         Sign in
                     </a>
+                    <a className="btn btn-sm btn-primary header-start" href={buyUrl('monitor')}>
+                        Start free
+                    </a>
                     <button
                         type="button"
                         className="icon-btn"
@@ -259,28 +262,50 @@ function Header({ onTheme }: { onTheme: () => void }) {
     );
 }
 
-// The demo button shows only on a product page; it opens that product's demo.
-export function Contact({ title, text, demo = false, demoUrl = DEMO_URL, demoLabel = 'Try the RadiusOne demo' }: { title: string; text: string; demo?: boolean; demoUrl?: string; demoLabel?: string }) {
+// The closing band of every page: one main action (a product's demo, or starting Monitor) and a way to talk to us.
+export function Contact({
+    title,
+    text,
+    demo = false,
+    demoUrl = DEMO_URL,
+    demoLabel = 'Try the RadiusOne demo',
+    start = false,
+}: {
+    title: string;
+    text: string;
+    demo?: boolean;
+    demoUrl?: string;
+    demoLabel?: string;
+    start?: boolean;
+}) {
     return (
-        <section className="stage contact" id="contact" aria-labelledby="contact-title">
-            <div className="container contact-row">
-                <div>
-                    <h2 id="contact-title" className="h2">
-                        {title}
-                    </h2>
-                    <p className="lead">{text}</p>
-                </div>
-                <div className="contact-actions">
-                    {demo && (
-                        <a className="btn btn-primary btn-lg" href={demoUrl} target="_blank" rel="noopener">
-                            {demoLabel}
-                            <Icon name="external" />
+        <section className="section contact" id="contact" aria-labelledby="contact-title">
+            <div className="container">
+                <div className="contact-panel">
+                    <div className="contact-text">
+                        <h2 id="contact-title" className="h2">
+                            {title}
+                        </h2>
+                        <p className="lead">{text}</p>
+                    </div>
+                    <div className="contact-actions">
+                        {demo && (
+                            <a className="btn btn-primary btn-lg" href={demoUrl} target="_blank" rel="noopener">
+                                {demoLabel}
+                                <Icon name="external" />
+                            </a>
+                        )}
+                        {start && (
+                            <a className="btn btn-primary btn-lg" href={buyUrl('monitor')}>
+                                Start Monitor, free
+                                <Icon name="arrow" />
+                            </a>
+                        )}
+                        <a className="btn btn-lg contact-mail" href={mailto('Question for PingOmni')}>
+                            <Icon name="mail" />
+                            {CONTACT_EMAIL}
                         </a>
-                    )}
-                    <a className="contact-mail" href={mailto('Question for PingOmni')}>
-                        <Icon name="mail" />
-                        {CONTACT_EMAIL}
-                    </a>
+                    </div>
                 </div>
             </div>
         </section>
@@ -299,34 +324,43 @@ function Footer() {
                             <Wordmark brand="pingomni" />
                         </a>
                         <p>Self-hosted software for ISPs and network operators, and PingOmni Monitor for every website.</p>
+                        <a className="footer-mail" href={mailto('Question for PingOmni')}>
+                            <Icon name="mail" />
+                            {CONTACT_EMAIL}
+                        </a>
                     </div>
                     <nav className="footer-col" aria-labelledby="footer-products">
                         <p className="footer-title" id="footer-products">Products</p>
-                        <a href={`${root}radiusone/`}>RadiusOne</a>
-                        <a href={`${root}radiusone/#use-cases`}>RadiusOne use cases</a>
                         <a href={`${root}monitor/`}>PingOmni Monitor</a>
+                        <a href={`${root}radiusone/`}>RadiusOne</a>
                         <a href={`${root}dnsone/`}>DNSOne</a>
+                        <a href={ACCOUNT_URL}>PingOmni Account</a>
+                    </nav>
+                    <nav className="footer-col" aria-labelledby="footer-resources">
+                        <p className="footer-title" id="footer-resources">Resources</p>
                         <a href={`${root}docs/`}>Documentation</a>
+                        <a href={`${root}radiusone/#use-cases`}>RadiusOne use cases</a>
                         <a href={`${root}guides/mikrotik-pppoe-freeradius/`}>MikroTik PPPoE with RadiusOne</a>
                         <a href={`${root}guides/rpz-ad-blocking-powerdns/`}>Ad-blocking with DNSOne</a>
                     </nav>
-                    <nav className="footer-col" aria-labelledby="footer-company">
-                        <p className="footer-title" id="footer-company">Company</p>
+                    <nav className="footer-col" aria-labelledby="footer-tools">
+                        <p className="footer-title" id="footer-tools">Free tools</p>
                         <a href={`${root}tools/network/`}>Network tools</a>
                         <a href={`${root}tools/email/`}>DNS & Email tools</a>
                         <a href={`${root}tools/bgp/`}>BGP & ASN tools</a>
-                        <a href={ACCOUNT_URL}>PingOmni Account</a>
+                    </nav>
+                    <nav className="footer-col" aria-labelledby="footer-company">
+                        <p className="footer-title" id="footer-company">Company</p>
                         <a href={`${root}#about`}>About</a>
                         <a href="#contact">Contact</a>
-                    </nav>
-                    <div className="footer-col">
-                        <p className="footer-title">Get in touch</p>
-                        <a href={mailto('Question for PingOmni')}>{CONTACT_EMAIL}</a>
                         <a href={`${root}terms/`}>Terms and Conditions</a>
                         <a href={`${root}privacy/`}>Privacy Policy</a>
-                    </div>
+                    </nav>
                 </div>
-                <p className="footer-bottom small faint">© {new Date().getFullYear()} PingOmni</p>
+                <div className="footer-bottom small faint">
+                    <span>© {new Date().getFullYear()} PingOmni. All rights reserved.</span>
+                    <a href={`${ACCOUNT_URL}/login`}>Sign in to PingOmni Account</a>
+                </div>
             </div>
         </footer>
     );
