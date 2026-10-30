@@ -5,6 +5,7 @@ import Icon from '../Icon';
 import { api } from '../lib/api';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { Contact, Shot, useSite } from '../shared/Layout';
+import { HeroFacts, ProofBand } from '../shared/Proof';
 import { TOOL_PREVIEW } from '../shared/ToolPreviews';
 
 // The product line, one row under the headline: each one a tap away, with its status in a word.
@@ -510,30 +511,6 @@ function Faq() {
     );
 }
 
-// The numbers that sum up the products: each one is a fact of the products themselves, not a claim about customers.
-function Proof() {
-    const facts: [string, string][] = [
-        ['11', 'kinds of checks, from websites and certificates to databases and cron jobs'],
-        ['8', 'alert channels, from email and Slack to PagerDuty, with escalation'],
-        ['7', 'languages for public status pages, with email subscribers'],
-        [String(TOOL_LIST.length), 'free network, DNS, email and BGP tools, no account needed'],
-    ];
-    return (
-        <section className="proof" aria-label="PingOmni in numbers">
-            <div className="container">
-                <ul className="proof-grid">
-                    {facts.map(([n, text]) => (
-                        <li key={text}>
-                            <strong>{n}</strong>
-                            <span>{text}</span>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        </section>
-    );
-}
-
 export default function Home() {
     return (
         <>
@@ -557,11 +534,7 @@ export default function Home() {
                                 See the products
                             </a>
                         </div>
-                        <ul className="hero-facts" aria-label="In short">
-                            <li><Icon name="check" />Free plan, no card needed</li>
-                            <li><Icon name="check" />Outages confirmed from other networks</li>
-                            <li><Icon name="check" />ISP software on your own servers</li>
-                        </ul>
+                        <HeroFacts items={['Free plan, no card needed', 'Outages confirmed from other networks', 'ISP software on your own servers']} />
                     </div>
                     <figure className="product-hero-shot">
                         <Shot name="monitor-overview" alt="The PingOmni Monitor overview: checks today, outages, the next certificate to end, 30-day uptime and response times" eager />
@@ -575,7 +548,15 @@ export default function Home() {
                 </div>
             </section>
             <Products />
-            <Proof />
+            <ProofBand
+                label="PingOmni in numbers"
+                facts={[
+                    ['11', 'kinds of checks, from websites and certificates to databases and cron jobs'],
+                    ['8', 'alert channels, from email and Slack to PagerDuty, with escalation'],
+                    ['7', 'languages for public status pages, with email subscribers'],
+                    [String(TOOL_LIST.length), 'free network, DNS, email and BGP tools, no account needed'],
+                ]}
+            />
             <MonitorNew />
             <FreeTools />
             <AccountBand />

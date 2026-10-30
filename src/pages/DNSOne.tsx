@@ -4,6 +4,7 @@ import { buyUrl, DNSONE_DEMO_URL, DNSONE_REPO_URL } from '../config';
 import Icon from '../Icon';
 import { type EditionGroup, type PriceTier, Editions } from '../shared/Editions';
 import { Contact, Shot, useSite } from '../shared/Layout';
+import { HeroFacts, ProofBand } from '../shared/Proof';
 
 const REQUIREMENTS: { term: string; text: string }[] = [
     { term: 'Operating system', text: 'Ubuntu 24.04 LTS, server or minimal' },
@@ -673,10 +674,12 @@ export default function DNSOne() {
                                 <Icon name="code" />
                                 Get the code
                             </a>
-                            <a className="btn btn-lg btn-ghost" href={buyUrl('dnsone')}>
-                                Buy DNSOne Pro
+                            <a className="text-link hero-link" href={buyUrl('dnsone')} aria-label="Buy DNSOne Pro">
+                                Buy Pro
+                                <Icon name="arrow" />
                             </a>
                         </div>
+                        <HeroFacts items={['Free and open source on one server', 'DNS data stays on your servers', 'Public demo with sample data']} />
                     </div>
                     <figure className="product-hero-shot">
                         <Shot name="dnsone-dashboard" alt="The DNSOne dashboard: queries, blocked queries, cache hit rate and service health" eager />
@@ -686,6 +689,16 @@ export default function DNSOne() {
                     </figure>
                 </div>
             </section>
+
+            <ProofBand
+                label="DNSOne in numbers"
+                facts={[
+                    ['10,000', 'clients on one server, tuned for up to 50,000'],
+                    ['3', 'DNS engines in one console: BIND, PowerDNS Recursor and dnsdist'],
+                    ['2', 'servers on one Pro licence: a primary and a replica'],
+                    ['€0', 'for the Community edition, free and open source'],
+                ]}
+            />
 
             <Release />
 
