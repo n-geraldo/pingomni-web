@@ -3,7 +3,7 @@ import Icon from '../Icon';
 import { api, ToolError, type Result } from '../lib/api';
 import { toText } from '../lib/textOutput';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
-import { useSite } from '../shared/Layout';
+import { Contact, useSite } from '../shared/Layout';
 import { TOOL_PREVIEW } from '../shared/ToolPreviews';
 import { BGP_SPECS } from '../tools/bgp';
 import { EMAIL_SPECS } from '../tools/email';
@@ -561,6 +561,11 @@ export default function Tools({ group }: { group: ToolGroup }) {
                     </section>
                 </div>
             </section>
+            <Contact
+                start
+                title="Check it around the clock."
+                text="These tools check once. PingOmni Monitor checks your sites, certificates, domains and servers around the clock, as often as every 30 seconds, and tells you the moment one fails. Free for 10 monitors, with no card."
+            />
         </>
     );
 }

@@ -5,6 +5,7 @@ import Icon from '../Icon';
 import { copyText } from '../lib/copy';
 import { type EditionGroup, type PriceTier, Editions } from '../shared/Editions';
 import { Contact, Shot } from '../shared/Layout';
+import { HeroFacts, ProofBand } from '../shared/Proof';
 
 const REQUIREMENTS: { term: string; text: string }[] = [
     { term: 'Operating system', text: 'Ubuntu 24.04 LTS, server or minimal' },
@@ -570,10 +571,12 @@ export default function RadiusOne() {
                                 <Icon name="code" />
                                 Get the code
                             </a>
-                            <a className="btn btn-lg btn-ghost" href={mailto('RadiusOne')}>
+                            <a className="text-link hero-link" href={mailto('RadiusOne')}>
                                 Email us
+                                <Icon name="arrow" />
                             </a>
                         </div>
+                        <HeroFacts items={['Free up to 150 active subscribers', 'On your own Ubuntu server', 'MikroTik tested end to end']} />
                     </div>
                     <figure className="product-hero-shot">
                         <Shot name="dashboard" alt="The RadiusOne dashboard: online clients, NAS status and top users" eager />
@@ -583,6 +586,16 @@ export default function RadiusOne() {
                     </figure>
                 </div>
             </section>
+
+            <ProofBand
+                label="RadiusOne in numbers"
+                facts={[
+                    ['150', 'active subscribers free, with every Community feature'],
+                    ['7', 'operator roles, with two-factor sign-in for the privileged ones'],
+                    ['3', 'SNMP versions for NAS monitoring: v1, v2c and v3'],
+                    ['1', 'command installs it on Ubuntu 24.04 LTS'],
+                ]}
+            />
 
             <Modules />
 

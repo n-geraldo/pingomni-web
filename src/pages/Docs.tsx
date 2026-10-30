@@ -8,7 +8,7 @@ import versions from '../docs/versions.json';
 import Icon from '../Icon';
 import Guide, { slug, splitGuide } from '../shared/guide';
 import { HOWTOS, type GuideId } from './Guides';
-import { useSite } from '../shared/Layout';
+import { Contact, useSite } from '../shared/Layout';
 
 // The product guides: the same docs/USER-GUIDE.md each console shows under Documentation (RadiusOne) and
 // Help (DNSOne), and PingOmni Monitor's docs/USER-GUIDE.md, copied by scripts/sync-docs.sh and drawn by the same
@@ -275,6 +275,11 @@ export function DocsHub() {
                     </div>
                 </div>
             </section>
+            <Contact
+                start
+                title="A question the guides do not answer?"
+                text="Email us: we answer within one working day. Or start PingOmni Monitor free and try it as you read."
+            />
         </>
     );
 }
@@ -332,6 +337,17 @@ export function DocsGuide({ product }: { product: Product }) {
                     />
                 </div>
             </section>
+            {product === 'monitor' ? (
+                <Contact start title="Try it as you read." text="PingOmni Monitor is free for 10 monitors, with no card. Questions the guide does not answer? Email us: we answer within one working day." />
+            ) : (
+                <Contact
+                    demo
+                    demoUrl={g.demo}
+                    demoLabel={`Try the ${g.name} demo`}
+                    title="Try it as you read."
+                    text={`The ${g.name} demo runs the real software on sample data. Questions the guide does not answer? Email us: we answer within one working day.`}
+                />
+            )}
         </>
     );
 }

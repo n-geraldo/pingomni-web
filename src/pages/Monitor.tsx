@@ -4,6 +4,7 @@ import { ACCOUNT_URL, buyUrl } from '../config';
 import Icon from '../Icon';
 import { Contact, Shot } from '../shared/Layout';
 import { MonitorPlans } from '../shared/MonitorPlans';
+import { HeroFacts, ProofBand } from '../shared/Proof';
 
 // What one monitor can watch: the eleven check types, each with what it actually catches.
 const CHECKS: { icon: string; name: string; text: string }[] = [
@@ -380,17 +381,7 @@ export default function Monitor() {
                                 See the plans
                             </a>
                         </div>
-                        <ul className="hero-facts" aria-label="At a glance">
-                            <li>
-                                <strong>10</strong> monitors free, for good
-                            </li>
-                            <li>
-                                <strong>30 s</strong> between checks on Pro
-                            </li>
-                            <li>
-                                <strong>8</strong> alert channels
-                            </li>
-                        </ul>
+                        <HeroFacts items={['Free plan, no card needed', 'Outages confirmed from other networks', 'Status pages in 7 languages']} />
                     </div>
                     <figure className="product-hero-shot">
                         <Shot name="monitor-overview" alt="The PingOmni Monitor overview: checks today, outages, the next certificate to end, 30-day uptime and response times" eager />
@@ -401,6 +392,15 @@ export default function Monitor() {
                 </div>
             </section>
 
+            <ProofBand
+                label="PingOmni Monitor in numbers"
+                facts={[
+                    ['11', 'kinds of checks: websites, APIs, certificates, domains, DNS, ping, ports, mail, WebSockets, databases and cron jobs'],
+                    ['30 s', 'between checks on Pro and Business; every minute on Starter'],
+                    ['8', 'alert channels, with escalation when nobody acknowledges'],
+                    ['10', 'monitors free, for good, with no card'],
+                ]}
+            />
             <Checks />
             <Flow />
             <Areas />

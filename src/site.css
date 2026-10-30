@@ -7366,3 +7366,36 @@ abbr[title] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* A hero's third action: a link beside the two buttons, so the row never wraps on a wide screen. */
+.hero-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  font-weight: 600;
+}
+
+.hero-link .icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 160ms var(--ease-out);
+}
+
+.hero-link:hover .icon {
+  transform: translateX(2px);
+}
+
+.actions:has(.hero-link) {
+  align-items: center;
+}
+
+@media (min-width: 981px) {
+  .actions:has(.hero-link) {
+    gap: 10px;
+  }
+
+  .actions:has(.hero-link) .btn-lg {
+    padding: 0 22px;
+  }
+}

@@ -3,7 +3,7 @@ import mikrotikPppoe from '../guides/mikrotik-pppoe-freeradius.md?raw';
 import rpzPowerdns from '../guides/rpz-ad-blocking-powerdns.md?raw';
 import Icon from '../Icon';
 import Guide from '../shared/guide';
-import { useSite } from '../shared/Layout';
+import { Contact, useSite } from '../shared/Layout';
 
 // How-to guides: doing a job with RadiusOne or DNSOne, step by step. Articles in src/guides/*.md, drawn by the
 // same guide component as the product guides.
@@ -78,6 +78,7 @@ export function HowTo({ id }: { id: GuideId }) {
                     <Guide markdown={g.markdown} title="Before you start" icons={g.icons} appLink={appLink} search={false} topSelector=".site-header" />
                 </div>
             </section>
+            <Contact title="A question about your setup?" text="Tell us about your network and what you are trying to do: we answer within one working day." />
         </>
     );
 }
