@@ -7021,3 +7021,348 @@ abbr[title] {
     display: none;
   }
 }
+
+/* ==========================================================================
+   Enterprise pass: calmer controls, a dark proof band, a closing panel and a fuller footer.
+   Controls are rounded rectangles (not pills); badges and chips stay round. The ink colours below are the same in
+   both themes: the bands they paint are meant to stand out from the page either way.
+   ========================================================================== */
+:root {
+  --ink: #0b1418;
+  --ink-2: #102127;
+  --ink-line: rgba(255, 255, 255, .1);
+  --ink-text: #e8eef2;
+  --ink-muted: #9fb0ba;
+  --ink-accent: #5eead4;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .06);
+}
+
+.btn,
+.icon-btn {
+  border-radius: 10px;
+}
+
+.btn {
+  font-weight: 600;
+  letter-spacing: -.005em;
+}
+
+.btn-sm {
+  border-radius: 8px;
+}
+
+.btn-primary {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 1px 2px rgba(16, 24, 40, .12);
+}
+
+.btn-primary:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 0 0 4px rgba(13, 127, 120, .16);
+}
+
+.btn .icon {
+  transition: transform 160ms var(--ease-out);
+}
+
+.btn-primary:hover > .icon:last-child {
+  transform: translateX(2px);
+}
+
+/* Header: sign in quietly, start prominently. */
+.header-actions {
+  gap: 8px;
+}
+
+.header-signin {
+  border-color: transparent;
+  background: transparent;
+}
+
+.header-signin:hover {
+  border-color: transparent;
+  background: var(--surface-hover);
+}
+
+@media (max-width: 480px) {
+  .header-start {
+    display: none;
+  }
+}
+
+/* Home hero: three plain facts under the buttons. */
+.hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: 14.5px;
+}
+
+.hero-facts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-facts .icon {
+  width: 16px;
+  height: 16px;
+  padding: 2px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+/* Cards: a hairline and the faintest lift, the same everywhere. */
+.pcard,
+.tool-card,
+.faq-item,
+.lineup {
+  box-shadow: var(--shadow-card);
+}
+
+.pcard {
+  transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out), border-color 200ms;
+}
+
+.pcard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -12px rgba(16, 24, 40, .18);
+}
+
+/* The proof band: the products in four numbers. */
+.proof {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(44px, 6vw, 72px) 0;
+  background:
+    radial-gradient(900px 300px at 15% 0%, rgba(45, 212, 191, .16), transparent 70%),
+    linear-gradient(180deg, var(--ink-2), var(--ink));
+  color: var(--ink-text);
+}
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proof-grid li {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 4px 28px;
+  border-left: 1px solid var(--ink-line);
+}
+
+.proof-grid li:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.proof-grid strong {
+  color: #fff;
+  font-size: clamp(40px, 5vw, 56px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.proof-grid strong::after {
+  content: "";
+  display: block;
+  width: 28px;
+  height: 3px;
+  margin-top: 14px;
+  border-radius: 2px;
+  background: var(--ink-accent);
+}
+
+.proof-grid span {
+  max-width: 240px;
+  color: var(--ink-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .proof-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 0;
+  }
+
+  .proof-grid li:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .proof-grid {
+    gap: 28px 0;
+  }
+
+  .proof-grid li {
+    padding: 0 0 0 16px;
+  }
+
+  .proof-grid li:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .proof-grid strong {
+    font-size: 36px;
+  }
+
+  .proof-grid span {
+    font-size: 13.5px;
+  }
+}
+
+/* The closing panel of every page. */
+.contact {
+  padding: clamp(48px, 7vw, 88px) 0;
+  border-top: 0;
+  background: var(--bg);
+}
+
+.contact-panel {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 28px 48px;
+  padding: clamp(32px, 5vw, 56px);
+  border: 1px solid var(--ink-line);
+  border-radius: 20px;
+  background:
+    radial-gradient(700px 320px at 100% 0%, rgba(45, 212, 191, .22), transparent 65%),
+    radial-gradient(500px 260px at 0% 100%, rgba(56, 120, 220, .14), transparent 70%),
+    linear-gradient(135deg, var(--ink-2), var(--ink));
+  color: var(--ink-text);
+  box-shadow: 0 24px 48px -24px rgba(11, 20, 24, .45);
+}
+
+.contact-text {
+  display: grid;
+  gap: 12px;
+  max-width: 620px;
+}
+
+.contact-panel .h2 {
+  color: #fff;
+}
+
+.contact-panel .lead {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.contact-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.contact-panel .contact-mail {
+  border-color: var(--ink-line);
+  background: rgba(255, 255, 255, .06);
+  color: var(--ink-text);
+  font-size: 15px;
+}
+
+.contact-panel .contact-mail:hover {
+  border-color: rgba(255, 255, 255, .28);
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
+}
+
+.contact-panel .contact-mail .icon {
+  color: var(--ink-accent);
+}
+
+.contact-panel .btn-primary {
+  border-color: #14b8a6;
+  background: #0f9488;
+}
+
+.contact-panel .btn-primary:hover {
+  background: #0d8077;
+  box-shadow: 0 0 0 4px rgba(94, 234, 212, .2);
+}
+
+@media (max-width: 640px) {
+  .contact-actions,
+  .contact-actions .btn {
+    width: 100%;
+  }
+}
+
+/* Footer: the brand, then products, resources, tools and company; a bottom line with the sign-in. */
+.site-footer {
+  padding: 64px 0 28px;
+}
+
+.footer-grid {
+  grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
+  gap: 32px 40px;
+}
+
+.footer-mail {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-strong);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.footer-mail .icon {
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+
+.footer-col .footer-title {
+  color: var(--text-faint);
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+}
+
+.footer-bottom a {
+  color: var(--text-muted);
+}
+
+@media (max-width: 1100px) {
+  .footer-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .footer-about {
+    grid-column: 1 / -1;
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 640px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

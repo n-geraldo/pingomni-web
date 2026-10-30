@@ -428,7 +428,7 @@ export default function Monitor() {
                 </div>
             </section>
 
-            <Contact title="Talk to us." text="Questions about PingOmni Monitor, a larger plan, or monitoring many customers’ sites? Email us." />
+            <Contact start title="Start watching in five minutes." text="Free for 10 monitors, with no card. Monitoring many customers’ sites, or need a larger plan? Email us: we answer within one working day." />
         </>
     );
 }

@@ -510,6 +510,30 @@ function Faq() {
     );
 }
 
+// The numbers that sum up the products: each one is a fact of the products themselves, not a claim about customers.
+function Proof() {
+    const facts: [string, string][] = [
+        ['11', 'kinds of checks, from websites and certificates to databases and cron jobs'],
+        ['8', 'alert channels, from email and Slack to PagerDuty, with escalation'],
+        ['7', 'languages for public status pages, with email subscribers'],
+        [String(TOOL_LIST.length), 'free network, DNS, email and BGP tools, no account needed'],
+    ];
+    return (
+        <section className="proof" aria-label="PingOmni in numbers">
+            <div className="container">
+                <ul className="proof-grid">
+                    {facts.map(([n, text]) => (
+                        <li key={text}>
+                            <strong>{n}</strong>
+                            <span>{text}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </section>
+    );
+}
+
 export default function Home() {
     return (
         <>
@@ -527,11 +551,17 @@ export default function Home() {
                         <div className="actions">
                             <a className="btn btn-primary btn-lg" href={buyUrl('monitor')}>
                                 Start Monitor, free
+                                <Icon name="arrow" />
                             </a>
                             <a className="btn btn-lg btn-ghost" href="#products">
                                 See the products
                             </a>
                         </div>
+                        <ul className="hero-facts" aria-label="In short">
+                            <li><Icon name="check" />Free plan, no card needed</li>
+                            <li><Icon name="check" />Outages confirmed from other networks</li>
+                            <li><Icon name="check" />ISP software on your own servers</li>
+                        </ul>
                     </div>
                     <figure className="product-hero-shot">
                         <Shot name="monitor-overview" alt="The PingOmni Monitor overview: checks today, outages, the next certificate to end, 30-day uptime and response times" eager />
@@ -545,14 +575,16 @@ export default function Home() {
                 </div>
             </section>
             <Products />
+            <Proof />
             <MonitorNew />
             <FreeTools />
             <AccountBand />
             <About />
             <Faq />
             <Contact
-                title="Talk to us."
-                text="Email us with questions about PingOmni Monitor, RadiusOne, DNSOne or the free tools."
+                start
+                title="Start in five minutes."
+                text="Monitor is free for 10 monitors, with no card. For RadiusOne, DNSOne, a larger plan or anything else, email us: we answer within one working day."
             />
         </>
     );
