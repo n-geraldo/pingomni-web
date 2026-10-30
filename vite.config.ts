@@ -23,6 +23,7 @@ export default defineConfig({
                 docs: page('docs/index.html'),
                 docsRadiusone: page('docs/radiusone/index.html'),
                 docsDnsone: page('docs/dnsone/index.html'),
+                docsMonitor: page('docs/monitor/index.html'),
                 guideMikrotikPppoe: page('guides/mikrotik-pppoe-freeradius/index.html'),
                 guideRpzPowerdns: page('guides/rpz-ad-blocking-powerdns/index.html'),
                 tools: page('tools/index.html'),
