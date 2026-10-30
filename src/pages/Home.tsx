@@ -437,7 +437,7 @@ function About() {
 }
 
 // Questions ISPs ask before trying the products. Every answer is something the product pages and guides also say.
-const FAQ: { q: string; a: string }[] = [
+export const FAQ: { q: string; a: string }[] = [
     {
         q: 'What is PingOmni Monitor?',
         a: 'A hosted monitoring service: it checks your websites and APIs, SSL certificates, domain registrations, DNS records, servers by ping, TCP ports, mail servers, databases, WebSockets and cron jobs from outside your network, confirms every failure from other networks, and alerts you by email, Slack, Teams, Telegram, Discord, Google Chat, PagerDuty or webhook, with escalation when nobody answers. Status pages with email subscribers keep your customers informed.',

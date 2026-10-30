@@ -9,7 +9,7 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const dist = join(root, 'dist');
 const ssr = join(root, 'dist-ssr');
 const site = (loadEnv('production', root, 'VITE_').VITE_SITE_URL ?? 'https://pingomni.com').replace(/\/$/, '');
-const { render } = await import(join(ssr, 'entry-server.js'));
+const { render, structuredData, llmsTxt, llmsFull } = await import(join(ssr, 'entry-server.js'));
 
 const htmlFiles = (dir) =>
     readdirSync(dir).flatMap((name) => {
@@ -25,6 +25,9 @@ for (const file of htmlFiles(dist)) {
     if (mount) {
         const [tag, page, base] = mount;
         html = html.replace(tag, tag.replace('></div>', `>${render(page, base)}</div>`));
+        // FAQs and prices as structured data, from the same data the page shows (src/lib/geo.ts).
+        const data = structuredData(page, site);
+        if (data) html = html.replace('</head>', `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>\n</head>`);
         writeFileSync(file, html);
         console.log(`prerendered ${relative(dist, file)}`);
     }
@@ -40,7 +43,16 @@ writeFileSync(
         .map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`)
         .join('\n')}\n</urlset>\n`,
 );
-writeFileSync(join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${site}/sitemap.xml\n`);
+// Everyone may read the site; AI assistants' crawlers are named too, so it is plain they are welcome.
+const AI_CRAWLERS = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot', 'Perplexity-User', 'Google-Extended', 'Applebot-Extended', 'Bingbot'];
+writeFileSync(
+    join(dist, 'robots.txt'),
+    `User-agent: *\nAllow: /\nDisallow: /api/\n\n${AI_CRAWLERS.map((a) => `User-agent: ${a}`).join('\n')}\nAllow: /\nDisallow: /api/\n\nSitemap: ${site}/sitemap.xml\n`,
+);
+// The site in brief for AI assistants (llmstxt.org), and everything in one file.
+writeFileSync(join(dist, 'llms.txt'), llmsTxt(site));
+writeFileSync(join(dist, 'llms-full.txt'), llmsFull(site));
+console.log('llms.txt, llms-full.txt and robots.txt written');
 console.log(`sitemap.xml: ${urls.length} pages`);
 
 rmSync(ssr, { recursive: true, force: true });

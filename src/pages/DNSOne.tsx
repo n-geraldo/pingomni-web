@@ -561,7 +561,7 @@ const EDITIONS: EditionGroup[] = [
 ];
 
 // Prices (the account portal's DNSOne plans): one Pro licence covers a 2-server cluster, more servers cost extra; a year costs ten months.
-const TIERS: PriceTier[] = [
+export const TIERS: PriceTier[] = [
     { name: 'Community', range: 'One server', points: ['Every Community feature'], action: 'code' },
     { name: 'Pro', range: '2 servers: a primary and a replica', monthly: 10, yearly: 100, points: ['Each server more: €5 a month or €50 a year', 'Every Pro feature'], action: 'buy' },
 ];

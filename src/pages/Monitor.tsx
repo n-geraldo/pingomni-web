@@ -144,7 +144,7 @@ const USE_CASES: { id: string; icon: string; tab: string; title: string; scene: 
     },
 ];
 
-const FAQ: { q: string; a: string }[] = [
+export const FAQ: { q: string; a: string }[] = [
     {
         q: 'Will it wake me up for nothing?',
         a: 'No: one failed check is never an alert. The check is repeated 20 seconds later, then other probes in other networks are asked. Only when they agree that the site is down does the incident open and the alert go out, and you can add a delay per monitor on top.',
