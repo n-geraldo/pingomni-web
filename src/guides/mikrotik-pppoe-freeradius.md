@@ -24,7 +24,7 @@ On the server, as root:
 
 ```
 apt-get install -y git
-git clone https://github.com/n-geraldo/radiusone /opt/radiusone
+git clone https://github.com/Pingomni/radiusone /opt/radiusone
 cd /opt/radiusone
 bash install.sh --domain radius.example.com --email it@example.com --timezone Europe/Tirane
 ```

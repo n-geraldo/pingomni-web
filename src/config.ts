@@ -2,7 +2,7 @@
 // The RadiusOne demo is a separate site; ?r=/login opens it at the sign-in page.
 export const DEMO_URL: string = import.meta.env.VITE_DEMO_URL ?? 'https://demo-radiusone.pingomni.com/?r=/login';
 // Where the RadiusOne source and installer live.
-export const REPO_URL: string = import.meta.env.VITE_REPO_URL ?? 'https://github.com/n-geraldo/radiusone';
+export const REPO_URL: string = import.meta.env.VITE_REPO_URL ?? 'https://github.com/Pingomni/radiusone';
 // The DNSOne demo, its own site.
 export const DNSONE_DEMO_URL: string = import.meta.env.VITE_DNSONE_DEMO_URL ?? 'https://demo-dns.pingomni.com/';
 // Where the DNSOne source and runbook live.
