@@ -9,7 +9,7 @@ export type Theme = 'light' | 'dark';
 
 // Bump when the screenshots are retaken: browsers and Cloudflare keep /shots/ for a day under the same address.
 export const SHOTS_VERSION = '?v=3';
-export type PageId = 'home' | 'monitor' | 'radiusone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'docs-monitor' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'terms' | 'privacy' | 'notfound';
+export type PageId = 'home' | 'monitor' | 'radiusone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'docs-monitor' | 'guides' | 'guide-freeradius-billing' | 'guide-connect-mikrotik' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | 'tools-network' | 'tools-email' | 'tools-bgp' | 'terms' | 'privacy' | 'notfound';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
 type Site = { page: PageId; root: string; theme: Theme };
@@ -224,7 +224,7 @@ function Header({ onTheme }: { onTheme: () => void }) {
                         <a
                             key={item.href}
                             href={`${root}${item.href}`}
-                            aria-current={item.page && (page.startsWith(item.page) || (item.page === 'docs' && page.startsWith('guide-'))) ? 'page' : undefined}
+                            aria-current={item.page && (page.startsWith(item.page) || (item.page === 'docs' && page.startsWith('guide'))) ? 'page' : undefined}
                             onClick={() => setOpen(false)}
                         >
                             {item.label}
@@ -340,6 +340,9 @@ function Footer() {
                         <p className="footer-title" id="footer-resources">Resources</p>
                         <a href={`${root}docs/`}>Documentation</a>
                         <a href={`${root}radiusone/#use-cases`}>RadiusOne use cases</a>
+                        <a href={`${root}guides/`}>How-to guides</a>
+                        <a href={`${root}guides/freeradius-billing-for-isps/`}>FreeRADIUS billing for ISPs</a>
+                        <a href={`${root}guides/connect-mikrotik-to-freeradius/`}>Connect MikroTik to FreeRADIUS</a>
                         <a href={`${root}guides/mikrotik-pppoe-freeradius/`}>MikroTik PPPoE with RadiusOne</a>
                         <a href={`${root}guides/rpz-ad-blocking-powerdns/`}>Ad-blocking with DNSOne</a>
                     </nav>

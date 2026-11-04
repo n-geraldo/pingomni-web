@@ -175,6 +175,9 @@ ${product('dnsone')}
 - [PingOmni Monitor user guide](${site}/docs/monitor/) (version ${versions.monitor}): every feature with an example, including the API and the MCP connector.
 - [RadiusOne user guide](${site}/docs/radiusone/) (version ${versions.radiusone}): every page of the portal.
 - [DNSOne user guide](${site}/docs/dnsone/) (version ${versions.dnsone}): every feature of the console.
+- [How-to guides](${site}/guides/): every guide below.
+- [FreeRADIUS billing for a small ISP](${site}/guides/freeradius-billing-for-isps/): what FreeRADIUS gives you and what billing has to add.
+- [How to connect MikroTik PPPoE to FreeRADIUS](${site}/guides/connect-mikrotik-to-freeradius/): a how-to guide with no RadiusOne needed.
 - [MikroTik PPPoE with FreeRADIUS and RadiusOne](${site}/guides/mikrotik-pppoe-freeradius/): a how-to guide.
 - [RPZ ad-blocking with PowerDNS and DNSOne](${site}/guides/rpz-ad-blocking-powerdns/): a how-to guide.
 

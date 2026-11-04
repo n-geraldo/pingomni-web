@@ -367,7 +367,7 @@ export default function Monitor() {
                             </span>
                         </div>
                         <h1 id="hero-title" className="display">
-                            Know the moment a site goes down.
+                            Website uptime monitoring with confirmed alerts.
                         </h1>
                         <p className="lead">
                             Websites, APIs, certificates, domains, servers, mail, databases and cron jobs, checked from outside your network around the clock.

@@ -519,7 +519,7 @@ export default function Home() {
                     <div className="product-hero-text">
                         <p className="eyebrow">Monitoring and ISP software</p>
                         <h1 id="hero-title" className="display">
-                            Keep every network running.
+                            Website monitoring and software for ISPs.
                         </h1>
                         <p className="lead">
                             PingOmni Monitor watches any website from the outside and tells you before your customers do. RadiusOne and DNSOne

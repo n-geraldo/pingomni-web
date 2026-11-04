@@ -556,7 +556,7 @@ export default function RadiusOne() {
                             </span>
                         </div>
                         <h1 id="hero-title" className="display">
-                            The ISP back office on FreeRADIUS.
+                            FreeRADIUS billing and management for ISPs.
                         </h1>
                         <p className="lead">
                             Subscribers, service plans, billing and NAS monitoring in one portal. One command installs it on your own Ubuntu

@@ -1,6 +1,6 @@
 import DNSOne from './pages/DNSOne';
 import { DocsGuide, DocsHub } from './pages/Docs';
-import { HowTo } from './pages/Guides';
+import { GuidesHub, HowTo } from './pages/Guides';
 import Home from './pages/Home';
 import Legal from './pages/Legal';
 import Monitor from './pages/Monitor';
@@ -18,6 +18,9 @@ const PAGES: Record<PageId, () => React.ReactNode> = {
     'docs-radiusone': () => <DocsGuide product="radiusone" />,
     'docs-dnsone': () => <DocsGuide product="dnsone" />,
     'docs-monitor': () => <DocsGuide product="monitor" />,
+    guides: () => <GuidesHub />,
+    'guide-freeradius-billing': () => <HowTo id="freeradius-billing-for-isps" />,
+    'guide-connect-mikrotik': () => <HowTo id="connect-mikrotik-to-freeradius" />,
     'guide-mikrotik-pppoe': () => <HowTo id="mikrotik-pppoe-freeradius" />,
     'guide-rpz-powerdns': () => <HowTo id="rpz-ad-blocking-powerdns" />,
     'tools-network': () => <Tools group="network" />,
