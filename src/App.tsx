@@ -6,10 +6,10 @@ import Legal from './pages/Legal';
 import Monitor from './pages/Monitor';
 import NotFound from './pages/NotFound';
 import RadiusOne from './pages/RadiusOne';
-import Tools from './pages/Tools';
+import Tools, { ToolPage } from './pages/Tools';
 import { Layout, type PageId } from './shared/Layout';
 
-const PAGES: Record<PageId, () => React.ReactNode> = {
+const PAGES: Record<Exclude<PageId, `tool-${string}`>, () => React.ReactNode> = {
     home: () => <Home />,
     monitor: () => <Monitor />,
     radiusone: () => <RadiusOne />,
@@ -35,7 +35,7 @@ const PAGES: Record<PageId, () => React.ReactNode> = {
 export default function App({ page, root }: { page: PageId; root: string }) {
     return (
         <Layout page={page} root={root}>
-            {PAGES[page]()}
+            {page.startsWith('tool-') ? <ToolPage id={page.slice('tool-'.length)} /> : PAGES[page as keyof typeof PAGES]()}
         </Layout>
     );
 }

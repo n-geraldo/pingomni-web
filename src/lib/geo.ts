@@ -13,7 +13,7 @@ import { TIERS as RADIUSONE_TIERS } from '../pages/RadiusOne';
 import { TIERS as DNSONE_TIERS } from '../pages/DNSOne';
 import { PLANS as MONITOR_PLANS } from '../shared/MonitorPlans';
 import type { PriceTier } from '../shared/Editions';
-import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from './toolList';
+import { TOOL_LIST, TOOL_PAGE_CONTENT, TOOL_PAGES, toolPath, type ToolGroup } from './toolList';
 import type { PageId } from '../shared/Layout';
 
 type Product = 'monitor' | 'radiusone' | 'dnsone';
@@ -121,6 +121,10 @@ export function structuredData(page: PageId, site: string): object | null {
     if (page === 'monitor') graph.push(faqPage(site, 'monitor/', MONITOR_FAQ), offers(site, 'monitor'));
     if (page === 'radiusone') graph.push(offers(site, 'radiusone'));
     if (page === 'dnsone') graph.push(offers(site, 'dnsone'));
+    if (page.startsWith('tool-')) {
+        const id = page.slice('tool-'.length);
+        if (TOOL_PAGE_CONTENT[id]) graph.push(faqPage(site, toolPath(id), TOOL_PAGE_CONTENT[id].faq));
+    }
     return graph.length ? { '@context': 'https://schema.org', '@graph': graph } : null;
 }
 
@@ -140,7 +144,7 @@ function toolsList(site: string): string {
     return (Object.keys(TOOL_PAGES) as ToolGroup[])
         .map((g) => {
             const page = TOOL_PAGES[g];
-            const tools = TOOL_LIST.filter((t) => t.group === g).map((t) => `${t.name} (${inline(t.blurb)})`);
+            const tools = TOOL_LIST.filter((t) => t.group === g).map((t) => `[${t.name}](${site}/${toolPath(t.id)}) (${inline(t.blurb)})`);
             return `- [${page.title}](${site}/${page.path}): ${tools.join('; ')}.`;
         })
         .join('\n');

@@ -1,4 +1,5 @@
-// The tools on the three tools pages, also listed in the navbar's Tools menu.
+// The tools on the three tools pages, also listed in the navbar's Tools menu. Each also has its own page (tools/pages.json).
+import TOOL_CONTENT from '../tools/pages.json';
 
 export type ToolGroup = 'network' | 'email' | 'bgp';
 
@@ -34,3 +35,21 @@ export const TOOL_LIST: { id: string; group: ToolGroup; name: string; blurb: str
     { id: 'prefix', group: 'bgp', name: 'Prefix lookup', blurb: 'Which AS announces an address, RPKI status and upstreams', icon: 'route' },
     { id: 'lg', group: 'bgp', name: 'Looking glass', blurb: 'The BGP paths networks worldwide use to reach a prefix', icon: 'eye' },
 ];
+
+export type ToolContent = {
+    id: string;
+    slug: string;
+    title: string;
+    description: string;
+    h1: string;
+    lead: string;
+    what: string[];
+    read: [string, string][];
+    faq: { q: string; a: string }[];
+    related: string[];
+};
+
+export const TOOL_PAGE_CONTENT = TOOL_CONTENT as unknown as Record<string, ToolContent>;
+
+/** A tool's own page, from the site root: "tools/ping/". */
+export const toolPath = (id: string) => `tools/${TOOL_PAGE_CONTENT[id].slug}/`;

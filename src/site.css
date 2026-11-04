@@ -4263,6 +4263,66 @@ picture {
   font-size: 14px;
 }
 
+/* A tool on its own page: the tool first, then how to read it */
+.tool-single {
+  padding-top: clamp(32px, 5vw, 48px);
+}
+
+.tool-single .tool-card {
+  margin-top: 0;
+}
+
+.tool-index {
+  display: grid;
+  gap: 14px;
+}
+
+.tool-about {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(24px, 4vw, 48px);
+}
+
+.tool-about h2 {
+  margin-bottom: 12px;
+}
+
+.tool-about p + p {
+  margin-top: 12px;
+}
+
+.tool-about p,
+.tool-about dd {
+  color: var(--text-muted);
+}
+
+.tool-about dl {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.tool-about dt {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.tool-about dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+}
+
+.tool-faq {
+  display: grid;
+  gap: 14px;
+}
+
+@media (max-width: 760px) {
+  .tool-about {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* What each tool is for, where it runs, and its less-used options */
 .tool-bestfor {
   color: var(--text-strong);

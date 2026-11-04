@@ -1,8 +1,12 @@
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
 const page = (path: string) => fileURLToPath(new URL(path, import.meta.url));
+
+// One page per tool: their HTML files come from scripts/tool-pages.mjs.
+const toolPages: Record<string, { slug: string }> = JSON.parse(readFileSync(page('src/tools/pages.json'), 'utf8'));
 
 export default defineConfig({
     // Absolute asset paths: the site lives at a domain root, and the 404 page is served at any depth.
@@ -36,6 +40,7 @@ export default defineConfig({
                 toolsNetwork: page('tools/network/index.html'),
                 toolsEmail: page('tools/email/index.html'),
                 toolsBgp: page('tools/bgp/index.html'),
+                ...Object.fromEntries(Object.values(toolPages).map((t) => [`tool-${t.slug}`, page(`tools/${t.slug}/index.html`)])),
             },
         },
     },

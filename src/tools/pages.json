@@ -1,0 +1,1106 @@
+{
+  "ping": {
+    "id": "ping",
+    "slug": "ping",
+    "title": "Online ping test: check if a host is up | PingOmni",
+    "description": "Ping any host or IP online, free and with no sign-up. See whether it answers and the round-trip time, from our server or from other countries.",
+    "h1": "Online ping test",
+    "lead": "Check whether a host answers and how long the round trip takes, from our server or from probes in other countries. Free, no sign-up.",
+    "what": [
+      "Ping sends small ICMP echo requests to a host and times the replies. It is the quickest first check when a site or server seems down.",
+      "Running it from another country helps when a problem only affects some places: a host can answer from one network and not from another."
+    ],
+    "read": [
+      [
+        "Round-trip time",
+        "How long a reply took, in milliseconds. Lower is better, and distance sets a floor no network can beat."
+      ],
+      [
+        "Packet loss",
+        "The share of requests with no reply. Steady loss from every location usually points near the host."
+      ],
+      [
+        "No replies",
+        "The host is down, or it or a firewall drops ICMP. Check the service itself with a port check before you decide."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why does a working website not answer ping?",
+        "a": "Many servers and firewalls drop ICMP on purpose. The site can still be fine, so test its port, such as 443, with the port check."
+      },
+      {
+        "q": "What is a good ping time?",
+        "a": "It depends on distance. Tens of milliseconds is normal within a region, and more between continents. What matters more is whether it stays steady and whether packets are lost."
+      },
+      {
+        "q": "Can I ping from another country?",
+        "a": "Yes. Choose a location under Test from. Those tests run on Globalping, a free network of probes, and count against your connection’s hourly allowance."
+      },
+      {
+        "q": "Can I ping a private address?",
+        "a": "No. Tests only reach public addresses, so 192.168.x.x and similar ranges are refused."
+      }
+    ],
+    "related": [
+      "traceroute",
+      "mtr",
+      "port"
+    ]
+  },
+  "traceroute": {
+    "id": "traceroute",
+    "slug": "traceroute",
+    "title": "Online traceroute: see the path to any host | PingOmni",
+    "description": "Run a traceroute online and see each hop on the path to a host, and where responses stop. ICMP or TCP, from our server or from other countries.",
+    "h1": "Online traceroute",
+    "lead": "See the path to a destination, hop by hop, and where responses stop. Run it from our server or from other countries. Free, no sign-up.",
+    "what": [
+      "Traceroute shows the routers between a starting point and a host, with the time to each one. It helps you see which network a problem sits in.",
+      "Under More options you can use TCP probes to a port. They often get further through firewalls that drop ICMP."
+    ],
+    "read": [
+      [
+        "Hop",
+        "One router on the path. Each line is one step further from the start."
+      ],
+      [
+        "Time per hop",
+        "How long that router took to answer. A rise that carries on to all later hops suggests real delay at that point."
+      ],
+      [
+        "* or no answer",
+        "That router did not reply. If later hops still answer, it is usually only ignoring these probes, not a fault."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Does a line of stars mean the network is broken?",
+        "a": "Not by itself. Many routers do not answer traceroute. It only points to a problem if every hop after it also stays silent and the host cannot be reached."
+      },
+      {
+        "q": "What is the difference between traceroute and MTR?",
+        "a": "Traceroute shows the path once. MTR repeats the test and counts loss and delay at each hop, which is better for problems that come and go."
+      },
+      {
+        "q": "Why does a hop in the middle show high delay?",
+        "a": "Routers often answer probes slowly while still forwarding traffic quickly. If the later hops are fast again, that hop is not the cause."
+      },
+      {
+        "q": "Should I use ICMP or TCP?",
+        "a": "Start with ICMP. If the trace stops early, try TCP to the port the service uses, usually 443 for a website."
+      }
+    ],
+    "related": [
+      "mtr",
+      "ping",
+      "prefix"
+    ]
+  },
+  "mtr": {
+    "id": "mtr",
+    "slug": "mtr",
+    "title": "MTR online: packet loss and delay per hop | PingOmni",
+    "description": "Run MTR online to find packet loss and delay at every hop on a route. ICMP or TCP, from our server or from other countries. Free, no sign-up.",
+    "h1": "MTR online",
+    "lead": "Find recurring packet loss and delay along a route, hop by hop, from our server or from other countries. Free, no sign-up.",
+    "what": [
+      "MTR combines ping and traceroute. It sends repeated probes along the path and shows loss and delay for each hop, so you see patterns that a single traceroute misses.",
+      "Network providers often ask for one when you report a slow or unstable connection."
+    ],
+    "read": [
+      [
+        "Loss %",
+        "The share of probes a hop did not answer. Only loss that carries through to the last hop affects traffic."
+      ],
+      [
+        "Average and worst",
+        "Typical delay at that hop and its slowest reply. A large gap between them suggests the delay is not steady."
+      ],
+      [
+        "Last hop",
+        "The destination itself. Start reading here: if it shows no loss, loss at earlier hops is usually harmless."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why does a hop show loss when the destination has none?",
+        "a": "That router limits how often it answers probes, but it still forwards traffic. This is normal and does not affect your connection."
+      },
+      {
+        "q": "How do I read an MTR report?",
+        "a": "Start at the last hop. If it has loss, go backwards to the first hop where the loss begins and carries on to the end. That is where to look."
+      },
+      {
+        "q": "Can I send this to my provider?",
+        "a": "Yes. Switch the result to Text and press Copy to paste it into a support ticket."
+      },
+      {
+        "q": "What is the difference between MTR and traceroute?",
+        "a": "Traceroute shows the path once. MTR repeats the probes and adds loss and delay statistics per hop."
+      }
+    ],
+    "related": [
+      "traceroute",
+      "ping",
+      "lg"
+    ]
+  },
+  "port": {
+    "id": "port",
+    "slug": "port-check",
+    "title": "Online port checker: test an open TCP port | PingOmni",
+    "description": "Check whether a TCP port is open from outside your network. Test one port such as 443 or 25, or a list of common ports at once. Free, no sign-up.",
+    "h1": "Online port checker",
+    "lead": "Check whether a TCP service can be reached from the internet. Test one port, or a fixed list of common ports at once. Free, no sign-up.",
+    "what": [
+      "The port check makes one TCP connection from our server to the host and port you choose, with a 4 second timeout. It shows whether a service can be reached from outside your network.",
+      "It is useful after opening a port on a router or firewall. Testing from your own network often does not show what the internet sees."
+    ],
+    "read": [
+      [
+        "Connected",
+        "The connection succeeded, so something is listening and the path is clear."
+      ],
+      [
+        "Refused",
+        "The host answered and refused the connection. It is reachable, but nothing listens on that port."
+      ],
+      [
+        "No answer",
+        "Nothing came back before the timeout. A firewall probably drops the traffic, or the host is unreachable."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Can it test UDP ports?",
+        "a": "No. It makes a TCP connection, so it cannot test UDP services such as DNS over UDP or WireGuard."
+      },
+      {
+        "q": "Why is my port closed when the service is running?",
+        "a": "Check that the service listens on a public address, not only on 127.0.0.1. Then check the firewall and, behind NAT, the port forward."
+      },
+      {
+        "q": "Which port should I test for a website?",
+        "a": "Port 443 for HTTPS and port 80 for plain HTTP."
+      },
+      {
+        "q": "Can I scan a range of ports?",
+        "a": "No. Check all common ports tests one fixed list of 27 ports, never a range you pick, and it has a rate limit."
+      }
+    ],
+    "related": [
+      "tls",
+      "ping",
+      "smtp"
+    ]
+  },
+  "tls": {
+    "id": "tls",
+    "slug": "ssl-check",
+    "title": "SSL certificate checker: expiry, chain and TLS | PingOmni",
+    "description": "Check any SSL/TLS certificate online: trust, names, expiry and chain, the TLS versions a server accepts, and HSTS. Free, with no sign-up.",
+    "h1": "SSL certificate checker",
+    "lead": "Check a certificate’s trust, names, expiry and chain, the TLS versions a server accepts, and HSTS. Free, no sign-up.",
+    "what": [
+      "This check connects to a server with the name you enter, reads its certificate and tests which TLS versions it accepts. For HTTPS it also reads the headers to see HSTS.",
+      "It works on any TLS service. Enter a port other than 443 to check, for example, a mail server: ports 25 and 587 use STARTTLS."
+    ],
+    "read": [
+      [
+        "Trust",
+        "Whether the certificate chains up to a trusted authority. A self-signed certificate or a missing intermediate fails here."
+      ],
+      [
+        "Names",
+        "The certificate must cover the name you entered, or browsers show a warning."
+      ],
+      [
+        "Days left",
+        "How long until expiry. Renew well before zero, because an expired certificate stops visitors with a warning."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why does my site work in a browser but fail this check?",
+        "a": "Browsers can sometimes fill in a missing intermediate certificate by themselves. Other clients cannot, so install the full chain on the server."
+      },
+      {
+        "q": "Is SSL the same as TLS?",
+        "a": "TLS is the modern version of what people still call SSL. Certificates work the same way. Servers should accept TLS 1.2 and 1.3 only."
+      },
+      {
+        "q": "What is HSTS?",
+        "a": "A header that tells browsers to use HTTPS for your site for a set time, so they refuse a plain connection."
+      },
+      {
+        "q": "Can it warn me before a certificate expires?",
+        "a": "This check runs once. PingOmni Monitor checks certificates around the clock and warns you before they expire."
+      }
+    ],
+    "related": [
+      "port",
+      "smtp",
+      "dns"
+    ]
+  },
+  "reverse": {
+    "id": "reverse",
+    "slug": "reverse-dns-lookup",
+    "title": "Reverse DNS lookup: find the PTR of an IP | PingOmni",
+    "description": "Look up the reverse DNS (PTR) name of any IPv4 or IPv6 address, and check whether it points back to the same address. Free, with no sign-up.",
+    "h1": "Reverse DNS lookup",
+    "lead": "Find the hostname an IP address points to, and whether that name points back to the same address. Free, no sign-up.",
+    "what": [
+      "A reverse DNS lookup asks for the PTR record of an IP address. It is the opposite of a normal DNS lookup, which turns a name into an address.",
+      "It matters most for mail servers, because many receivers distrust mail from an address with no matching name."
+    ],
+    "read": [
+      [
+        "Forward-confirmed",
+        "The address points to a name, and that name resolves back to the same address. This is what mail servers should have."
+      ],
+      [
+        "Does not match",
+        "The PTR name exists, but it does not resolve back to this address."
+      ],
+      [
+        "No PTR record",
+        "The address has no reverse name. It is set by the owner of the address block."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "How do I change the PTR record of my server?",
+        "a": "Reverse DNS belongs to whoever controls the address block, usually your hosting provider or ISP. Set it in their panel or ask them."
+      },
+      {
+        "q": "Why does reverse DNS matter for email?",
+        "a": "Many mail servers check it when they decide whether to trust a sender. A missing or mismatched name can send your mail to spam or get it refused."
+      },
+      {
+        "q": "Does it work with IPv6?",
+        "a": "Yes. Enter any public IPv4 or IPv6 address."
+      }
+    ],
+    "related": [
+      "dns",
+      "blacklist",
+      "smtp"
+    ]
+  },
+  "proxy": {
+    "id": "proxy",
+    "slug": "proxy-checker",
+    "title": "Proxy checker: see what your connection sends | PingOmni",
+    "description": "See which proxy-related headers our server receives from your connection, and your public IP address. Free, with no sign-up and nothing to install.",
+    "h1": "Proxy checker",
+    "lead": "See which proxy-related headers our server receives from your connection, along with your public IP address. Free, no sign-up.",
+    "what": [
+      "Proxies often add headers such as X-Forwarded-For or Via to the requests that pass through them. This tool reads the request your browser sends to our server and shows what it finds.",
+      "It tests only your own connection. Nothing else is tested, and it does not check other proxies."
+    ],
+    "read": [
+      [
+        "Your IP",
+        "The public address our server sees for your connection."
+      ],
+      [
+        "Proxy headers",
+        "Headers that proxies commonly add. If they are present, something along the way may be forwarding your traffic."
+      ],
+      [
+        "No proxy headers",
+        "Nothing obvious was added. A well-configured proxy or VPN can still hide itself, so this is not proof that none is in use."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Does it prove that I am not behind a proxy?",
+        "a": "No. It only shows what the request contains. A VPN or a proxy that adds no headers leaves nothing here to see."
+      },
+      {
+        "q": "Why does it show a different IP than my computer?",
+        "a": "Your computer usually has a private address. The tool shows the public address your router or provider uses on the internet."
+      },
+      {
+        "q": "Can I check a proxy server’s address here?",
+        "a": "No. It reads your own connection only. To look up who holds an address, use the registration lookup."
+      }
+    ],
+    "related": [
+      "reverse",
+      "whois",
+      "blacklist"
+    ]
+  },
+  "bandwidth": {
+    "id": "bandwidth",
+    "slug": "bandwidth-test",
+    "title": "Bandwidth test: measure your download speed | PingOmni",
+    "description": "Estimate the download speed between your device and our server in your browser. Choose a standard test of up to 30 MB or a light one of 5 MB.",
+    "h1": "Bandwidth test",
+    "lead": "Estimate the download speed between your device and our server. It runs in your browser, with no sign-up.",
+    "what": [
+      "The test downloads random data from our server, through Cloudflare, and times it in your browser. It usually takes 5 to 20 seconds.",
+      "It measures one path, to our server. It is an estimate of your connection, not a full test of your line."
+    ],
+    "read": [
+      [
+        "Download speed",
+        "The speed measured during the test. Compare several runs, because one result can be affected by other traffic."
+      ],
+      [
+        "Standard test",
+        "Uses up to 30 MB of data, which gives a better estimate on a fast line."
+      ],
+      [
+        "Light test",
+        "Uses 5 MB only. Choose it on a metered or mobile plan."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why is the result lower than the speed I pay for?",
+        "a": "Wi-Fi, other devices on your network, the path to our server and the server’s own limits can all lower it. Try it over a cable, with nothing else running."
+      },
+      {
+        "q": "Does it test upload speed?",
+        "a": "No. It measures download only."
+      },
+      {
+        "q": "How much data does it use?",
+        "a": "Up to 30 MB on the standard test and 5 MB on the light one. Mind this on a metered or mobile plan."
+      }
+    ],
+    "related": [
+      "ping",
+      "mtr",
+      "subnet"
+    ]
+  },
+  "subnet": {
+    "id": "subnet",
+    "slug": "subnet-calculator",
+    "title": "Subnet calculator: IP ranges, masks and CIDR | PingOmni",
+    "description": "Work out network ranges, masks and CIDR, and split a subnet into smaller ones. The calculator runs in your browser and sends nothing to our server.",
+    "h1": "Subnet calculator",
+    "lead": "Work out network boundaries, masks and ranges, and split a subnet into smaller ones. It runs in your browser, and nothing is sent anywhere.",
+    "what": [
+      "Enter an address and a prefix to see the network it belongs to, its mask and its range. You can also turn a range of addresses into CIDR blocks and split a network into smaller subnets.",
+      "It helps when you plan address space for customers, VLANs or point-to-point links."
+    ],
+    "read": [
+      [
+        "Network address",
+        "The first address of the block, which identifies the subnet."
+      ],
+      [
+        "Mask and prefix",
+        "The same size written two ways: /24 is 255.255.255.0."
+      ],
+      [
+        "Range",
+        "The addresses inside the block, from first to last."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "How many addresses are in a /24?",
+        "a": "A /24 has 256 addresses. On a normal IPv4 LAN, 254 can be given to hosts, because the first is the network and the last is the broadcast address."
+      },
+      {
+        "q": "What is a /30 or a /31 used for?",
+        "a": "Both are common for links between two routers. A /30 has two usable addresses, and a /31 uses both of its addresses on point-to-point links."
+      },
+      {
+        "q": "Is my data sent to your server?",
+        "a": "No. The calculator runs in your browser and sends nothing anywhere."
+      }
+    ],
+    "related": [
+      "ping",
+      "prefix",
+      "whois"
+    ]
+  },
+  "dns": {
+    "id": "dns",
+    "slug": "dns-lookup",
+    "title": "DNS lookup online: check DNS records worldwide | PingOmni",
+    "description": "Check any domain’s DNS records online: A, AAAA, MX, TXT, NS and more. Compare answers across locations after a change. Free, with no sign-up.",
+    "h1": "DNS lookup",
+    "lead": "See a name’s DNS records, status and TTLs, or compare the answers across locations after a change. Free, no sign-up.",
+    "what": [
+      "A DNS lookup asks which records a name has: the addresses it points to, its mail servers, its text records and more. Choose one record type or all common types.",
+      "Under More options you can pick the resolver. The domain’s own name server skips caches and shows what the zone itself publishes, which helps right after a change."
+    ],
+    "read": [
+      [
+        "Status",
+        "NOERROR means the query worked. NXDOMAIN means the name does not exist. SERVFAIL means the resolver could not get a valid answer."
+      ],
+      [
+        "Answer",
+        "The records returned, with their values."
+      ],
+      [
+        "TTL",
+        "How many seconds resolvers may keep the answer. Until it runs out, some of them can still give the old value."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why do I see an old DNS record after a change?",
+        "a": "Resolvers keep answers until the TTL runs out. Ask the domain’s own name server to see the new value, then compare other locations to see how far it has reached."
+      },
+      {
+        "q": "How long does DNS propagation take?",
+        "a": "It depends on the old record’s TTL. It is often minutes or hours. Changing name servers at the registrar can take longer."
+      },
+      {
+        "q": "What does SERVFAIL mean?",
+        "a": "The resolver could not get a valid answer. Common causes are broken DNSSEC and name servers that do not answer. Check both with the DNSSEC and NS checks."
+      },
+      {
+        "q": "Can I check from other countries?",
+        "a": "Yes. Choose a location under Look up from. Those lookups run on Globalping, a free network of probes."
+      }
+    ],
+    "related": [
+      "ns",
+      "dnssec",
+      "whois"
+    ]
+  },
+  "mx": {
+    "id": "mx",
+    "slug": "mx-lookup",
+    "title": "MX lookup: find a domain’s mail servers | PingOmni",
+    "description": "Look up a domain’s MX records and see which servers receive its email and in what order. A free online MX check, with no sign-up needed.",
+    "h1": "MX lookup",
+    "lead": "See which servers receive a domain’s email, and in what order. Free, no sign-up.",
+    "what": [
+      "MX records tell other mail servers where to deliver mail for a domain. Each has a priority, and a lower number is tried first.",
+      "If mail is not arriving, this is the first thing to check. A wrong or missing MX record sends mail nowhere."
+    ],
+    "read": [
+      [
+        "Priority",
+        "Senders try the lowest number first and use the others if it fails."
+      ],
+      [
+        "No MX records",
+        "Senders may fall back to the domain’s own address, but many setups will not receive mail this way."
+      ],
+      [
+        "Null MX",
+        "The domain says that it does not accept email at all (RFC 7505)."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why does my domain not receive email?",
+        "a": "Check that MX records exist and point to the right provider. Then use the SMTP test to see whether that server answers."
+      },
+      {
+        "q": "What should MX priorities be?",
+        "a": "Your provider gives you the values. With two or more servers, the one with the lowest number gets the mail first."
+      },
+      {
+        "q": "Can an MX record point to an IP address?",
+        "a": "No. It must point to a hostname, and that hostname must have an address record."
+      }
+    ],
+    "related": [
+      "smtp",
+      "spf",
+      "blacklist"
+    ]
+  },
+  "ns": {
+    "id": "ns",
+    "slug": "ns-lookup",
+    "title": "NS lookup: check a domain’s name servers | PingOmni",
+    "description": "Find a domain’s authoritative name servers, ask each one for its SOA serial, and see whether they all answer and agree. Free, with no sign-up.",
+    "h1": "NS lookup",
+    "lead": "Find which name servers are authoritative for a domain, and check that they answer and agree. Free, no sign-up.",
+    "what": [
+      "This check reads a domain’s NS records, then asks each name server for the zone’s SOA directly. That shows problems a normal lookup hides behind a cache.",
+      "If the serials differ, one server has not picked up your latest change, so visitors can get different answers."
+    ],
+    "read": [
+      [
+        "Name server",
+        "A server that holds the zone. Each should answer for the domain."
+      ],
+      [
+        "SOA serial",
+        "The zone’s version number. All servers should show the same one."
+      ],
+      [
+        "No answer",
+        "That server is down or unreachable, or it does not know the zone. Fix or remove it."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why do my name servers show different serials?",
+        "a": "One has not received the latest zone yet. Check zone transfers between them, or wait if you have only just made the change."
+      },
+      {
+        "q": "How many name servers should a domain have?",
+        "a": "At least two, ideally on different networks, so one failure does not take the domain down."
+      },
+      {
+        "q": "Why are the servers here different from those at my registrar?",
+        "a": "The registry’s delegation and the zone’s own NS records should match. Compare them with the registration lookup."
+      }
+    ],
+    "related": [
+      "dns",
+      "dnssec",
+      "whois"
+    ]
+  },
+  "dnssec": {
+    "id": "dnssec",
+    "slug": "dnssec-check",
+    "title": "DNSSEC check: test a domain’s chain of trust | PingOmni",
+    "description": "Check that a domain’s DNSSEC chain of trust is complete and validates, from the DS at the parent to the signatures, or find out why it breaks.",
+    "h1": "DNSSEC check",
+    "lead": "Check that a domain’s DNSSEC chain of trust is complete and validates, or find out why it breaks. Free, no sign-up.",
+    "what": [
+      "DNSSEC signs DNS answers so that they cannot be forged. This check reads the DS record at the parent, the zone’s DNSKEY and signatures, then asks a validating resolver (1.1.1.1) whether the answers validate.",
+      "Broken DNSSEC is worse than none: validating resolvers refuse the answers, so the domain looks down for many visitors."
+    ],
+    "read": [
+      [
+        "Secure",
+        "The domain is signed, and the chain validates."
+      ],
+      [
+        "Not signed",
+        "The domain does not use DNSSEC. Its answers work, but they are not protected."
+      ],
+      [
+        "Broken",
+        "A link in the chain is wrong, such as a DS that matches no key or an expired signature."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why does my domain fail after moving DNS provider?",
+        "a": "The DS record at the registrar often still matches the old provider’s key. Remove or update it at the registrar."
+      },
+      {
+        "q": "What is a DS record?",
+        "a": "A hash of your zone’s key, published by the parent zone through your registrar. It links your zone to the chain of trust."
+      },
+      {
+        "q": "How do I turn DNSSEC off safely?",
+        "a": "Remove the DS record at the registrar first, and wait for its TTL to pass. Only then stop signing the zone."
+      }
+    ],
+    "related": [
+      "dns",
+      "ns",
+      "whois"
+    ]
+  },
+  "spf": {
+    "id": "spf",
+    "slug": "spf-check",
+    "title": "SPF checker: test a domain’s SPF record | PingOmni",
+    "description": "Check a domain’s SPF record online. See which servers may send its email and how many DNS lookups it uses, as a receiving server would.",
+    "h1": "SPF checker",
+    "lead": "See which servers a domain authorises to send its email, and how many DNS lookups the record uses. Free, no sign-up.",
+    "what": [
+      "SPF is a TXT record that lists the servers allowed to send mail for a domain. This check reads it and follows each include the way a receiver would.",
+      "Receivers count DNS lookups while they read the record. Above the limit of 10, SPF fails even if the sender is listed."
+    ],
+    "read": [
+      [
+        "Lookup count",
+        "How many DNS lookups the record needs. The limit is 10, and each include can use several."
+      ],
+      [
+        "~all or -all",
+        "The ending says what to do with other senders: ~all marks them as suspect, and -all says to fail them."
+      ],
+      [
+        "More than one record",
+        "A domain must have only one SPF record. Two make SPF fail, so merge them."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why does my SPF fail with too many lookups?",
+        "a": "Each include can pull in more lookups. Remove services that you no longer use. Merge what is left into as few includes as you can."
+      },
+      {
+        "q": "Should I use ~all or -all?",
+        "a": "Many domains start with ~all while they check that all their senders are listed. Move to -all once you are sure."
+      },
+      {
+        "q": "Is SPF enough to stop spoofing?",
+        "a": "No. SPF checks the envelope sender, not the address people see. Use it together with DKIM and DMARC."
+      }
+    ],
+    "related": [
+      "dmarc",
+      "dkim",
+      "mx"
+    ]
+  },
+  "dmarc": {
+    "id": "dmarc",
+    "slug": "dmarc-check",
+    "title": "DMARC checker: test a domain’s DMARC policy | PingOmni",
+    "description": "Check a domain’s DMARC record online and see what it asks receivers to do with mail that fails authentication. Free, with no sign-up.",
+    "h1": "DMARC checker",
+    "lead": "See what a domain asks receivers to do with mail that fails authentication. Free, no sign-up.",
+    "what": [
+      "DMARC is a TXT record at _dmarc.yourdomain. It tells receivers what to do when mail fails SPF and DKIM alignment, and where to send reports.",
+      "With a strict enough policy, it helps stop other people from sending mail in your domain’s name."
+    ],
+    "read": [
+      [
+        "p=none",
+        "Only monitor. Failing mail is treated as usual, and you receive reports."
+      ],
+      [
+        "p=quarantine",
+        "Ask receivers to treat failing mail as suspect, usually the spam folder."
+      ],
+      [
+        "p=reject",
+        "Ask receivers to refuse failing mail. This is the strongest protection."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Which DMARC policy should I start with?",
+        "a": "Start with p=none and read the reports. When all your real senders pass, move to quarantine and then to reject."
+      },
+      {
+        "q": "Why does mail fail DMARC when SPF passes?",
+        "a": "DMARC needs alignment: the domain that passes SPF or DKIM must match the address in the From line. A service that sends with its own domain will not align."
+      },
+      {
+        "q": "Do I need DMARC if I do not send email?",
+        "a": "It is worth having. A strict policy with an SPF record that allows nobody tells receivers that any mail in your name is fake."
+      }
+    ],
+    "related": [
+      "spf",
+      "dkim",
+      "mailpolicy"
+    ]
+  },
+  "dkim": {
+    "id": "dkim",
+    "slug": "dkim-check",
+    "title": "DKIM checker: find and test a domain’s keys | PingOmni",
+    "description": "Find a domain’s DKIM keys and check them, with or without the selector. Enter one, or try 45 common selectors at once. Free, with no sign-up.",
+    "h1": "DKIM checker",
+    "lead": "Find a domain’s DKIM keys and check them, with or without knowing the selector. Free, no sign-up.",
+    "what": [
+      "DKIM signs outgoing mail with a private key. Receivers check the signature against a public key published in DNS, at selector._domainkey.yourdomain.",
+      "Enter a selector if you know it, or leave it empty to try 45 common ones at once. In a message’s DKIM-Signature header, the selector is the s= value."
+    ],
+    "read": [
+      [
+        "Selector",
+        "The name of the key. A domain can have several, one for each sending service."
+      ],
+      [
+        "Key strength",
+        "The size of the public key. Use at least 2048-bit RSA where your provider allows it."
+      ],
+      [
+        "No key found",
+        "No key at the common selectors. This does not prove DKIM is off: enter the selector from a real message."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "How do I find my DKIM selector?",
+        "a": "Open the headers of a message that you sent, find DKIM-Signature, and read the s= value."
+      },
+      {
+        "q": "Why was no key found although I use DKIM?",
+        "a": "Your provider may use a selector outside the common list. Enter the exact one from a message header."
+      },
+      {
+        "q": "Does this test that my mail is signed?",
+        "a": "No. It checks the published key. To check signing, read the DKIM result in the headers of a message you received."
+      }
+    ],
+    "related": [
+      "spf",
+      "dmarc",
+      "smtp"
+    ]
+  },
+  "smtp": {
+    "id": "smtp",
+    "slug": "smtp-test",
+    "title": "SMTP test: check a mail server and STARTTLS | PingOmni",
+    "description": "Test whether a domain’s mail server answers on port 25, encrypts with STARTTLS and has a valid certificate. No email is sent. Free, no sign-up.",
+    "h1": "SMTP test",
+    "lead": "Check that a domain’s mail server answers on port 25, encrypts with STARTTLS and has a valid certificate. No email is sent.",
+    "what": [
+      "The test connects to port 25, reads the greeting, sends EHLO, starts TLS when it is offered and checks the certificate. Enter a domain to test its first MX, or a hostname or IP to test it directly.",
+      "It can take up to 20 seconds, because some mail servers delay their greeting on purpose."
+    ],
+    "read": [
+      [
+        "Greeting",
+        "The server’s first answer on port 25. No greeting means it is down or blocked."
+      ],
+      [
+        "STARTTLS",
+        "Whether the server offers encryption. Without it, mail can travel in plain text."
+      ],
+      [
+        "Certificate",
+        "Whether the server’s TLS certificate is valid."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Does this test send an email?",
+        "a": "No. It stops after checking the connection and TLS, so nothing is delivered."
+      },
+      {
+        "q": "Why can’t I reach port 25 from my own network?",
+        "a": "Many ISPs block outgoing port 25 on home lines to reduce spam. This test runs from our server, so that block does not affect it."
+      },
+      {
+        "q": "Why is the test slow?",
+        "a": "Some servers wait before greeting a new connection, to slow down spam senders. A delay alone is not a fault."
+      }
+    ],
+    "related": [
+      "mx",
+      "tls",
+      "blacklist"
+    ]
+  },
+  "mailpolicy": {
+    "id": "mailpolicy",
+    "slug": "mta-sts-check",
+    "title": "MTA-STS and BIMI check: test mail policies | PingOmni",
+    "description": "Check a domain’s MTA-STS, TLS-RPT and BIMI records online, and fetch its MTA-STS policy over HTTPS the way mail senders do. Free, no sign-up.",
+    "h1": "MTA-STS and BIMI check",
+    "lead": "Check whether a domain makes senders use TLS (MTA-STS), collects TLS failure reports (TLS-RPT) and shows a brand logo (BIMI). Free, no sign-up.",
+    "what": [
+      "STARTTLS alone can be stripped by an attacker on the path. MTA-STS tells senders that your mail must arrive over TLS with a valid certificate. This check reads the record at _mta-sts and fetches the policy over HTTPS, as senders do.",
+      "It also reads TLS-RPT at _smtp._tls, which collects failure reports, and BIMI at default._bimi, which publishes a brand logo."
+    ],
+    "read": [
+      [
+        "Enforced",
+        "Mail to the domain must travel over TLS with a valid certificate."
+      ],
+      [
+        "MTA-STS testing",
+        "Senders report failures but still deliver. Use it before you enforce."
+      ],
+      [
+        "No MTA-STS",
+        "Nothing asks senders to require TLS, so they use it only if they can."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "What is the difference between MTA-STS and STARTTLS?",
+        "a": "STARTTLS offers encryption, but a sender may go on without it. MTA-STS tells senders to refuse delivery if TLS or the certificate fails."
+      },
+      {
+        "q": "Why does my policy fail although the DNS record exists?",
+        "a": "Senders must also fetch the policy from https://mta-sts.yourdomain/.well-known/mta-sts.txt with a valid certificate, and the policy must list your MX hosts."
+      },
+      {
+        "q": "What does BIMI need?",
+        "a": "A strict DMARC policy and a logo in the required format. Some mailbox providers also ask for a verified mark certificate."
+      }
+    ],
+    "related": [
+      "dmarc",
+      "smtp",
+      "tls"
+    ]
+  },
+  "whois": {
+    "id": "whois",
+    "slug": "whois-lookup",
+    "title": "WHOIS lookup: domain and IP registration | PingOmni",
+    "description": "Look up the public registration of a domain or IP network: registrar, dates and status, from the registry’s RDAP service. Free, with no sign-up.",
+    "h1": "WHOIS lookup",
+    "lead": "See the public registration record of a domain or IP network: registrar, dates and status. Free, no sign-up.",
+    "what": [
+      "This lookup asks the registry’s RDAP service, the modern replacement for WHOIS. It shows when a domain was registered, when it expires, who the registrar is and which name servers it uses.",
+      "For an IP address, it shows the network it belongs to and who holds it."
+    ],
+    "read": [
+      [
+        "Expiry date",
+        "When the registration ends. If it passes, the domain can stop working."
+      ],
+      [
+        "Status",
+        "Codes set by the registry. For example, clientHold means that the domain does not resolve."
+      ],
+      [
+        "Name servers",
+        "The servers the registry points to. They should match those in the zone."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why is the owner’s name hidden?",
+        "a": "Most registries hide personal data under privacy rules. You usually see the registrar and the dates, not the person."
+      },
+      {
+        "q": "What does No RDAP service mean?",
+        "a": "Some country domains do not publish RDAP. Ask that registry directly."
+      },
+      {
+        "q": "Is RDAP the same as WHOIS?",
+        "a": "It answers the same question in a structured format, and many registries now prefer it."
+      }
+    ],
+    "related": [
+      "dns",
+      "ns",
+      "asn"
+    ]
+  },
+  "blacklist": {
+    "id": "blacklist",
+    "slug": "blacklist-check",
+    "title": "Blacklist check: IP and domain on spam lists | PingOmni",
+    "description": "Check whether a mail server’s IP or a domain is on public spam lists (DNSBLs). Each list is tested first, so a broken list cannot skew the result.",
+    "h1": "Blacklist check",
+    "lead": "Check whether a mail server’s IP or a domain is on public spam lists (DNSBLs). Free, no sign-up.",
+    "what": [
+      "Mail servers use DNS-based lists to decide whom to trust. This check queries each list, after checking that the list answers its own test entries correctly.",
+      "A name is checked by its IPv4 address, and a domain is also checked against domain lists."
+    ],
+    "read": [
+      [
+        "Listed",
+        "That list returned a listing code for the address or domain. Read why on the list’s site before you ask for removal."
+      ],
+      [
+        "Refused us",
+        "That list does not answer queries from our server, so it gives no result here."
+      ],
+      [
+        "Unreliable",
+        "The list gave answers that do not match its documented behaviour, so they are ignored."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "How do I get off a blacklist?",
+        "a": "First find and fix the cause, such as a hacked account or an open relay. Then follow the removal steps on the list’s own site. Many remove you automatically after a while."
+      },
+      {
+        "q": "Does one listing mean my mail is blocked?",
+        "a": "Not always. It depends on which lists the receivers use, and some lists matter much more than others."
+      },
+      {
+        "q": "Why is my new IP already listed?",
+        "a": "A previous user of the address may have sent spam. Ask your provider, or request removal from the list."
+      }
+    ],
+    "related": [
+      "smtp",
+      "reverse",
+      "mx"
+    ]
+  },
+  "announce": {
+    "id": "announce",
+    "slug": "bgp-announcement-check",
+    "title": "BGP prefix check: RPKI, IRR and visibility | PingOmni",
+    "description": "Find out why a prefix is not reachable everywhere: RPKI, IRR route objects, visibility and 30 days of history in one check. Free, with no sign-up.",
+    "h1": "BGP announcement check",
+    "lead": "Find out why a prefix is not reachable everywhere, or check a new one before you announce it. RPKI, IRR, visibility and history in one check.",
+    "what": [
+      "A prefix can be filtered because its RPKI record or IRR route object is wrong or missing. This check brings together BGP state, visibility and history from RIPE NCC’s route collectors, route objects from every major IRR, and RPKI validation.",
+      "To test a prefix before you announce it, enter the AS that should announce it. You can see whether networks should accept it."
+    ],
+    "read": [
+      [
+        "RPKI",
+        "Valid, invalid or unknown. Many networks drop routes that are RPKI invalid."
+      ],
+      [
+        "IRR",
+        "Whether route objects exist for this prefix and origin. Many upstreams build their filters from them."
+      ],
+      [
+        "Visibility",
+        "How many route collectors see the prefix. Low visibility means that part of the internet may not reach it."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why is my prefix not visible everywhere?",
+        "a": "The usual causes are an RPKI invalid, a missing IRR route object, or an upstream filter that has not been updated. This check shows the first two directly."
+      },
+      {
+        "q": "What should I do before announcing a new prefix?",
+        "a": "Create a ROA and a route object, then run this check with your AS as the expected origin. It should say that networks should accept it."
+      },
+      {
+        "q": "How current is the data?",
+        "a": "It comes from public route collectors. Answers are kept for up to 5 minutes, so a route that just changed can take that long to show."
+      }
+    ],
+    "related": [
+      "lg",
+      "prefix",
+      "asn"
+    ]
+  },
+  "asn": {
+    "id": "asn",
+    "slug": "asn-lookup",
+    "title": "ASN lookup: who runs an AS, what it announces | PingOmni",
+    "description": "Look up any autonomous system: who runs it, what it announces, its neighbours, and which of its prefixes have RPKI or IRR problems. Free, no sign-up.",
+    "h1": "ASN lookup",
+    "lead": "Find who runs an autonomous system, what it announces, who it connects to, and which of its prefixes have RPKI or IRR problems.",
+    "what": [
+      "An autonomous system (AS) is a network with its own routing policy. Enter an AS number, with or without “AS”, to see its holder, its announced prefixes and its neighbours.",
+      "Routing data comes from RIPEstat, which is based on RIPE NCC’s route collectors. Network details come from PeeringDB."
+    ],
+    "read": [
+      [
+        "Prefixes",
+        "The address blocks this AS announces."
+      ],
+      [
+        "Neighbours",
+        "The networks it connects to, as seen in BGP paths."
+      ],
+      [
+        "RPKI and IRR problems",
+        "Prefixes that may be filtered by other networks because their records are wrong or missing."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "How do I find which AS an IP address belongs to?",
+        "a": "Use the prefix lookup. It shows which AS announces the address."
+      },
+      {
+        "q": "Why does my AS show no prefixes?",
+        "a": "It may announce nothing at the moment, or the collectors may not see it. Check your BGP sessions and use the announcement check."
+      },
+      {
+        "q": "What is PeeringDB?",
+        "a": "A public database where networks publish their details. If yours has no entry, the network details here will be limited."
+      }
+    ],
+    "related": [
+      "prefix",
+      "announce",
+      "lg"
+    ]
+  },
+  "prefix": {
+    "id": "prefix",
+    "slug": "prefix-lookup",
+    "title": "IP prefix lookup: which AS announces an IP | PingOmni",
+    "description": "Find which network announces an IP address or prefix, whether RPKI allows it, and how the internet reaches it. Free BGP lookup, with no sign-up.",
+    "h1": "IP prefix lookup",
+    "lead": "Find which network announces an address, whether RPKI allows it, and how the internet reaches it. Free, no sign-up.",
+    "what": [
+      "Enter an address, a prefix or a hostname. The lookup finds the route in the global table, the AS that originates it and its RPKI status.",
+      "It is the quickest way to answer “whose network is this address on?” from routing data rather than registration records."
+    ],
+    "read": [
+      [
+        "Origin AS",
+        "The network that announces this route."
+      ],
+      [
+        "RPKI status",
+        "Whether a signed record allows this AS to announce this prefix."
+      ],
+      [
+        "Upstreams",
+        "The networks seen carrying the route from the origin towards the rest of the internet."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "What is the difference between this and a WHOIS lookup?",
+        "a": "WHOIS shows who an address is registered to. This lookup shows who announces it in BGP now. The two can differ."
+      },
+      {
+        "q": "What does RPKI invalid mean?",
+        "a": "A signed record says that a different AS or a shorter prefix should be used. Many networks drop such a route."
+      },
+      {
+        "q": "Can a hostname be used?",
+        "a": "Yes. It is resolved to an address first."
+      }
+    ],
+    "related": [
+      "asn",
+      "lg",
+      "announce"
+    ]
+  },
+  "lg": {
+    "id": "lg",
+    "slug": "looking-glass",
+    "title": "BGP looking glass: see routes to any prefix | PingOmni",
+    "description": "See the BGP paths that networks around the world use to reach a prefix right now, from RIPE NCC’s route collectors. Free looking glass, no sign-up.",
+    "h1": "BGP looking glass",
+    "lead": "See the BGP paths that networks around the world use to reach a prefix right now. Free, no sign-up.",
+    "what": [
+      "A looking glass shows routes as other networks see them, which you cannot see from your own router. This one uses RIPEstat, which draws on RIPE NCC’s RIS route collectors, fed by hundreds of networks worldwide.",
+      "It helps you confirm that a new announcement has spread, or see which paths lead into your network."
+    ],
+    "read": [
+      [
+        "AS path",
+        "The networks a route passes through, ending with the origin."
+      ],
+      [
+        "Origin",
+        "The last AS in the path, which announces the prefix."
+      ],
+      [
+        "No routes",
+        "The collectors do not see this prefix. It may not be announced, or it may be filtered."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Why is the route different from what my router shows?",
+        "a": "Each network picks its own best path by its own policy. The collectors show the views of their peers, not yours."
+      },
+      {
+        "q": "How quickly does it show a change?",
+        "a": "Answers are kept for up to 5 minutes, so a route that just changed can take that long to show."
+      },
+      {
+        "q": "Can I run a ping or traceroute from it?",
+        "a": "No. It shows BGP routes only. To test the data path, use the traceroute tool."
+      }
+    ],
+    "related": [
+      "prefix",
+      "announce",
+      "traceroute"
+    ]
+  }
+}

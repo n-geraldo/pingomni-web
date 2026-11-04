@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Icon from '../Icon';
 import { api, ToolError, type Result } from '../lib/api';
 import { toText } from '../lib/textOutput';
-import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
+import { TOOL_LIST, TOOL_PAGE_CONTENT, TOOL_PAGES, toolPath, type ToolGroup } from '../lib/toolList';
 import { Contact, useSite } from '../shared/Layout';
 import { TOOL_PREVIEW } from '../shared/ToolPreviews';
 import { BGP_SPECS } from '../tools/bgp';
@@ -537,6 +537,22 @@ export default function Tools({ group }: { group: ToolGroup }) {
                         </div>
                     </div>
 
+                    <section className="tool-index" aria-labelledby="tool-index-title">
+                        <h2 id="tool-index-title" className="h3">
+                            Open a tool on its own page
+                        </h2>
+                        <ul className="toolgroup-list">
+                            {tools.map((t) => (
+                                <li key={t.id}>
+                                    <a href={`${root}${toolPath(t.id)}`} title={t.blurb}>
+                                        <Icon name={t.icon} />
+                                        {TOOL_PAGE_CONTENT[t.id].h1}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+
                     <Workflows target={target} hrefFor={hrefFor} />
 
                     <section className="sources" aria-labelledby="sources-title">
@@ -558,6 +574,129 @@ export default function Tools({ group }: { group: ToolGroup }) {
                             {group === 'bgp' && 'Answers are kept for up to 5 minutes, so a route that just changed can take that long to show. '}
                             Built by PingOmni, makers of <a href={`${root}radiusone/`}>RadiusOne</a>.
                         </p>
+                    </section>
+                </div>
+            </section>
+            <Contact
+                start
+                title="Check it around the clock."
+                text="These tools check once. PingOmni Monitor checks your sites, certificates, domains and servers around the clock, as often as every 30 seconds, and tells you the moment one fails. Free for 10 monitors, with no card."
+            />
+        </>
+    );
+}
+
+/** A tool on its own page (/tools/ping/ and the others): the tool first, then how to read it and the common questions. */
+export function ToolPage({ id }: { id: string }) {
+    const { root } = useSite();
+    const tool = TOOLS.find((t) => t.id === id)!;
+    const content = TOOL_PAGE_CONTENT[id];
+    const group = TOOL_PAGES[tool.group];
+    const [current, setCurrent] = useState<{ initial: Values; n: number }>({ initial: {}, n: 0 });
+
+    // A link can fill in the form (#mx?domain=…); nothing runs until the visitor asks.
+    useEffect(() => {
+        const onHash = () => {
+            const parsed = parseHash(window.location.hash);
+            if (parsed.id !== id) return;
+            setCurrent((c) => ({ initial: parsed.values, n: c.n + 1 }));
+        };
+        onHash();
+        window.addEventListener('hashchange', onHash);
+        return () => window.removeEventListener('hashchange', onHash);
+    }, [id]);
+
+    const hrefFor = (n: Next) => {
+        const query = new URLSearchParams(Object.entries(n.values).filter((e): e is [string, string] => !!e[1])).toString();
+        const hash = `#${n.tool}${query ? `?${query}` : ''}`;
+        return n.tool === id ? hash : `${root}${TOOL_PAGES[TOOLS.find((t) => t.id === n.tool)!.group].path}${hash}`;
+    };
+
+    return (
+        <>
+            <section className="stage docs-hero" aria-labelledby="hero-title">
+                <div className="container docs-hero-inner">
+                    <p className="docs-crumbs">
+                        <a href={root}>PingOmni</a>
+                        <span aria-hidden="true">/</span>
+                        <a href={`${root}${group.path}`}>{group.title}</a>
+                    </p>
+                    <h1 id="hero-title" className="display">
+                        {content.h1}
+                    </h1>
+                    <p className="lead">{content.lead}</p>
+                    <MyIp />
+                </div>
+            </section>
+
+            <section className="tools-main tool-single">
+                <div className="container tools-stack">
+                    <div className="tool-card" id="tool-card">
+                        <ToolPanel key={`${id}-${current.n}`} tool={tool} initial={current.initial} hrefFor={hrefFor} onTarget={() => {}} />
+                    </div>
+
+                    <section className="tool-about" aria-labelledby="tool-about-title">
+                        <div>
+                            <h2 id="tool-about-title" className="h3">
+                                What it does
+                            </h2>
+                            {content.what.map((text) => (
+                                <p key={text}>{text}</p>
+                            ))}
+                        </div>
+                        <div>
+                            <h2 className="h3">How to read the result</h2>
+                            <dl>
+                                {content.read.map(([term, meaning]) => (
+                                    <div key={term}>
+                                        <dt>{term}</dt>
+                                        <dd>{meaning}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+                        </div>
+                    </section>
+
+                    <section className="tool-faq" aria-labelledby="tool-faq-title">
+                        <h2 id="tool-faq-title" className="h3">
+                            Common questions
+                        </h2>
+                        <div className="faq-list">
+                            {content.faq.map((f) => (
+                                <details className="faq-item" key={f.q}>
+                                    <summary>
+                                        <h3 className="h3">{f.q}</h3>
+                                        <Icon name="chevron" />
+                                    </summary>
+                                    <p>{f.a}</p>
+                                </details>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section className="tool-index" aria-labelledby="tool-related-title">
+                        <h2 id="tool-related-title" className="h3">
+                            Related tools
+                        </h2>
+                        <ul className="toolgroup-list">
+                            {content.related.map((r) => {
+                                const other = TOOLS.find((t) => t.id === r)!;
+                                return (
+                                    <li key={r}>
+                                        <a href={`${root}${toolPath(r)}`} title={other.blurb}>
+                                            <Icon name={other.icon} />
+                                            {TOOL_PAGE_CONTENT[r].h1}
+                                        </a>
+                                    </li>
+                                );
+                            })}
+                            <li>
+                                <a href={`${root}${group.path}`}>
+                                    <Icon name={group.icon} />
+                                    All {group.title}
+                                </a>
+                            </li>
+                        </ul>
                     </section>
                 </div>
             </section>
