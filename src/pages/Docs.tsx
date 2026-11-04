@@ -50,6 +50,7 @@ const GUIDES: Record<
             clients: 'clients',
             'services-and-ip-pools': 'services',
             'nas-devices': 'server',
+            'olt-and-client-mapping': 'nodes',
             monitoring: 'activity',
             'network-operations': 'signal',
             billing: 'billing',

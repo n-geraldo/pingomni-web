@@ -116,7 +116,7 @@ standard FreeRADIUS SQL tables. It does not sit in the login path.
   customer email and SMS, and your logo on invoices.
 
 Payments are recorded by method, and a full payment of a renewal extends the service end date. See the
-[billing chapter of the user guide](/docs/radiusone/#8-billing) and the [editions and prices](/radiusone/#editions).
+[billing chapter of the user guide](/docs/radiusone/#9-billing) and the [editions and prices](/radiusone/#editions).
 
 ## 7. Before you bill real customers
 

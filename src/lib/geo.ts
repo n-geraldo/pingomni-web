@@ -6,6 +6,10 @@ import { CONTACT_EMAIL, DNSONE_REPO_URL, MONITOR_URL, ACCOUNT_URL } from '../con
 import monitorGuide from '../docs/monitor.md?raw';
 import radiusoneGuide from '../docs/radiusone.md?raw';
 import dnsoneGuide from '../docs/dnsone.md?raw';
+import freeradiusBilling from '../guides/freeradius-billing-for-isps.md?raw';
+import connectMikrotik from '../guides/connect-mikrotik-to-freeradius.md?raw';
+import mikrotikPppoe from '../guides/mikrotik-pppoe-freeradius.md?raw';
+import rpzPowerdns from '../guides/rpz-ad-blocking-powerdns.md?raw';
 import versions from '../docs/versions.json';
 import { FAQ as HOME_FAQ } from '../pages/Home';
 import { FAQ as MONITOR_FAQ } from '../pages/Monitor';
@@ -219,6 +223,24 @@ function guide(markdown: string): string {
         .trim();
 }
 
+/** Each tool's own page as plain text: what it does, how to read the result, and the common questions. */
+function toolPagesText(site: string): string {
+    return TOOL_LIST.map((t) => {
+        const c = TOOL_PAGE_CONTENT[t.id];
+        return `### ${c.h1}
+
+Page: ${site}/${toolPath(t.id)}
+
+${c.lead}
+
+${c.what.join('\n\n')}
+
+${c.read.map(([term, meaning]) => `- **${term}:** ${meaning}`).join('\n')}
+
+${c.faq.map((f) => `**${f.q}** ${f.a}`).join('\n\n')}`;
+    }).join('\n\n');
+}
+
 export function llmsFull(site: string): string {
     const faq = (list: { q: string; a: string }[]) => list.map((f) => `### ${f.q}\n\n${f.a}`).join('\n\n');
     const block = (k: Product) => `## ${PRODUCTS[k].name}
@@ -242,6 +264,8 @@ ${block('dnsone')}
 
 ${toolsList(site)}
 
+${toolPagesText(site)}
+
 ## Questions and answers
 
 ${faq(HOME_FAQ)}
@@ -255,5 +279,13 @@ ${guide(monitorGuide)}
 ${guide(radiusoneGuide)}
 
 ${guide(dnsoneGuide)}
+
+${guide(freeradiusBilling)}
+
+${guide(connectMikrotik)}
+
+${guide(mikrotikPppoe)}
+
+${guide(rpzPowerdns)}
 `;
 }
