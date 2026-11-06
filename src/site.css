@@ -5290,6 +5290,19 @@ abbr[title] {
     display: flex;
   }
 
+  /* Taller than the screen (Tools open): the menu scrolls on its own, the page behind stays put. */
+  .site-nav {
+    max-height: calc(100vh - var(--header-h));
+    max-height: calc(100dvh - var(--header-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .menu-open,
+  .menu-open body {
+    overflow: hidden;
+  }
+
   .site-nav a {
     padding: 12px 8px;
     font-size: 16px;

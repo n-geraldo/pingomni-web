@@ -199,15 +199,32 @@ function Header({ onTheme }: { onTheme: () => void }) {
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
 
+    // The phone menu closes on Escape, a tap outside the header, widening to the desktop bar, or coming back to the
+    // page from the browser's history. While it is open the page behind stays still, so a swipe scrolls the menu.
+    const headerRef = useRef<HTMLElement>(null);
     useEffect(() => {
         if (!open) return;
-        const close = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-        window.addEventListener('keydown', close);
-        return () => window.removeEventListener('keydown', close);
+        const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+        const onTap = (e: PointerEvent) => headerRef.current && !headerRef.current.contains(e.target as Node) && setOpen(false);
+        const wide = window.matchMedia('(min-width: 821px)');
+        const onWide = () => wide.matches && setOpen(false);
+        const onShow = () => setOpen(false);
+        window.addEventListener('keydown', onKey);
+        document.addEventListener('pointerdown', onTap);
+        wide.addEventListener('change', onWide);
+        window.addEventListener('pageshow', onShow);
+        document.documentElement.classList.add('menu-open');
+        return () => {
+            window.removeEventListener('keydown', onKey);
+            document.removeEventListener('pointerdown', onTap);
+            wide.removeEventListener('change', onWide);
+            window.removeEventListener('pageshow', onShow);
+            document.documentElement.classList.remove('menu-open');
+        };
     }, [open]);
 
     return (
-        <header className={scrolled ? 'site-header scrolled' : 'site-header'}>
+        <header ref={headerRef} className={scrolled ? 'site-header scrolled' : 'site-header'}>
             <div className="container header-row">
                 <a className="brand" href={root} aria-label="PingOmni home">
                     <Mark brand="pingomni" size={30} />
