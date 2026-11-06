@@ -175,6 +175,17 @@ Requests an address and checks the answer's status code.
 | Time-out | 15 s | 2 to 30 seconds |
 | Follow redirects | on | Off: a redirect is the answer, so expect `301` or `302` |
 | Fail on an invalid certificate | on | Off for a test server with a self-signed certificate |
+| Login | none | Username and password, or a bearer token |
+| Headers | none | Up to 20, like `X-Api-Key`. The check sets `Host` and `User-Agent` itself |
+| Body and content type | none | Sent with POST |
+
+**Login, headers and body** come with the Starter plan and above. They are saved encrypted and never shown again: leave a field empty to keep what is saved.
+They go only to the address they were saved for. If the answer redirects to another site, the check stops, reports
+it and marks the monitor down, so enter the final address. Changing the monitor to another site asks you to enter them
+again.
+
+**Example: an API behind a token.** Address `https://api.example.com/v1/status`, login **Bearer token**, expected
+status `200`. Add a JSON rule to check a field of the answer as well.
 
 **Example: a health endpoint.** Address `https://api.example.com/health`, method `GET`, expected status
 `200`. The monitor is down on a 500, on a time-out and on an invalid certificate.
@@ -262,14 +273,20 @@ Looks up a record and, optionally, checks its value.
 
 | Setting | Notes |
 |---|---|
-| Host | the name to look up: `example.com`, `www.example.com` |
-| Record | A, AAAA, CNAME, MX, NS or TXT |
+| Host | the name to look up: `example.com`, `_sip._tcp.example.com`; for PTR, the IP address |
+| Record | A, AAAA, CNAME, MX, NS, TXT, SRV, SOA, CAA or PTR |
+| DNS server | optional: a public IP address to ask directly, like your own name server. Empty: the probe's own |
 | Expected value | down when no answer contains it; empty: the record only has to exist |
 
 **Example: the website's address must not change.** Host `www.example.com`, record `A`, expected
 `198.51.100.10`. If someone repoints the name, or the domain is hijacked, you know within one check.
 
 **Example: mail must reach the right server.** Host `example.com`, record `MX`, expected `mail.example.com`.
+
+**Example: your name server has the latest zone.** Host `example.com`, record `SOA`, DNS server your name server's
+public address, expected the serial number you published.
+
+**Example: only your certificate authority may issue.** Host `example.com`, record `CAA`, expected `letsencrypt.org`.
 
 **Example: domain verification stays in place.** Host `example.com`, record `TXT`, expected
 `google-site-verification=`.
