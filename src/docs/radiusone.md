@@ -4,7 +4,8 @@ What each page of the portal does, every field and button on it, how it works be
 server commands that go with it, for the operators who run RadiusOne. Installing the server is in
 [INSTALL.md](../INSTALL.md).
 
-Page names below are as they appear in the portal's navigation: **Page → tab**. Examples use placeholder
+Page names below are as they appear in the portal's navigation: **Page → tab**. The portal's **Documentation**
+link opens this guide. Examples use placeholder
 addresses and IDs (192.0.2.x, 198.51.100.x, example.com, 123456789), never a real server's settings.
 Commands are run on the RadiusOne server over SSH.
 

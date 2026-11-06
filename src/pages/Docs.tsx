@@ -192,7 +192,7 @@ export function DocsHub() {
                     <h1 id="hero-title" className="display">
                         Documentation
                     </h1>
-                    <p className="lead">The user guides of PingOmni Monitor, RadiusOne and DNSOne. RadiusOne and DNSOne carry the same guide inside, for the version they run.</p>
+                    <p className="lead">The user guides of PingOmni Monitor, RadiusOne and DNSOne, for their latest releases. The Documentation and Help links in RadiusOne and DNSOne open these pages.</p>
                     <label className="docs-hub-search">
                         <Icon name="search" />
                         <span className="sr-only">Search the guides</span>
