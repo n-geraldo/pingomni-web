@@ -398,7 +398,7 @@ export default function Monitor() {
                     ['11', 'kinds of checks: websites, APIs, certificates, domains, DNS, ping, ports, mail, WebSockets, databases and cron jobs'],
                     ['30 s', 'between checks on Pro and Business; every minute on Starter'],
                     ['8', 'alert channels, with escalation when nobody acknowledges'],
-                    ['10', 'monitors free, for good, with no card'],
+                    ['30', 'monitors free, for good, with no card'],
                 ]}
             />
             <Checks />
