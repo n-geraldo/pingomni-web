@@ -21,23 +21,25 @@ Commands are run on the RadiusOne server over SSH.
 8. [Monitoring](#8-monitoring)
 9. [Network operations](#9-network-operations)
 10. [Billing](#10-billing)
-11. [Reports and logs](#11-reports-and-logs)
-12. [Your profile](#12-your-profile)
-13. [Settings: overview and software update](#13-settings-overview-and-software-update)
-14. [Settings: operators](#14-settings-operators)
-15. [Settings: licence and Pro](#15-settings-licence-and-pro)
-16. [Settings: regional](#16-settings-regional)
-17. [Settings: email and SMS gateways](#17-settings-email-and-sms-gateways)
-18. [Settings: customer messages](#18-settings-customer-messages)
-19. [Settings: admin alerts and daily report](#19-settings-admin-alerts-and-daily-report)
-20. [Settings: branding](#20-settings-branding)
-21. [Settings: invoices and receipts](#21-settings-invoices-and-receipts)
-22. [Settings: firewall](#22-settings-firewall)
-23. [Settings: backups](#23-settings-backups)
-24. [Settings: data retention](#24-settings-data-retention)
-25. [Server operations](#25-server-operations)
-26. [Command reference](#26-command-reference)
-27. [Troubleshooting](#27-troubleshooting)
+11. [Contracts](#11-contracts)
+12. [Pay page and online payments](#12-pay-page-and-online-payments)
+13. [Reports and logs](#13-reports-and-logs)
+14. [Your profile](#14-your-profile)
+15. [Settings: overview and software update](#15-settings-overview-and-software-update)
+16. [Settings: operators](#16-settings-operators)
+17. [Settings: licence and Pro](#17-settings-licence-and-pro)
+18. [Settings: regional](#18-settings-regional)
+19. [Settings: email and SMS gateways](#19-settings-email-and-sms-gateways)
+20. [Settings: customer messages](#20-settings-customer-messages)
+21. [Settings: admin alerts and daily report](#21-settings-admin-alerts-and-daily-report)
+22. [Settings: branding](#22-settings-branding)
+23. [Settings: invoices and receipts](#23-settings-invoices-and-receipts)
+24. [Settings: firewall](#24-settings-firewall)
+25. [Settings: backups](#25-settings-backups)
+26. [Settings: data retention](#26-settings-data-retention)
+27. [Server operations](#27-server-operations)
+28. [Command reference](#28-command-reference)
+29. [Troubleshooting](#29-troubleshooting)
 
 ---
 
@@ -56,14 +58,14 @@ customer's next login, and the portal can push them to an online customer straig
 | FreeRADIUS | Answers your routers: is this username and password right, which speed and IP address does it get. Writes the accounting (who is online, traffic). |
 | MariaDB | One `radius` database holding customers, plans, NAS devices, accounting, invoices and settings. |
 | The portal (nginx + PHP) | The pages in this guide. |
-| The scheduler | One cron line that runs the background jobs every minute (expiry, billing, monitoring, messages, alerts). See [Server operations](#25-server-operations). |
+| The scheduler | One cron line that runs the background jobs every minute (expiry, billing, monitoring, messages, alerts). See [Server operations](#27-server-operations). |
 | Root helpers | Small scripts in `/usr/local/sbin/radiusone-*` that let the portal restart services, change the time zone, run backups, apply the firewall and install updates, and nothing else. |
 
 ### A first day, step by step
 
 1. **Sign in** with the administrator the installer printed and set up two-factor authentication.
-2. **Settings → Regional**: choose the currency and the time zone ([section 16](#16-settings-regional)).
-3. **Settings → Branding**: your company name and logo ([section 20](#20-settings-branding)).
+2. **Settings → Regional**: choose the currency and the time zone ([section 16](#18-settings-regional)).
+3. **Settings → Branding**: your company name and logo ([section 20](#22-settings-branding)).
 4. **Services**: create your plans, e.g. *Home 50* at 50/10 Mbps for 20.00 a month ([section 4](#4-services-and-ip-pools)).
 5. **NAS devices**: add your router, restart FreeRADIUS, then configure the router ([section 6](#6-nas-devices)).
 6. **Clients**: add a customer and connect them ([section 3](#3-clients)).
@@ -102,7 +104,7 @@ can do what your role allows.
 | support | Read-only: dashboard, clients, services, NAS, reports and network operations, including connection diagnostics. |
 | view | Read-only access to the pages it can open. |
 
-Every change is written to the audit log ([Logs](#11-reports-and-logs)) with the operator, the time and
+Every change is written to the audit log ([Logs](#13-reports-and-logs)) with the operator, the time and
 the address it came from.
 
 ### Lists, filters and exports everywhere
@@ -185,6 +187,7 @@ choose *Suspend*, *Disable* or *Archive*, and **Apply**. You confirm once for al
    | Service plan | The plan from **Services**. |
    | Static IP pool / Static IP address | Only when the customer buys a fixed IP: choose the pool, then one of its free addresses. |
    | Customer alerts | Tick **Email alert** and/or **SMS alert** only if the customer agreed to messages. Customers with a box off never receive messages on that channel. |
+   | Online payment | **May pay on the pay page**: on by default. Off for a customer who must pay at the office ([Pay page](#12-pay-page-and-online-payments)). |
 
    **Access restrictions** (optional)
 
@@ -283,7 +286,7 @@ Both need a recent sign-in and are written to the audit log.
 2. Personal Info: *John Doe*, phone `0691234567`, address `Rruga e Kavajes 10, Tirana`.
 3. Save. On the customer's router, set PPPoE to `jdoe` / `k7Qm2vXp9LtR4a`.
 4. Within seconds the client shows **online** with an IP from the plan's pool, and the *Welcome* message
-   goes out if it is switched on ([Customer messages](#18-settings-customer-messages)).
+   goes out if it is switched on ([Customer messages](#20-settings-customer-messages)).
 
 ## 4. Services and IP pools
 
@@ -389,7 +392,7 @@ On **Services → the plan**, under **Data cap**:
   runs until 5 December on a monthly plan has a cycle of 6 November to 5 December. Without an expiry date, the
   cycle is the calendar month.
 - At **80%** the customer gets the *Data cap 80% used* message, and at **100%** *Data cap reached*, once per
-  cycle each, by email and/or SMS as their alert boxes allow ([Customer messages](#18-settings-customer-messages)).
+  cycle each, by email and/or SMS as their alert boxes allow ([Customer messages](#20-settings-customer-messages)).
 - With *Slow down*, at 100% the customer is moved to the slow-down plan within a minute (the expiry job
   publishes it, and an online customer is disconnected so they reconnect at the new speed). When the next
   cycle starts, or the plan's cap is removed or raised, they get their normal plan back the same way.
@@ -401,7 +404,7 @@ data limit", and his router reconnects at 2 Mbps. On 6 December the new cycle st
 
 > Data caps need the expiry job (`RADIUSONE_SCHEDULE_EXPIRY_SYNC=true`) for the slow-down, and the network
 > worker (`NETWORK_WORKER_ENABLED=true`) to move online customers straight away. See
-> [Server operations](#25-server-operations).
+> [Server operations](#27-server-operations).
 
 ## 6. NAS devices
 
@@ -766,7 +769,7 @@ payment never lifts a manual or security suspension.
 
 On an invoice, **Draft PDF** is the payment request and **Payment receipt** confirms a payment, with your
 uploaded logo and company name. Their wording is set under
-[Invoices and receipts](#21-settings-invoices-and-receipts).
+[Invoices and receipts](#23-settings-invoices-and-receipts).
 
 ### Recurring invoices and overdue
 
@@ -788,7 +791,140 @@ that customer. Such an invoice shows **Legacy invoice review**: choose the **Cla
 **Review evidence** (what you checked) and, if known, the original anchor. Classify only from evidence you
 reviewed.
 
-## 11. Reports and logs
+## 11. Contracts
+
+**Contracts** (Pro: contracts) ties a customer to a plan for a term, such as 12 months billed monthly. The contract text
+comes from your template and is kept exactly as issued, so changing the template later never changes a signed contract.
+A customer has at most one active contract.
+
+### Write the template
+
+**Settings → Contracts**: the **Title on the PDF** (e.g. `Internet service contract`) and the **Template**, in your own
+words and language. A line starting with `#` is a heading. Placeholders:
+
+| Placeholder | Becomes |
+| --- | --- |
+| `{contract_number}` | The contract's number |
+| `{customer}`, `{username}`, `{company}`, `{tax_id}` | Who it is for |
+| `{address}`, `{city}`, `{phone}`, `{email}` | Their details from the client |
+| `{plan}`, `{download}`, `{upload}` | The plan and its speeds |
+| `{monthly_price}`, `{currency}`, `{billing_period}` | What it costs and how often it is billed |
+| `{start_date}`, `{end_date}`, `{term_months}`, `{today}` | The dates |
+
+```
+# Internet service contract {contract_number}
+Between {company} and {customer} (username {username}), {address}, {city}.
+Plan: {plan}, {download}/{upload} Mbps, {monthly_price} {currency} a month, billed {billing_period}.
+Term: {term_months} months, from {start_date} to {end_date}.
+```
+
+Have a lawyer check the text before you use it.
+
+### Issue a contract
+
+**Contracts → New contract**:
+
+| Field | Example | Notes |
+| --- | --- | --- |
+| Customer username | `jdoe` | The contract uses this customer's current plan and price. |
+| Term (months) | `12` | The customer cannot pay online for time past the end of the term. |
+| Billing period | Monthly | Monthly, 3 months, 6 months or yearly: how often the customer is invoiced. |
+| Start date | `2026-11-07` | The term ends the day before the same date, e.g. `2027-11-06`. |
+| Issue the first invoice for this period now | on | Bills the first period straight away. |
+
+The contract's page shows the text, the PDF to print and sign, its invoices and its online payments. **Cancel contract**
+ends it early; the history stays. The list under **Contracts** can be searched and filtered by status (active, ended,
+cancelled). The nightly invoices follow the contract's billing period and stop at its end; contracts past their end
+date are marked ended by themselves.
+
+## 12. Pay page and online payments
+
+Customers can pay their internet by card on your own page, such as `https://pay.example.com`, through **POK** or
+**Stripe** (Pro: contracts). They pay on POK's or Stripe's own secure page: card details never reach RadiusOne. A
+payment counts only after RadiusOne asks POK or Stripe and finds it completed for the full amount, in the right
+currency. Then the invoice is issued and paid, and the service is renewed, at once.
+
+### How a customer pays
+
+1. They open the pay page and enter their **username** and the **last 4 digits of their phone number** (the phone or
+   cell phone saved on the client).
+2. They see their plan, how long it is paid for and how long the contract runs (their name is shown masked, e.g.
+   `A**** D**`).
+3. They choose how long to pay for (1, 3, 6 or 12 months, only inside the contract), and POK or Stripe.
+4. They pay on the service's page and come back to *Payment received, thank you. Your service is paid until …*.
+
+A wrong username and a wrong phone number get the same answer, so the page does not tell anyone which usernames exist.
+After 5 wrong phone numbers, that username must wait 15 minutes. A customer without an active contract, or with online
+payment turned off, cannot pay here.
+
+### Set it up
+
+1. **Point the address at RadiusOne.** Behind a Cloudflare Tunnel: add a public hostname such as `pay.example.com` to the
+   tunnel that serves the portal, with the same service (for example `http://10.0.0.5:80`). Without a tunnel: point the
+   name at the server and run `sudo radiusone-pay-domain pay.example.com` (it gets a Let's Encrypt certificate and adds
+   the nginx site).
+2. **Settings → Pay page**: tick **Turn on the pay page**, enter the **Address** and the **Language of the page**
+   (Albanian or English). Under *How it looks*: the title, your colour, a description and a footer (for example your
+   phone number and office hours). The logo comes from Settings → Branding.
+3. **POK and/or Stripe**: tick **Offer POK** / **Offer Stripe**, fill in the credentials, choose the mode, press **Test the
+   saved … key**, and **Save**.
+
+The page only answers on its own address, and the portal never answers there.
+
+### Test and live mode
+
+Each service has **Test credentials** and **Live credentials**, saved apart, and a switch, **The pay page uses**: *Test:
+no real money* or *Live: real payments*. New installs start in test mode.
+
+| | Test | Live |
+| --- | --- | --- |
+| POK | POK's staging service (`api-staging.pokpay.io`) with your staging merchant id, key id and key secret | POK production (`api.pokpay.io`) with your production keys |
+| Stripe | A secret key starting `sk_test_` | A secret key starting `sk_live_` |
+| A completed payment | Recorded under Online payments as *POK (test)*, but **no invoice is issued and the service is not renewed** | Issues and pays the invoice, and renews the service |
+| The pay page | Shows *Test mode: no real money is taken* | Normal |
+
+Test payments are not counted in the *Paid today / this month* totals. A payment always stays in the mode it started
+in, so switching to live never turns a test payment into a real one.
+
+**Going live, step by step:**
+
+1. Save the test credentials, press **Test the saved test key**, and pay once with a test card on your own account.
+2. Check it under **Online payments** (it shows *(test)*, no invoice).
+3. Save the live credentials and press **Test the saved live key**.
+4. Switch **The pay page uses** to *Live* and **Save**. The test-mode note disappears from the page.
+
+POK's keys come from your POK merchant account (pokpay.io). Stripe's secret keys are in the Stripe dashboard under
+Developers → API keys; the publishable key is not used. Stripe opens accounts only in the countries it supports (not
+Albania); check stripe.com/global. Optionally, add a webhook in Stripe to `https://pay.example.com/pay/webhook` for the
+`checkout.session` events, so payments show at once; without it they are checked every 5 minutes.
+
+### Turn it off for one client
+
+On a client's **Account** tab, **Online payment → May pay on the pay page** is on by default. Turn it off for a customer
+who must pay at the office: the pay page then tells them online payment is not available and to contact you.
+
+### Online payments
+
+**Online payments** lists every payment started on the page: when, the customer, the service (*POK*, *Stripe*, or with
+*(test)*), the amount, the period it covers, the invoice and the status:
+
+| Status | Meaning |
+| --- | --- |
+| Waiting | The customer is on the service's page, or has not finished. |
+| Paid | Completed and applied (a live one has its invoice). |
+| Not completed | Cancelled, expired or failed: no money was taken. |
+| Needs review | The service took money but it could not be applied by itself (a different amount or currency, for example). |
+| Reviewed | Someone handled it. |
+
+The cards at the top show what was paid today and this month, what is waiting, and what needs review. Search, filter by
+status, service and dates, and export as CSV. On a payment, **Check now** asks the service again; for one that needs
+review, check the order at POK or Stripe, apply it by hand under Billing if needed, then write **What was done** to
+close it. Admin alerts include payments that need review.
+
+Every 5 minutes `radiusone:sync-payments` checks the payments still open (in case a webhook was missed) and ends
+contracts past their end date.
+
+## 13. Reports and logs
 
 ### Reports
 
@@ -810,9 +946,9 @@ All tables can be exported as CSV.
 - **Admin audit log**: who changed what and when, from which address. Search by operator, action, entity or IP,
   e.g. `reveal_password`, `disconnect`, `nas.packet_test`, `usage_capped` or an operator's name.
 
-How long login and session records are kept is set under [Data retention](#24-settings-data-retention).
+How long login and session records are kept is set under [Data retention](#26-settings-data-retention).
 
-## 12. Your profile
+## 14. Your profile
 
 Click your name at the top to open your profile:
 
@@ -825,7 +961,7 @@ Click your name at the top to open your profile:
 Lost your phone? Another superadmin can reset your account under **Settings → Users**, or on the server:
 `sudo radiusone-root-artisan radiusone:reset-password jane --reset-2fa`.
 
-## 13. Settings: overview and software update
+## 15. Settings: overview and software update
 
 **Settings** (superadmins only) opens on **Overview**: a card per settings area (Users & access with the number
 of enabled operators, Notifications, Branding with the logo in use, Backups, Data retention), and **System
@@ -862,7 +998,7 @@ sudo radiusone-update v2.8.0      # install that release
 server files, and leaves the old paths as links. Preview it without changing anything:
 `sudo bash ops/radiusone-upgrade-2.3 --dry-run`.
 
-## 14. Settings: operators
+## 16. Settings: operators
 
 **Settings → Users** lists the operators with name, email, username, role, status, two-factor (2FA) and last login. **Role access** explains each role (the table in [Getting started](#roles)).
 
@@ -893,7 +1029,7 @@ sudo radiusone-root-artisan radiusone:reset-password admin      # asks for a new
 sudo radiusone-root-artisan radiusone:reset-password admin --reset-2fa
 ```
 
-## 15. Settings: licence and Pro
+## 17. Settings: licence and Pro
 
 RadiusOne **Community** is free and includes everything RADIUS needs: clients, plans, NAS devices, disconnects,
 data caps, OLTs, network operations, reports, logs, the firewall and local backups, for up to **150 clients**
@@ -908,6 +1044,7 @@ data caps, OLTs, network operations, reports, logs, the firewall and local backu
 | NAS monitoring and traffic | SNMP on NAS devices, the NAS monitor pages and graphs. |
 | Remote backups | Encrypted copies to Backblaze B2, Cloudflare R2 or SFTP. |
 | Your logo | Your logo in the portal and on PDFs. |
+| Customer contracts and the pay page | Contracts, the public pay page with POK and Stripe, and Online payments. |
 
 for up to 999 clients (Licence 1), 4,999 (Licence 2) or with no limit (Licence 3).
 
@@ -932,7 +1069,7 @@ ones is refused.
 
 **Remove the licence** returns the server to Community.
 
-## 16. Settings: regional
+## 18. Settings: regional
 
 ### Currency
 
@@ -951,7 +1088,7 @@ converted**, so old and new records line up.
 From the server: `sudo radiusone-set-timezone apply Europe/Tirane`. Choose the zone at install time if you can
 (`install.sh --timezone Europe/Tirane`).
 
-## 17. Settings: email and SMS gateways
+## 19. Settings: email and SMS gateways
 
 Customer messages and admin alerts are sent through the gateways under **Settings → Notifications → Gateways**
 (Pro: notifications).
@@ -995,7 +1132,7 @@ arrives.
 > Gateway passwords, tokens and keys are stored encrypted and are never shown again. Leave a password field empty
 > to keep the saved value.
 
-## 18. Settings: customer messages
+## 20. Settings: customer messages
 
 Under **Settings → Notifications** (Pro: notifications):
 
@@ -1047,7 +1184,7 @@ retried automatically, so check with the provider before resending.
 Customers whose Email or SMS alert box is off never receive messages on that channel. Queued messages are sent
 every minute by `radiusone:process-customer-notifications`.
 
-## 19. Settings: admin alerts and daily report
+## 21. Settings: admin alerts and daily report
 
 Admin alerts tell your team when something on the server or network needs attention, and send a daily report.
 Set them up under **Settings → Notifications → Admin alerts** (Pro: notifications).
@@ -1129,7 +1266,7 @@ If a test fails, Recent alerts shows Telegram's reason: *chat not found* (wrong 
 yet), *bot was blocked by the user*, or *Unauthorized* (wrong or revoked token; create a new one with `/token` in
 @BotFather). To stop Telegram, untick it, or tick **Remove the saved bot token**.
 
-## 20. Settings: branding
+## 22. Settings: branding
 
 Under **Settings → Branding**:
 
@@ -1140,7 +1277,7 @@ Under **Settings → Branding**:
   and on the sign-in page; only an uploaded logo also appears on PDF invoices and receipts. **Reset to default
   logo** removes it.
 
-## 21. Settings: invoices and receipts
+## 23. Settings: invoices and receipts
 
 The wording of the two PDFs your customers get (Pro: billing). Edit the text in use; an empty field goes back to
 the default.
@@ -1160,7 +1297,7 @@ Please pay {balance} by {due} for {period}.
 Bank: Example Bank, IBAN AL00 0000 0000 0000 0000 0000 0000, reference {invoice}.
 ```
 
-## 22. Settings: firewall
+## 24. Settings: firewall
 
 **Settings → Firewall** manages this server's own firewall from the portal, with nftables. It starts **off**.
 The first time you open the page it fills in a template you can change:
@@ -1212,7 +1349,7 @@ sudo radiusone-firewall off
 
 If `ufw` is active too, both firewalls apply, so a port has to be open in both; the page warns about this.
 
-## 23. Settings: backups
+## 25. Settings: backups
 
 Every night at 02:15 the database and customer documents are backed up on the server, encrypted, and uploaded to
 each enabled destination under **Settings → Backups** (remote destinations: Pro).
@@ -1304,7 +1441,7 @@ To move to a new server: install RadiusOne there, restore the database the same 
 `/var/lib/radiusone/` (documents and logos), and copy `APP_KEY` from the old `.env` so saved router, SNMP and
 gateway secrets can be opened (or re-enter them).
 
-## 24. Settings: data retention
+## 26. Settings: data retention
 
 Under **Settings → Data retention**, choose how long RADIUS history is kept:
 
@@ -1321,7 +1458,7 @@ only come back from a backup.
 Shorter periods keep the database fast, but reports, usage and data caps cannot look further back than the
 period. Check the law in your country: many require ISPs to keep connection records for a fixed time.
 
-## 25. Server operations
+## 27. Server operations
 
 One cron line (`/etc/cron.d/radiusone`) runs the Laravel scheduler every minute as the web user. Each job keeps
 its own lock, so a slow run is never started twice (a second copy exits with code 75). Each job writes its own
@@ -1341,6 +1478,7 @@ log in `/var/log/radiusone/`.
 | `license:check-in` | Every 5 minutes | Registers the licence's server with your PingOmni account when due (report only). | `license.log` |
 | `radiusone:process-notifications` | Every 5 minutes (`RADIUSONE_SCHEDULE_EXPIRY_NOTIFICATIONS=true`, Pro: notifications) | Sends due service-expiry notifications. | `notifications.log` |
 | `radiusone:backup` | 02:15 (root cron) | Database and documents backup with encrypted remote copies. | `backup.log` |
+| `radiusone:sync-payments` | Every 5 minutes | Checks open pay page payments with POK or Stripe, and ends contracts past their end date. | `billing.log` |
 | `radiusone:generate-billing` | 03:15 (Pro: billing) | Marks overdue invoices and creates recurring ones. | `billing.log` |
 | `radiusone:prune-job-runs` | 03:30 | Removes job history older than 30 days. | `maintenance.log` |
 | `radiusone:prune-radius` | 03:45 | Applies the data retention periods. | `maintenance.log` |
@@ -1411,7 +1549,7 @@ UDP 161 and TCP 23. MariaDB (3306) listens only on the server itself.
   Restart, Regional → Time zone, Back up now, the firewall, NAS diagnostics and Software update.
 - **Update**: Settings → Software update, or `sudo radiusone-update`.
 
-## 26. Command reference
+## 28. Command reference
 
 Run artisan commands as root through `radiusone-root-artisan`, never as `sudo php artisan`: that would load cache
 files the web user can write. Commands that need another database identity take it from
@@ -1423,6 +1561,7 @@ files the web user can write. Commands that need another database identity take 
 | --- | --- |
 | `sudo radiusone-root-artisan radiusone:job-status` | Recent job runs with their result, schema state, network lag and the notification queue. The first thing to run when something seems stuck. |
 | `sudo radiusone-root-artisan radiusone:generate-billing` | Creates due recurring invoices and marks overdue ones now. `--username=jdoe` for one customer. |
+| `sudo radiusone-root-artisan radiusone:sync-payments` | Checks the open online payments now. |
 | `sudo radiusone-root-artisan radiusone:collect-usage` | Updates usage and applies data caps now. |
 | `sudo radiusone-root-artisan radiusone:sync-expired` | Expires services and publishes access changes now. |
 | `sudo radiusone-root-artisan radiusone:poll-snmp` | Takes a monitoring sample now (the same as *Poll all devices now*). |
@@ -1488,7 +1627,7 @@ sudo freeradius -X
 sudo systemctl start freeradius
 ```
 
-## 27. Troubleshooting
+## 29. Troubleshooting
 
 | Symptom | What to check |
 | --- | --- |

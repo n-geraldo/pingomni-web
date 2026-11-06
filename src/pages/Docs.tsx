@@ -55,6 +55,8 @@ const GUIDES: Record<
             monitoring: 'activity',
             'network-operations': 'signal',
             billing: 'billing',
+            contracts: 'logs',
+            'pay-page-and-online-payments': 'billing',
             'reports-and-logs': 'reports',
             'your-profile': 'user',
             'settings-overview-and-software-update': 'refresh',
