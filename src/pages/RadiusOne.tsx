@@ -573,7 +573,6 @@ export default function RadiusOne() {
                             </a>
                             <a className="text-link hero-link" href={mailto('RadiusOne')}>
                                 Email us
-                                <Icon name="arrow" />
                             </a>
                         </div>
                         <HeroFacts items={['Free up to 150 active subscribers', 'On your own Ubuntu server', 'MikroTik tested end to end']} />

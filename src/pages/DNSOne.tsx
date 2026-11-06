@@ -446,7 +446,6 @@ function Release() {
                             </ul>
                             <a className="text-link" href={`${root}docs/dnsone/`}>
                                 How it works, in the user guide
-                                <Icon name="arrow" />
                             </a>
                         </div>
                         <figure className="frame release-shot">
@@ -676,7 +675,6 @@ export default function DNSOne() {
                             </a>
                             <a className="text-link hero-link" href={buyUrl('dnsone')} aria-label="Buy DNSOne Pro">
                                 Buy Pro
-                                <Icon name="arrow" />
                             </a>
                         </div>
                         <HeroFacts items={['Free and open source on one server', 'DNS data stays on your servers', 'Public demo with sample data']} />

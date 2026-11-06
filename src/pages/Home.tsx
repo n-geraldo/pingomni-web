@@ -122,7 +122,6 @@ function Products() {
                                     </a>
                                     <a className="text-link" href={`${root}${p.page}`}>
                                         Learn more
-                                        <Icon name="arrow" />
                                     </a>
                                 </div>
                             </div>
@@ -161,7 +160,6 @@ function MonitorNew() {
                         </a>
                         <a className="text-link" href={`${root}monitor/#plans`}>
                             Plans and prices
-                            <Icon name="arrow" />
                         </a>
                     </div>
                 </div>
@@ -333,7 +331,6 @@ function FreeTools() {
                                                 <Icon name={info.icon} />
                                             </span>
                                             {info.title}
-                                            <Icon name="arrow" />
                                         </a>
                                     </h3>
                                     <ul className="toolgroup-list">

@@ -84,7 +84,6 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
                                         <strong>{info.title}</strong>
                                         <span>{info.blurb}</span>
                                     </span>
-                                    <Icon name="arrow" />
                                 </a>
                                 <ul>
                                     {TOOL_LIST.filter((t) => t.group === g).map((t) => (
@@ -152,11 +151,9 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
                                     onClick={close}
                                 >
                                     PingOmni Monitor overview
-                                    <Icon name="arrow" />
                                 </a>
                                 <a className="text-link" href={buyUrl('monitor')} onClick={close}>
                                     Start free
-                                    <Icon name="arrow" />
                                 </a>
                             </div>
                         </div>
@@ -177,7 +174,6 @@ function ProductsMenu({ onNavigate }: { onNavigate: () => void }) {
                                                     <Wordmark brand={p.brand} />
                                                     <span className="mega-soon-job">{p.job}</span>
                                                 </span>
-                                                <Icon name="arrow" />
                                             </a>
                                         </li>
                                     ))}
@@ -298,7 +294,6 @@ export function Contact({
                         {start && (
                             <a className="btn btn-primary btn-lg" href={buyUrl('monitor')}>
                                 Start Monitor, free
-                                <Icon name="arrow" />
                             </a>
                         )}
                         <a className="btn btn-lg contact-mail" href={mailto('Question for PingOmni')}>

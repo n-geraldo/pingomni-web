@@ -272,7 +272,6 @@ export function NextSteps({ steps, hrefFor }: { steps: Next[]; hrefFor: (n: Next
                     <li key={s.tool + s.label}>
                         <a href={hrefFor(s)} className="next-link">
                             <span>{s.label}</span>
-                            <Icon name="arrow" />
                         </a>
                     </li>
                 ))}

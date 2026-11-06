@@ -7830,3 +7830,89 @@ body {
   height: auto !important;
   color: var(--accent);
 }
+
+/* Signal: product pages. The same opening as the home page: the headline large on the left, what it is and the way
+   in on the right, then the product's own screen across the full width beneath. */
+.product-hero::before {
+  display: none;
+}
+.product-hero {
+  background: var(--surface);
+}
+.product-hero-row {
+  display: block;
+}
+.product-hero-text {
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  column-gap: clamp(24px, 4vw, 56px);
+  row-gap: 18px;
+  align-items: end;
+  padding-bottom: clamp(32px, 4vw, 48px);
+}
+.product-hero-text > * {
+  grid-column: 2;
+  margin: 0;
+}
+.product-hero-text > .tile-head {
+  grid-column: 1 / -1;
+}
+.product-hero-text > .display {
+  grid-column: 1;
+  grid-row: 2 / span 5;
+  align-self: end;
+  font-size: clamp(44px, 6.6vw, 92px);
+  line-height: .92;
+}
+.product-hero-text .hero-facts {
+  margin-top: 4px;
+}
+.product-hero-shot {
+  padding-top: 0;
+}
+.product-hero-shot .shot {
+  max-height: 520px;
+  border-color: var(--line-strong);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: none;
+}
+.hero-float {
+  left: auto;
+  right: clamp(16px, 3vw, 40px);
+  bottom: 24px;
+  width: min(38%, 400px);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-pop);
+}
+@media (max-width: 860px) {
+  .product-hero-text {
+    grid-template-columns: 1fr;
+  }
+  .product-hero-text > *,
+  .product-hero-text > .display {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .hero-float {
+    display: none;
+  }
+}
+
+/* Small labels read as words, not shouted capitals. */
+.edition-group th,
+.docs-toc strong,
+.footer-col .footer-title {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+}
+
+/* Docs, guides, legal and tools open like the rest: narrow, heavy, left. */
+.docs-hero .display,
+.tools-hero .display {
+  font-size: clamp(40px, 5.6vw, 72px);
+  line-height: .95;
+}
+.docs-hero,
+.tools-hero {
+  background: var(--surface);
+}

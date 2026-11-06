@@ -206,7 +206,6 @@ export function DocsHub() {
                                                 <strong>{h.title}</strong>
                                                 <span>{GUIDES[h.p].name}{h.where ? ` · ${h.where}` : ''}</span>
                                             </span>
-                                            <Icon name="arrow" />
                                         </a>
                                     </li>
                                 ))}
@@ -241,7 +240,6 @@ export function DocsHub() {
                                         <div className="docs-card-actions">
                                             <a className="btn btn-primary" href={`${root}docs/${p}/`}>
                                                 Read the guide
-                                                <Icon name="arrow" />
                                             </a>
                                             {g.links.map((l) => (
                                                 <a className="btn btn-ghost" key={l.href} href={l.href} target="_blank" rel="noopener">
@@ -268,7 +266,6 @@ export function DocsHub() {
                                             <strong>{HOWTOS[id].title}</strong>
                                             <span>{HOWTOS[id].lead}</span>
                                         </span>
-                                        <Icon name="arrow" />
                                     </a>
                                 </li>
                             ))}

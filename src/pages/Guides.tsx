@@ -150,7 +150,6 @@ export function GuidesHub() {
                                             <strong>{HOWTOS[id].title}</strong>
                                             <span>{HOWTOS[id].lead}</span>
                                         </span>
-                                        <Icon name="arrow" />
                                     </a>
                                 </li>
                             ))}
