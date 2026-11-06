@@ -7459,3 +7459,374 @@ abbr[title] {
     padding: 0 22px;
   }
 }
+
+/* ==========================================================================
+   Signal (2026-11): the site's look from here on. Slate ink on a cool white, the brand's teal for actions, and the
+   yellow of a single-mode fibre patch cord in one place only: the live check under the home headline.
+   Archivo carries everything; its narrow widths set the headlines. Chivo Mono is kept for real check output.
+   ========================================================================== */
+:root {
+  --font: "Archivo Variable", "Segoe UI", -apple-system, system-ui, Roboto, Arial, sans-serif;
+  --fibre: #f5c400;
+  --fibre-ink: #1b1d12;
+  --fibre-deep: #d9ad00;
+  --bg: #f1f3f2;
+  --surface: #fbfcfb;
+  --surface-2: #f1f3f2;
+  --line: #dde2e0;
+  --line-strong: #c3cbc8;
+  --text: #22303a;
+  --text-strong: #121d26;
+  --text-muted: #4d5a64;
+  --text-faint: #5f6b74;
+  --wordmark: #121d26;
+  --stage: #fbfcfb;
+  --on-stage: #121d26;
+  --radius-sm: 3px;
+  --radius: 6px;
+  --radius-lg: 8px;
+  --shadow-sm: none;
+  --shadow-pop: 0 6px 18px rgba(18, 29, 38, .14);
+  --up: #12804a;
+  --down: #c2352b;
+}
+:root[data-theme="dark"] {
+  --bg: #0f171d;
+  --surface: #131c23;
+  --surface-2: #18222a;
+  --line: #26333c;
+  --line-strong: #364550;
+  --text: #d3dbe0;
+  --text-strong: #eef2f4;
+  --text-muted: #a2aeb6;
+  --text-faint: #87939b;
+  --wordmark: #eef2f4;
+  --stage: #131c23;
+  --on-stage: #eef2f4;
+  --up: #4fcf8a;
+  --down: #ff7d72;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f171d;
+    --surface: #131c23;
+    --surface-2: #18222a;
+    --line: #26333c;
+    --line-strong: #364550;
+    --text: #d3dbe0;
+    --text-strong: #eef2f4;
+    --text-muted: #a2aeb6;
+    --text-faint: #87939b;
+    --wordmark: #eef2f4;
+    --stage: #131c23;
+    --on-stage: #eef2f4;
+    --up: #4fcf8a;
+    --down: #ff7d72;
+  }
+}
+
+body {
+  font-variation-settings: normal;
+  font-stretch: 100%;
+}
+
+/* Headlines: narrow and heavy, like the labels on a patch panel. Body text keeps the normal width. */
+.display,
+.h2,
+.sig-title {
+  font-family: var(--font);
+  font-stretch: 72%;
+  font-weight: 760;
+  letter-spacing: -.012em;
+  line-height: .98;
+}
+.display {
+  font-size: clamp(42px, 6.4vw, 76px);
+}
+.h2 {
+  font-size: clamp(32px, 4.4vw, 54px);
+  line-height: 1.02;
+}
+.h3,
+.pcard-pitch,
+.tile-head {
+  font-stretch: 88%;
+}
+
+/* No all-caps labels: the small line above a heading is plain, quiet text. */
+.eyebrow {
+  font-size: 15px;
+  font-weight: 560;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+}
+
+.btn,
+.badge,
+.tool-tab,
+.icon-btn {
+  border-radius: var(--radius-sm);
+}
+.btn {
+  font-weight: 620;
+  letter-spacing: 0;
+}
+.btn-lg {
+  min-height: 52px;
+  padding-inline: 26px;
+  font-size: 17px;
+}
+
+/* Cards: one hairline, no shadow, no lift. Hierarchy comes from the type, not the box. */
+.pcard,
+.pcard:hover {
+  box-shadow: none;
+  transform: none;
+  border-radius: var(--radius-lg);
+}
+
+/* --------------------------------------------------------------------------
+   Home hero: the question, then the yellow band where it is answered.
+   -------------------------------------------------------------------------- */
+.sig-hero {
+  background: var(--surface);
+  padding-top: clamp(32px, 5vw, 64px);
+  padding-bottom: clamp(32px, 4vw, 48px);
+}
+.sig-hero-head {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: clamp(20px, 4vw, 56px);
+  align-items: end;
+}
+.sig-title {
+  margin: 0;
+  font-size: clamp(56px, 11vw, 150px);
+  line-height: .9;
+  letter-spacing: -.02em;
+  color: var(--text-strong);
+  text-wrap: balance;
+}
+.sig-lead {
+  margin: 0 0 .4em;
+  max-width: 44ch;
+  font-size: clamp(17px, 1.5vw, 19px);
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.sig-band {
+  margin-block: clamp(28px, 4vw, 48px) clamp(28px, 4vw, 40px);
+  background: var(--fibre);
+  color: var(--fibre-ink);
+  padding-block: clamp(22px, 3vw, 34px);
+}
+.sig-form {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 24px;
+}
+.sig-label {
+  font-size: 17px;
+  font-weight: 650;
+  font-stretch: 88%;
+}
+.sig-field {
+  display: flex;
+  min-width: 0;
+  border: 2px solid var(--fibre-ink);
+  border-radius: var(--radius-sm);
+  background: #fffdf2;
+}
+.sig-field:focus-within {
+  outline: 3px solid var(--fibre-ink);
+  outline-offset: 2px;
+}
+.sig-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0 18px;
+  height: 60px;
+  font: 500 clamp(18px, 2vw, 22px)/1 var(--font-mono);
+  color: var(--fibre-ink);
+}
+.sig-input::placeholder {
+  color: #6f6a45;
+}
+.sig-input:focus {
+  outline: none;
+}
+.sig-go {
+  border: 0;
+  border-left: 2px solid var(--fibre-ink);
+  background: var(--fibre-ink);
+  color: var(--fibre);
+  padding: 0 26px;
+  font: 680 17px/1 var(--font);
+  cursor: pointer;
+}
+.sig-go:hover {
+  background: #000;
+}
+.sig-go:focus-visible {
+  outline: 3px solid #fffdf2;
+  outline-offset: -6px;
+}
+.sig-go:disabled {
+  cursor: progress;
+}
+.sig-result {
+  min-height: 28px;
+  margin-top: 14px;
+  padding-left: calc(var(--sig-label-w, 0px));
+}
+.sig-hint {
+  margin: 0;
+  font-size: 15px;
+  color: #4a4623;
+}
+.sig-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 28px;
+}
+.sig-line {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 15px/1.4 var(--font-mono);
+}
+.sig-line::before {
+  content: "";
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--up);
+  box-shadow: 0 0 0 2px #fffdf2;
+}
+.sig-bad::before {
+  background: var(--down);
+}
+.sig-good::before {
+  background: #12804a;
+}
+.sig-bad::before {
+  background: #c2352b;
+}
+.sig-next {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+}
+.sig-next p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  font-stretch: 88%;
+}
+.sig-next .btn-primary {
+  background: var(--fibre-ink);
+  border-color: var(--fibre-ink);
+  color: var(--fibre);
+}
+.sig-next .btn-primary:hover {
+  background: #000;
+}
+
+.sig-hero .lineup {
+  margin-top: 0;
+}
+
+@media (max-width: 860px) {
+  .sig-hero-head {
+    grid-template-columns: 1fr;
+  }
+  .sig-form {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .sig-field {
+    flex-direction: column;
+  }
+  .sig-input {
+    flex: none;
+    height: 56px;
+  }
+  .sig-go {
+    border-left: 0;
+    border-top: 2px solid var(--fibre-ink);
+    height: 52px;
+  }
+}
+
+/* Signal: sections below the hero. Headings sit on the left edge like the hero's; lists are rows between hairlines,
+   not boxes; the numbers band is part of the page, not a dark slab. */
+.section-head-center {
+  margin-inline: 0;
+  justify-items: start;
+  text-align: left;
+}
+.section-head-center .lead {
+  margin-inline: 0;
+}
+
+.proof {
+  background: var(--surface);
+  color: var(--text);
+  border-block: 1px solid var(--line);
+}
+.proof-grid li {
+  border-left-color: var(--line);
+}
+.proof-grid strong {
+  color: var(--text-strong);
+  font-stretch: 72%;
+  font-weight: 760;
+  font-size: clamp(48px, 6vw, 72px);
+  letter-spacing: -.01em;
+}
+.proof-grid strong::after {
+  display: none;
+}
+.proof-grid span {
+  color: var(--text-muted);
+}
+
+.mon-new-list,
+.check-grid {
+  gap: 0 32px;
+}
+.mon-new-list a,
+.check-grid li {
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--line-strong);
+  border-radius: 0;
+  padding: 16px 0 20px;
+}
+.mon-new-list a:hover {
+  border-color: var(--text-strong);
+}
+.mon-new-list a:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.check-grid-icon {
+  background: none !important;
+  border: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  color: var(--accent);
+}

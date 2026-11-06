@@ -5,7 +5,7 @@ import Icon from '../Icon';
 import { api } from '../lib/api';
 import { TOOL_LIST, TOOL_PAGES, type ToolGroup } from '../lib/toolList';
 import { Contact, Shot, useSite } from '../shared/Layout';
-import { HeroFacts, ProofBand } from '../shared/Proof';
+import { ProofBand } from '../shared/Proof';
 import { TOOL_PREVIEW } from '../shared/ToolPreviews';
 
 // The product line, one row under the headline: each one a tap away, with its status in a word.
@@ -511,38 +511,97 @@ function Faq() {
     );
 }
 
+type CheckLine = { ok: boolean; text: string };
+
+/** The hero: a real check of the visitor's own site, from our server, then the way to have it checked for good. */
+function SiteCheck() {
+    const [value, setValue] = useState('');
+    const [state, setState] = useState<{ host: string; busy: boolean; lines?: CheckLine[]; error?: string } | null>(null);
+    const submit = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const host = bareHost(value);
+        if (!host) return;
+        setState({ host, busy: true });
+        api('tls', { host }, 30000).then(
+            (r) => {
+                const lines: CheckLine[] = [];
+                lines.push(r.connected ? { ok: true, text: `Connected to ${r.ip} on port 443` } : { ok: false, text: `No connection to ${r.ip ?? host} on port 443` });
+                if (r.http?.status) lines.push({ ok: r.http.status < 400, text: `Answered HTTP ${r.http.status}` });
+                const cert = (r.checks ?? []).find((c: { text?: string }) => /valid for|expired|expires/i.test(c.text ?? ''));
+                if (cert) lines.push({ ok: cert.level === 'pass', text: cert.text });
+                else if (r.connected && !r.handshake) lines.push({ ok: false, text: 'HTTPS did not start: no certificate was offered.' });
+                setState({ host, busy: false, lines });
+            },
+            (err: Error) => setState({ host, busy: false, error: err.message }),
+        );
+    };
+    const down = state?.lines?.some((l) => !l.ok);
+    return (
+        <div className="sig-band">
+            <div className="container">
+                <form className="sig-form" onSubmit={submit}>
+                    <label className="sig-label" htmlFor="site-check">
+                        Your website
+                    </label>
+                    <div className="sig-field">
+                        <input
+                            id="site-check"
+                            className="sig-input"
+                            value={value}
+                            onChange={(e) => setValue(e.target.value)}
+                            placeholder="yourcompany.com"
+                            inputMode="url"
+                            autoComplete="off"
+                            autoCapitalize="off"
+                            spellCheck={false}
+                            required
+                        />
+                        <button className="sig-go" type="submit" disabled={state?.busy}>
+                            {state?.busy ? 'Checking' : 'Check it now'}
+                        </button>
+                    </div>
+                </form>
+                <div className="sig-result" aria-live="polite">
+                    {!state && <p className="sig-hint">A real check: we connect to it, read its answer and its certificate. Nothing is stored.</p>}
+                    {state?.busy && <p className="sig-hint">Checking {state.host} from Tirana</p>}
+                    {state?.error && <p className="sig-line sig-bad">{state.error}</p>}
+                    {state?.lines && (
+                        <>
+                            <ul className="sig-lines">
+                                {state.lines.map((l) => (
+                                    <li key={l.text} className={l.ok ? 'sig-line sig-good' : 'sig-line sig-bad'}>
+                                        {l.text}
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className="sig-next">
+                                <p>{down ? `Something is wrong with ${state.host}. Monitor would have told you.` : `${state.host} is up now. Monitor tells you the minute it is not.`}</p>
+                                <a className="btn btn-primary btn-lg" href={buyUrl('monitor')}>
+                                    Monitor {state.host} free
+                                </a>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function Home() {
     return (
         <>
-            <section className="stage product-hero home-hero" aria-labelledby="hero-title">
-                <div className="container product-hero-row">
-                    <div className="product-hero-text">
-                        <p className="eyebrow">Monitoring and ISP software</p>
-                        <h1 id="hero-title" className="display">
-                            Website monitoring and software for ISPs.
-                        </h1>
-                        <p className="lead">
-                            PingOmni Monitor watches any website from the outside and tells you before your customers do. RadiusOne and DNSOne
-                            run an ISP on its own servers. And {TOOL_LIST.length} free tools for everyone who runs a network.
-                        </p>
-                        <div className="actions">
-                            <a className="btn btn-primary btn-lg" href={buyUrl('monitor')}>
-                                Start Monitor, free
-                                <Icon name="arrow" />
-                            </a>
-                            <a className="btn btn-lg btn-ghost" href="#products">
-                                See the products
-                            </a>
-                        </div>
-                        <HeroFacts items={['Free plan, no card needed', 'Outages confirmed from other networks', 'ISP software on your own servers']} />
-                    </div>
-                    <figure className="product-hero-shot">
-                        <Shot name="monitor-overview" alt="The PingOmni Monitor overview: checks today, outages, the next certificate to end, 30-day uptime and response times" eager />
-                        <div className="hero-float" aria-hidden="true">
-                            <Shot name="monitor-status" alt="A public status page" eager sizes="(max-width: 980px) 52vw, 360px" />
-                        </div>
-                    </figure>
+            <section className="sig-hero" aria-labelledby="hero-title">
+                <div className="container sig-hero-head">
+                    <h1 id="hero-title" className="sig-title">
+                        Is your website up?
+                    </h1>
+                    <p className="sig-lead">
+                        Type its address and our server in Tirana checks it now. PingOmni Monitor then checks it around the clock, confirms
+                        every outage from a second network and tells you before your customers do. Free for 30 websites.
+                    </p>
                 </div>
+                <SiteCheck />
                 <div className="container">
                     <Lineup />
                 </div>

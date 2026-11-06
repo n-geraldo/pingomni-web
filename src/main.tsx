@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import App from './App';
 import type { PageId } from './shared/Layout';
-import '@fontsource-variable/chivo';
+import '@fontsource-variable/archivo/standard.css';
 import '@fontsource-variable/chivo-mono';
 import './site.css';
 
