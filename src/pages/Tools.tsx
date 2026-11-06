@@ -580,7 +580,7 @@ export default function Tools({ group }: { group: ToolGroup }) {
             <Contact
                 start
                 title="Check it around the clock."
-                text="These tools check once. PingOmni Monitor checks your sites, certificates, domains and servers around the clock, as often as every 30 seconds, and tells you the moment one fails. Free for 10 monitors, with no card."
+                text="These tools check once. PingOmni Monitor checks your sites, certificates, domains and servers around the clock, as often as every 30 seconds, and tells you the moment one fails. Free for 30 monitors, with no card."
             />
         </>
     );
@@ -703,7 +703,7 @@ export function ToolPage({ id }: { id: string }) {
             <Contact
                 start
                 title="Check it around the clock."
-                text="These tools check once. PingOmni Monitor checks your sites, certificates, domains and servers around the clock, as often as every 30 seconds, and tells you the moment one fails. Free for 10 monitors, with no card."
+                text="These tools check once. PingOmni Monitor checks your sites, certificates, domains and servers around the clock, as often as every 30 seconds, and tells you the moment one fails. Free for 30 monitors, with no card."
             />
         </>
     );

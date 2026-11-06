@@ -339,7 +339,7 @@ export function DocsGuide({ product }: { product: Product }) {
                 </div>
             </section>
             {product === 'monitor' ? (
-                <Contact start title="Try it as you read." text="PingOmni Monitor is free for 10 monitors, with no card. Questions the guide does not answer? Email us: we answer within one working day." />
+                <Contact start title="Try it as you read." text="PingOmni Monitor is free for 30 monitors, with no card. Questions the guide does not answer? Email us: we answer within one working day." />
             ) : (
                 <Contact
                     demo

@@ -69,7 +69,7 @@ const AREAS: { id: string; title: string; pitch: string; points: { icon: string;
         points: [
             { icon: 'chart', text: '90 days of uptime for each service, and the incidents of the last two weeks' },
             { icon: 'mail', text: 'Visitors subscribe by email and hear when a service goes down, gets an update and recovers' },
-            { icon: 'globe', text: 'On your own domain, like status.yourcompany.com, with HTTPS set up for you (Pro and Business)' },
+            { icon: 'globe', text: 'On your own domain, like status.yourcompany.com, with HTTPS set up for you, on every plan' },
             { icon: 'seal', text: 'Live status and uptime badges for your website or README' },
             { icon: 'code', text: 'A widget for your website that shows the live status, and the same status as JSON' },
         ],
@@ -160,7 +160,7 @@ export const FAQ: { q: string; a: string }[] = [
     },
     {
         q: 'Can the status page be on my own domain?',
-        a: 'Yes, on Pro and Business. Enter status.yourcompany.com, add one CNAME record at your DNS provider, and the HTTPS certificate is issued for you within minutes.',
+        a: 'Yes, on every plan, Free included. Enter status.yourcompany.com, add one CNAME record at your DNS provider, and the HTTPS certificate is issued for you within minutes.',
     },
     {
         q: 'How do I pay, and can I cancel?',
@@ -428,7 +428,7 @@ export default function Monitor() {
                 </div>
             </section>
 
-            <Contact start title="Start watching in five minutes." text="Free for 10 monitors, with no card. Monitoring many customers’ sites, or need a larger plan? Email us: we answer within one working day." />
+            <Contact start title="Start watching in five minutes." text="Free for 30 monitors, with no card. Monitoring many customers’ sites, or need a larger plan? Email us: we answer within one working day." />
         </>
     );
 }

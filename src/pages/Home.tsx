@@ -46,7 +46,7 @@ const PRODUCT_CARDS: { brand: Brand; page: string; pitch: string; points: { icon
             { icon: 'message', text: 'Confirmed alerts to 8 channels, with escalation' },
             { icon: 'eye', text: 'Status pages with email subscribers, on your own domain' },
         ],
-        price: 'Free for 10 monitors. Paid plans from €6 a month.',
+        price: 'Free for 30 monitors. Paid plans from €6 a month.',
         shot: 'monitor-overview',
         alt: 'The PingOmni Monitor overview',
         cta: { label: 'Start free', href: buyUrl('monitor') },
@@ -445,7 +445,7 @@ export const FAQ: { q: string; a: string }[] = [
     },
     {
         q: 'What does PingOmni Monitor cost?',
-        a: 'The Free plan costs nothing and covers 10 monitors checked every 5 minutes. Starter is €6 a month, Pro €19 and Business €45; a year costs ten months. Paid plans are paid by card in your PingOmni Account, and start as soon as the payment goes through.',
+        a: 'The Free plan costs nothing and covers 30 monitors checked every 5 minutes, and a status page on your own domain. Starter is €6 a month, Pro €19 and Business €45; a year costs ten months. Paid plans are paid by card in your PingOmni Account, and start as soon as the payment goes through.',
     },
     {
         q: 'How do I buy RadiusOne or DNSOne?',
@@ -565,7 +565,7 @@ export default function Home() {
             <Contact
                 start
                 title="Start in five minutes."
-                text="Monitor is free for 10 monitors, with no card. For RadiusOne, DNSOne, a larger plan or anything else, email us: we answer within one working day."
+                text="Monitor is free for 30 monitors, with no card. For RadiusOne, DNSOne, a larger plan or anything else, email us: we answer within one working day."
             />
         </>
     );

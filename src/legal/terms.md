@@ -41,8 +41,8 @@ Prices are stated in euros (EUR) and are **final prices**: they include every ta
 | RadiusOne Licence 2 | 1,000–4,999 active subscribers | €99 | €990 |
 | RadiusOne Licence 3 | 5,000 active subscribers or more | €199 | €1,990 |
 | DNSOne Pro | 2 servers; each further server €5 a month or €50 a year | €10 | €100 |
-| PingOmni Monitor Starter | 25 monitors, checks every minute | €6 | €60 |
-| PingOmni Monitor Pro | 100 monitors, checks every 30 seconds | €19 | €190 |
+| PingOmni Monitor Starter | 60 monitors, checks every minute | €6 | €60 |
+| PingOmni Monitor Pro | 120 monitors, checks every 30 seconds | €19 | €190 |
 | PingOmni Monitor Business | 500 monitors, checks every 30 seconds | €45 | €450 |
 
 We may change prices for future orders. A change never affects an order already placed; for renewals we announce it at least 30 days in advance, and you may then let the licence or plan end.

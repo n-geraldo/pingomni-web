@@ -157,7 +157,7 @@ function toolsList(site: string): string {
 const intro = (site: string) => `# PingOmni
 
 > PingOmni makes software for people who keep networks and websites running. PingOmni Monitor is a hosted uptime
-> monitoring service with alerts and public status pages, free for 10 monitors. RadiusOne (an ISP back office on
+> monitoring service with alerts and public status pages, free for 30 monitors. RadiusOne (an ISP back office on
 > FreeRADIUS) and DNSOne (DNS for ISPs) are self-hosted on the customer's own Ubuntu servers. ${TOOL_LIST.length} free network,
 > DNS, email and BGP tools run on the website without an account.
 

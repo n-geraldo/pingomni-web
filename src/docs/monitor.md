@@ -83,14 +83,14 @@ Manage the plan**. A change applies here within minutes.
 
 | | Free | Starter | Pro | Business |
 |---|---|---|---|---|
-| Monitors | 10 | 25 | 100 | 500 |
+| Monitors | 30 | 60 | 120 | 500 |
 | Fastest check | every 5 min | every 1 min | every 30 s | every 30 s |
 | Status pages | 1 | 2 | 10 | 50 |
 | People in the workspace | 1 | 3 | 10 | 50 |
 | Alert channels | 2 | 5 | 20 | 100 |
 | Check history kept | 7 days | 30 days | 90 days | 180 days |
 | Status page subscribers | – | 100 | 1,000 | 10,000 |
-| Status page on your own domain | – | – | yes | yes |
+| Status page on your own domain | yes | yes | yes | yes |
 
 **Example:** you are on Starter, so the fastest check is every minute. A monitor set to every 30 seconds is
 refused with *"Your plan checks at most every 1 min."* If you move down from Pro to Starter, monitors set
@@ -584,7 +584,7 @@ shows them by their names, never their addresses.
 | Show response times | adds the response time chart | on |
 | Subscriptions | visitors can subscribe by email (Starter and above) | on |
 | Published | off: the page is hidden, and its address answers *not found* | on |
-| Domain | your own domain (Pro and Business) | `status.example.com` |
+| Domain | your own domain (every plan) | `status.example.com` |
 
 The page shows the overall state (*"All systems operational"*, *"Some services are slow or partly working"*,
 *"Some services are down"*), each monitor's state with 90 days of uptime, and the incidents of the last 14
