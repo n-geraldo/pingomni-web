@@ -29,6 +29,7 @@ export default defineConfig({
                 docsDnsone: page('docs/dnsone/index.html'),
                 docsMonitor: page('docs/monitor/index.html'),
                 guides: page('guides/index.html'),
+                blog: page('blog/index.html'),
                 guideFreeradiusBilling: page('guides/freeradius-billing-for-isps/index.html'),
                 guideConnectMikrotik: page('guides/connect-mikrotik-to-freeradius/index.html'),
                 guideMikrotikPppoe: page('guides/mikrotik-pppoe-freeradius/index.html'),

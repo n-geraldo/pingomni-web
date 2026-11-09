@@ -9,7 +9,7 @@ export type Theme = 'light' | 'dark';
 
 // Bump when the screenshots are retaken: browsers and Cloudflare keep /shots/ for a day under the same address.
 export const SHOTS_VERSION = '?v=3';
-export type PageId = 'home' | 'monitor' | 'radiusone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'docs-monitor' | 'guides' | 'guide-freeradius-billing' | 'guide-connect-mikrotik' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | `tool-${string}` | 'tools-network' | 'tools-email' | 'tools-bgp' | 'terms' | 'privacy' | 'notfound';
+export type PageId = 'home' | 'monitor' | 'radiusone' | 'dnsone' | 'docs' | 'docs-radiusone' | 'docs-dnsone' | 'docs-monitor' | 'guides' | 'blog' | 'guide-freeradius-billing' | 'guide-connect-mikrotik' | 'guide-mikrotik-pppoe' | 'guide-rpz-powerdns' | `tool-${string}` | 'tools-network' | 'tools-email' | 'tools-bgp' | 'terms' | 'privacy' | 'notfound';
 
 // Pages live at the root (home) or one folder down (products); links and images are relative to the site root.
 type Site = { page: PageId; root: string; theme: Theme };
@@ -106,6 +106,7 @@ function ToolsMenu({ onNavigate }: { onNavigate: () => void }) {
 
 const NAV: { href: string; label: string; page?: PageId }[] = [
     { href: 'docs/', label: 'Docs', page: 'docs' },
+    { href: 'blog/', label: 'Blog', page: 'blog' },
     { href: '#about', label: 'About' },
 ];
 
@@ -352,6 +353,7 @@ function Footer() {
                         <p className="footer-title" id="footer-resources">Resources</p>
                         <a href={`${root}docs/`}>Documentation</a>
                         <a href={`${root}radiusone/#use-cases`}>RadiusOne use cases</a>
+                        <a href={`${root}blog/`}>Blog</a>
                         <a href={`${root}guides/`}>How-to guides</a>
                         <a href={`${root}guides/freeradius-billing-for-isps/`}>FreeRADIUS billing for ISPs</a>
                         <a href={`${root}guides/connect-mikrotik-to-freeradius/`}>Connect MikroTik to FreeRADIUS</a>

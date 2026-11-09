@@ -1,3 +1,4 @@
+import Blog from './pages/Blog';
 import DNSOne from './pages/DNSOne';
 import { DocsGuide, DocsHub } from './pages/Docs';
 import { GuidesHub, HowTo } from './pages/Guides';
@@ -19,6 +20,7 @@ const PAGES: Record<Exclude<PageId, `tool-${string}`>, () => React.ReactNode> = 
     'docs-dnsone': () => <DocsGuide product="dnsone" />,
     'docs-monitor': () => <DocsGuide product="monitor" />,
     guides: () => <GuidesHub />,
+    blog: () => <Blog />,
     'guide-freeradius-billing': () => <HowTo id="freeradius-billing-for-isps" />,
     'guide-connect-mikrotik': () => <HowTo id="connect-mikrotik-to-freeradius" />,
     'guide-mikrotik-pppoe': () => <HowTo id="mikrotik-pppoe-freeradius" />,
