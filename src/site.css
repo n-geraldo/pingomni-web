@@ -7929,3 +7929,31 @@ body {
 .tools-hero {
   background: var(--surface);
 }
+
+/* Blog: Holo's embed brings light-only colours; these follow the site's theme. The #holo-blog id outranks
+   its class rules, whatever order the stylesheets load in. */
+#holo-blog .holo-blog { font-family: var(--font); color: var(--text); max-width: 800px; }
+#holo-blog .holo-blog-card { background: var(--surface); border-color: var(--line); }
+#holo-blog .holo-blog-card:hover { border-color: var(--accent-line); box-shadow: none; background: var(--surface-hover); }
+#holo-blog .holo-blog-card-title, #holo-blog .holo-blog-article-title { color: var(--text-strong); }
+#holo-blog .holo-blog-card-excerpt { color: var(--text-muted); }
+#holo-blog .holo-blog-card-date, #holo-blog .holo-blog-article-date { color: var(--text-faint); }
+#holo-blog .holo-blog-card-thumb, #holo-blog .holo-blog-article-hero { background: var(--surface-2); }
+#holo-blog .holo-blog-back { border-color: var(--line-strong); color: var(--text-muted); }
+#holo-blog .holo-blog-back:hover { background: var(--surface-hover); color: var(--text-strong); }
+#holo-blog .holo-blog-empty { color: var(--text-muted); border-color: var(--line-strong); }
+#holo-blog .holo-blog-article-content { color: var(--text); font-size: 17px; line-height: 1.7; }
+#holo-blog .holo-blog-article-content :is(h1, h2, h3, h4, strong) { color: var(--text-strong); }
+#holo-blog .holo-blog-article-content :is(h2, h3, h4) { margin: 1.6em 0 .5em; line-height: 1.25; }
+/* The article body repeats its title as a heading; the title above already shows it. */
+#holo-blog .holo-blog-article-content > h1:first-child { display: none; }
+#holo-blog .holo-blog-article-content a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+#holo-blog .holo-blog-article-content :is(ul, ol) { margin: 0 0 1em; padding-left: 1.4em; }
+#holo-blog .holo-blog-article-content li { margin: .3em 0; }
+#holo-blog .holo-blog-article-content img { max-width: 100%; height: auto; border-radius: 8px; }
+#holo-blog .holo-blog-article-content blockquote { margin: 0 0 1em; padding: .2em 1em; border-left: 3px solid var(--accent-line); color: var(--text-muted); }
+#holo-blog .holo-blog-article-content code { font-family: var(--font-mono); font-size: .9em; background: var(--surface-2); padding: .1em .35em; border-radius: 4px; }
+#holo-blog .holo-blog-article-content pre { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; }
+#holo-blog .holo-blog-article-content pre code { background: none; padding: 0; }
+#holo-blog .holo-blog-article-content :is(table) { border-collapse: collapse; width: 100%; margin: 0 0 1em; display: block; overflow-x: auto; }
+#holo-blog .holo-blog-article-content :is(th, td) { border: 1px solid var(--line); padding: 6px 10px; text-align: left; }
