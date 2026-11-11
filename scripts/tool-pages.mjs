@@ -15,7 +15,7 @@ for (const t of Object.values(pages)) {
     if (!group) throw new Error(`No group for ${t.id} in toolList.ts`);
     const site = '%VITE_SITE_URL%';
     const url = `${site}/tools/${t.slug}/`;
-    const image = `${site}/og/tools-${group}.png?v=2`;
+    const image = `${site}/og/tools-${group}.png?v=4`;
     const data = {
         '@context': 'https://schema.org',
         '@graph': [
